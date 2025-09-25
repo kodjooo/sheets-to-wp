@@ -85,22 +85,17 @@ SKIP_IMAGE=true
 
 ### 4. Настройка конфигурации
 
-Убедитесь, что файл `run/config.json` содержит актуальные данные:
+**Приоритет конфигурации:**
+1. **Переменные окружения (.env)** - имеют высший приоритет
+2. **config.json** - используется как fallback, если переменная не задана в .env
+
+**Рекомендуемый подход:**
+- Используйте `.env` файл для всех настроек
+- `config.json` можно оставить пустым или удалить
 
 ```json
 {
-  "openai_api_key": "из .env",
-  "assistant_id_text": "из .env",
-  "assistant_id_pdf": "из .env",
-  "opencage_api_key": "из .env",
-  "spreadsheet_id": "из .env",
-  "worksheet_name": "RACES",
-  "sleep_seconds": 3,
-  "wp_admin_user": "из .env",
-  "wp_admin_pass": "из .env",
-  "wp_url": "из .env",
-  "consumer_key": "из .env",
-  "consumer_secret": "из .env"
+  "worksheet_name": "RACES"
 }
 ```
 

@@ -2,10 +2,34 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import json
 import logging
+import os
 
 def load_config():
-    with open("config.json", "r", encoding="utf-8") as f:
-        return json.load(f)
+    # Сначала пытаемся загрузить из переменных окружения
+    env_config = {
+        "spreadsheet_id": os.getenv("GOOGLE_SPREADSHEET_ID"),
+        "worksheet_name": os.getenv("GOOGLE_WORKSHEET_NAME", "RACES"),
+        "openai_api_key": os.getenv("OPENAI_API_KEY"),
+        "assistant_id_text": os.getenv("ASSISTANT_ID_TEXT"),
+        "assistant_id_pdf": os.getenv("ASSISTANT_ID_PDF"),
+        "opencage_api_key": os.getenv("OPENCAGE_API_KEY"),
+        "wp_url": os.getenv("WP_URL"),
+        "wp_admin_user": os.getenv("WP_ADMIN_USER"),
+        "wp_admin_pass": os.getenv("WP_ADMIN_PASS"),
+        "consumer_key": os.getenv("WP_CONSUMER_KEY"),
+        "consumer_secret": os.getenv("WP_CONSUMER_SECRET")
+    }
+    
+    # Если есть config.json, используем его как fallback
+    if os.path.exists("config.json"):
+        with open("config.json", "r", encoding="utf-8") as f:
+            file_config = json.load(f)
+        # Объединяем: env переменные имеют приоритет
+        for key, value in file_config.items():
+            if env_config.get(key) is None:
+                env_config[key] = value
+    
+    return env_config
 
 config = load_config()
 SPREADSHEET_ID = config["spreadsheet_id"]
