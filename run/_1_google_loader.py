@@ -5,31 +5,35 @@ import logging
 import os
 
 def load_config():
-    # Сначала пытаемся загрузить из переменных окружения
-    env_config = {
+    # Загружаем конфигурацию только из переменных окружения
+    config = {
         "spreadsheet_id": os.getenv("GOOGLE_SPREADSHEET_ID"),
         "worksheet_name": os.getenv("GOOGLE_WORKSHEET_NAME", "RACES"),
         "openai_api_key": os.getenv("OPENAI_API_KEY"),
         "assistant_id_text": os.getenv("ASSISTANT_ID_TEXT"),
         "assistant_id_pdf": os.getenv("ASSISTANT_ID_PDF"),
+        "assistant_id_second": os.getenv("ASSISTANT_ID_SECOND"),
         "opencage_api_key": os.getenv("OPENCAGE_API_KEY"),
         "wp_url": os.getenv("WP_URL"),
         "wp_admin_user": os.getenv("WP_ADMIN_USER"),
         "wp_admin_pass": os.getenv("WP_ADMIN_PASS"),
         "consumer_key": os.getenv("WP_CONSUMER_KEY"),
-        "consumer_secret": os.getenv("WP_CONSUMER_SECRET")
+        "consumer_secret": os.getenv("WP_CONSUMER_SECRET"),
+        "sleep_seconds": int(os.getenv("SLEEP_SECONDS", "3"))
     }
     
-    # Если есть config.json, используем его как fallback
-    if os.path.exists("config.json"):
-        with open("config.json", "r", encoding="utf-8") as f:
-            file_config = json.load(f)
-        # Объединяем: env переменные имеют приоритет
-        for key, value in file_config.items():
-            if env_config.get(key) is None:
-                env_config[key] = value
+    # Проверяем, что все обязательные переменные заданы
+    required_vars = [
+        "spreadsheet_id", "openai_api_key", "assistant_id_text", 
+        "assistant_id_pdf", "opencage_api_key", "wp_url", 
+        "wp_admin_user", "wp_admin_pass", "consumer_key", "consumer_secret"
+    ]
     
-    return env_config
+    missing_vars = [var for var in required_vars if not config.get(var)]
+    if missing_vars:
+        raise ValueError(f"Отсутствуют обязательные переменные окружения: {', '.join(missing_vars)}")
+    
+    return config
 
 config = load_config()
 SPREADSHEET_ID = config["spreadsheet_id"]

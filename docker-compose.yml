@@ -29,8 +29,7 @@ services:
     env_file:
       - .env
     volumes:
-      # Монтируем конфигурационные файлы из папки run/
-      - ./run/config.json:/app/config.json:ro
+      # Монтируем только необходимые файлы
       - ./run/google-credentials.json:/app/google-credentials.json:ro
       # Временные файлы (для PDF и изображений)
       - temp_volume:/tmp/app_temp

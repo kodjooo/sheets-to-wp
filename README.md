@@ -28,7 +28,7 @@ run/
 ├── _4_create_translation.py  # Создание переводов
 ├── _5_taxonomy_and_attributes.py # Настройка атрибутов
 ├── _6_create_variations.py   # Создание вариаций товаров
-├── config.json               # Конфигурация приложения
+├── .env                      # Переменные окружения (создается из env.template)
 ├── google-credentials.json   # Ключи Google API
 └── requirements.txt         # Python зависимости
 ```
@@ -85,18 +85,18 @@ SKIP_IMAGE=true
 
 ### 4. Настройка конфигурации
 
-**Приоритет конфигурации:**
-1. **Переменные окружения (.env)** - имеют высший приоритет
-2. **config.json** - используется как fallback, если переменная не задана в .env
+**Конфигурация:**
+- Все настройки загружаются из переменных окружения в `.env` файле
+- Скопируйте `env.template` в `.env` и заполните реальными значениями
+- Файл `config.json` больше не используется
 
-**Рекомендуемый подход:**
-- Используйте `.env` файл для всех настроек
-- `config.json` можно оставить пустым или удалить
-
-```json
-{
-  "worksheet_name": "RACES"
-}
+```bash
+# Пример .env файла
+OPENAI_API_KEY=sk-proj-your-key-here
+ASSISTANT_ID_TEXT=asst_your-assistant-id-here
+GOOGLE_SPREADSHEET_ID=your-spreadsheet-id-here
+WP_URL=https://your-wordpress-site.com
+# ... остальные переменные
 ```
 
 ### 5. Настройка Google API
@@ -190,7 +190,7 @@ crontab -e
 docker-compose logs
 
 # Проверить права доступа
-ls -la .env run/config.json run/google-credentials.json
+ls -la .env run/google-credentials.json
 
 # Пересобрать образ
 docker-compose build --no-cache
@@ -227,7 +227,7 @@ sheets-to-wp/
     ├── _4_create_translation.py
     ├── _5_taxonomy_and_attributes.py
     ├── _6_create_variations.py
-    ├── config.json
+    ├── .env
     ├── google-credentials.json
     └── requirements.txt
 ```
@@ -238,8 +238,8 @@ sheets-to-wp/
 
 ```bash
 # Ограничить доступ к конфигурационным файлам
-chmod 600 .env run/config.json run/google-credentials.json
-chown root:root .env run/config.json run/google-credentials.json
+chmod 600 .env run/google-credentials.json
+chown root:root .env run/google-credentials.json
 ```
 
 ### Файрвол

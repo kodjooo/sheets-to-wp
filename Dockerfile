@@ -47,7 +47,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY --chown=racefinder:racefinder run/ .
 
 # Устанавливаем правильные права доступа к файлам
-RUN chmod 644 config.json google-credentials.json 2>/dev/null || true && \
+RUN chmod 644 google-credentials.json 2>/dev/null || true && \
     chmod 755 *.py && \
     mkdir -p logs && \
     chown -R racefinder:racefinder /app
