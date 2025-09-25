@@ -32,8 +32,6 @@ services:
       # Монтируем конфигурационные файлы из папки run/
       - ./run/config.json:/app/config.json:ro
       - ./run/google-credentials.json:/app/google-credentials.json:ro
-      # Логи
-      - ./logs:/app/logs
       # Временные файлы (для PDF и изображений)
       - temp_volume:/tmp/app_temp
     networks:

@@ -151,8 +151,8 @@ docker-compose logs -f
 # Логи последних 100 строк
 docker-compose logs --tail=100
 
-# Логи приложения
-tail -f logs/content-generation.log
+# Логи приложения (если настроено логирование в файлы)
+tail -f /var/log/racefinder-cron.log
 ```
 
 ### Проверка статуса
@@ -174,7 +174,7 @@ docker stats
 crontab -e
 
 # Добавить задачу (запуск каждый день в 9:00)
-0 9 * * * cd /path/to/project && docker-compose up --build >> logs/cron.log 2>&1
+0 9 * * * cd /path/to/project && docker-compose up --build >> /var/log/racefinder-cron.log 2>&1
 ```
 
 ## 🔧 Устранение неполадок
@@ -216,18 +216,17 @@ sheets-to-wp/
 ├── Dockerfile               # Образ приложения
 ├── .env                     # Переменные окружения (создать из env.template)
 ├── env.template             # Шаблон переменных окружения
-├── run/                     # Код приложения
-│   ├── main.py
-│   ├── _1_google_loader.py
-│   ├── _2_content_generation.py
-│   ├── _3_create_product.py
-│   ├── _4_create_translation.py
-│   ├── _5_taxonomy_and_attributes.py
-│   ├── _6_create_variations.py
-│   ├── config.json
-│   ├── google-credentials.json
-│   └── requirements.txt
-└── logs/                    # Логи приложения
+└── run/                     # Код приложения
+    ├── main.py
+    ├── _1_google_loader.py
+    ├── _2_content_generation.py
+    ├── _3_create_product.py
+    ├── _4_create_translation.py
+    ├── _5_taxonomy_and_attributes.py
+    ├── _6_create_variations.py
+    ├── config.json
+    ├── google-credentials.json
+    └── requirements.txt
 ```
 
 ## 🛡️ Безопасность
