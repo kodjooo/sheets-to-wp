@@ -1,9 +1,12 @@
 # С этим файлом будем работать
 
-SKIP_AI = False     # пропускает вызовы OpenAI GPT, генерацию текста и картинок
-SKIP_IMAGE = True   # пропускает только генерацию картинок
-
+import os
 import logging
+
+# Настройки из переменных окружения
+SKIP_AI = os.getenv('SKIP_AI', 'false').lower() == 'true'
+SKIP_IMAGE = os.getenv('SKIP_IMAGE', 'true').lower() == 'true'
+
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
 import time
 import json

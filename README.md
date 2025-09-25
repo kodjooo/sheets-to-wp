@@ -52,28 +52,36 @@ nano .env  # Заполните реальными значениями
 
 ### 3. Настройка переменных окружения
 
-Отредактируйте файл `.env`:
+Файл `.env` содержит **только реально используемые** переменные окружения:
 
 ```bash
-# OpenAI API
+# OpenAI API (обязательно)
 OPENAI_API_KEY=sk-proj-ваш-ключ-openai
 ASSISTANT_ID_TEXT=asst_ваш-text-assistant-id
 ASSISTANT_ID_PDF=asst_ваш-pdf-assistant-id
 
-# OpenCage Geocoding API
+# OpenCage Geocoding API (обязательно)
 OPENCAGE_API_KEY=ваш-opencage-ключ
 
-# Google Sheets
+# Google Sheets (обязательно)
 GOOGLE_SPREADSHEET_ID=id-вашей-гугл-таблицы
 GOOGLE_WORKSHEET_NAME=RACES
 
-# WordPress/WooCommerce
+# WordPress/WooCommerce (обязательно)
 WP_URL=https://ваш-сайт.com
 WP_ADMIN_USER=admin-пользователь
 WP_ADMIN_PASS=пароль-админа
 WP_CONSUMER_KEY=ck_ваш-consumer-key
 WP_CONSUMER_SECRET=cs_ваш-consumer-secret
+
+# Настройки приложения (опционально)
+SKIP_AI=false
+SKIP_IMAGE=true
 ```
+
+**Назначение переменных:**
+- **Обязательные** - API ключи и настройки подключения к сервисам
+- **Опциональные** - настройки поведения приложения (можно изменить в .env)
 
 ### 4. Настройка конфигурации
 
