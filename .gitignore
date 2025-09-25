@@ -1,0 +1,52 @@
+# Локальные файлы разработки
+.env
+.env.local
+.env.*
+
+# Логи
+*.log
+logs/
+logs-local/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Временные файлы
+tmp/
+temp/
+*.tmp
+
+# Виртуальные окружения
+.venv/
+venv/
+env/
+
+# Резервные копии
+*.backup
+backups/
+
+# Секретные файлы (НЕ коммитить!)
+google-credentials.json
+config.json
+*.key
+*.pem

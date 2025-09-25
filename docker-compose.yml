@@ -1,0 +1,64 @@
+services:
+  racefinder:
+    build: .
+    container_name: racefinder-automation
+    restart: unless-stopped
+    
+    # ========= СЕТЕВЫЕ ИСПРАВЛЕНИЯ ДЛЯ СЕРВЕРА =========
+    # Принудительные DNS серверы для надежного подключения к Google API
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    
+    # Отключение IPv6 для избежания конфликтов сети
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
+      - net.ipv6.conf.default.disable_ipv6=1
+    
+    # Принудительное использование IPv4 для Google сервисов
+    extra_hosts:
+      - "oauth2.googleapis.com:142.250.27.95"
+      - "sheets.googleapis.com:142.250.185.78"
+      - "www.googleapis.com:142.250.185.78"
+      - "accounts.google.com:142.250.185.78"
+    # ==================================================
+    
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    volumes:
+      # Монтируем конфигурационные файлы из папки run/
+      - ./run/config.json:/app/config.json:ro
+      - ./run/google-credentials.json:/app/google-credentials.json:ro
+      # Логи
+      - ./logs:/app/logs
+      # Временные файлы (для PDF и изображений)
+      - temp_volume:/tmp/app_temp
+    networks:
+      - racefinder_network
+    # Запуск по расписанию (можно заменить на cron)
+    command: python main.py
+    
+    # Мониторинг здоровья контейнера
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  temp_volume:
+    driver: local
+
+networks:
+  racefinder_network:
+    driver: bridge
+    enable_ipv6: false  # Отключаем IPv6 для стабильной работы на сервере
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.0.0/16  # Отдельная подсеть для продакшена
+          gateway: 172.19.0.1
