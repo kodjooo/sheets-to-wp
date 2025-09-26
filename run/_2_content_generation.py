@@ -8,6 +8,7 @@ from PIL import Image
 from io import BytesIO
 import base64
 import logging
+import re
 from _1_google_loader import load_config, get_logger
 from _3_create_product import get_jwt_token
 
@@ -17,22 +18,54 @@ config = load_config()
 openai.api_key = config['openai_api_key']
 OPENCAGE_API_KEY = config.get("opencage_api_key")
 
+def convert_google_drive_url(url):
+    """
+    Преобразует Google Drive ссылку в прямую ссылку для скачивания.
+    Поддерживает формат: https://drive.google.com/file/d/FILE_ID/view
+    Возвращает: https://drive.google.com/uc?export=download&id=FILE_ID
+    """
+    # Проверяем, является ли это ссылкой на Google Drive
+    google_drive_pattern = r'https://drive\.google\.com/file/d/([a-zA-Z0-9_-]+)/'
+    match = re.search(google_drive_pattern, url)
+    
+    if match:
+        file_id = match.group(1)
+        direct_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+        logger.info(f"🔗 Преобразована Google Drive ссылка: {url} → {direct_url}")
+        return direct_url
+    
+    # Если это не Google Drive ссылка, возвращаем исходную
+    return url
+
 def extract_text_from_url(url):
     try:
-        if url.lower().endswith(".pdf"):
-            response = requests.get(url)
+        # Преобразуем Google Drive ссылку в прямую ссылку, если необходимо
+        direct_url = convert_google_drive_url(url)
+        
+        if direct_url.lower().endswith(".pdf") or "drive.google.com/uc?export=download" in direct_url:
+            # Для PDF файлов (включая Google Drive)
+            response = requests.get(direct_url)
             response.raise_for_status()
+            
+            # Проверяем, что получили именно PDF, а не HTML страницу с ошибкой
+            content_type = response.headers.get('content-type', '').lower()
+            if 'text/html' in content_type and 'drive.google.com' in direct_url:
+                logger.warning(f"⚠️ Google Drive файл может быть недоступен для публичного скачивания: {url}")
+                logger.warning("⚠️ Убедитесь, что файл имеет публичный доступ")
+                return "", None
+            
             pdf_path = "/tmp/temp.pdf"
             with open(pdf_path, "wb") as f:
                 f.write(response.content)
-            logger.info(f"📄 Обнаружен PDF: {url}")  # ← ДОБАВЬ ЭТУ СТРОКУ
+            logger.info(f"📄 Обнаружен PDF: {url}")
             return "", pdf_path
         else:
-            response = requests.get(url)
+            # Для обычных веб-страниц
+            response = requests.get(direct_url)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
             text = soup.get_text(separator=' ', strip=True)
-            logger.info(f"🌐 Обработан сайт: {url}")  # ← Можешь добавить эту строку для логов сайта
+            logger.info(f"🌐 Обработан сайт: {url}")
             return text.strip(), None
     except Exception as e:
         logger.error(f"❌ Ошибка загрузки из {url}: {e}")
@@ -91,15 +124,28 @@ def call_openai_assistant(text, file_ids=None, has_pdf=False):
             # ⬅️ Больше ничего сюда не передаём!
         )
 
-        # Ждём завершения
-        while True:
+        # Ждём завершения с таймаутом
+        max_attempts = 60  # 2 минуты максимум (60 * 2 секунды)
+        attempt = 0
+        
+        while attempt < max_attempts:
             status = openai.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
             if status.status == "completed":
                 break
             elif status.status in ["failed", "cancelled"]:
                 logger.error("❌ Ошибка выполнения ассистента")
                 return None
+            elif status.status == "expired":
+                logger.error("❌ Время выполнения ассистента истекло")
+                return None
+            
+            attempt += 1
+            logger.debug(f"⏳ Попытка {attempt}/{max_attempts}, статус: {status.status}")
             time.sleep(2)
+        
+        if attempt >= max_attempts:
+            logger.error("❌ Превышено время ожидания OpenAI ассистента")
+            return None
 
         messages = openai.beta.threads.messages.list(thread_id=thread.id)
         reply = messages.data[0].content[0].text.value
@@ -107,6 +153,68 @@ def call_openai_assistant(text, file_ids=None, has_pdf=False):
 
     except Exception as e:
         logger.error(f"❌ Ошибка OpenAI: {e}")
+        return None
+
+def call_second_openai_assistant(first_result):
+    """
+    Вызывает второй ассистент GPT с результатом первого ассистента.
+    """
+    try:
+        thread = openai.beta.threads.create()
+        logger.info("💬 Создан новый тред для второго ассистента")
+
+        assistant_id = config["assistant_id_second"]
+        
+        # Конвертируем результат первого ассистента в текст для отправки
+        if isinstance(first_result, dict):
+            text_content = json.dumps(first_result, ensure_ascii=False, indent=2)
+        else:
+            text_content = str(first_result)
+
+        logger.debug("📤 Отправляем во второй ассистент (assistant_id=%s):\n%s", assistant_id, text_content[:40000])
+
+        # Создаём сообщение
+        openai.beta.threads.messages.create(
+            thread_id=thread.id,
+            role="user",
+            content=text_content[:40000]
+        )
+
+        # Запускаем второй ассистент
+        run = openai.beta.threads.runs.create(
+            thread_id=thread.id,
+            assistant_id=assistant_id
+        )
+
+        # Ждём завершения с таймаутом
+        max_attempts = 60  # 2 минуты максимум
+        attempt = 0
+        
+        while attempt < max_attempts:
+            status = openai.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+            if status.status == "completed":
+                break
+            elif status.status in ["failed", "cancelled"]:
+                logger.error("❌ Ошибка выполнения второго ассистента")
+                return None
+            elif status.status == "expired":
+                logger.error("❌ Время выполнения второго ассистента истекло")
+                return None
+            
+            attempt += 1
+            logger.debug(f"⏳ Попытка {attempt}/{max_attempts}, статус: {status.status}")
+            time.sleep(2)
+        
+        if attempt >= max_attempts:
+            logger.error("❌ Превышено время ожидания второго OpenAI ассистента")
+            return None
+
+        messages = openai.beta.threads.messages.list(thread_id=thread.id)
+        reply = messages.data[0].content[0].text.value
+        return json.loads(reply)
+
+    except Exception as e:
+        logger.error(f"❌ Ошибка второго ассистента OpenAI: {e}")
         return None
 
 def get_coordinates_from_location(location: str):
