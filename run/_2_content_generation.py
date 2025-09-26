@@ -109,6 +109,65 @@ def call_openai_assistant(text, file_ids=None, has_pdf=False):
         logger.error(f"❌ Ошибка OpenAI: {e}")
         return None
 
+def call_second_assistant(first_result):
+    """Второй ассистент для редактирования и улучшения текста"""
+    try:
+        # Проверяем, есть ли ID второго ассистента в конфигурации
+        if "assistant_id_second" not in config:
+            logger.warning("⚠️ ASSISTANT_ID_SECOND не настроен, пропускаем второй ассистент")
+            return None
+            
+        thread = openai.beta.threads.create()
+        logger.info("💬 Создан новый тред для второго ассистента")
+
+        assistant_id = config["assistant_id_second"]
+        
+        # Подготавливаем текст для второго ассистента
+        edit_text = f"""Пожалуйста, отредактируйте и улучшите следующий контент для спортивного события:
+
+SUMMARY: {first_result.get('summary', '')}
+ORG INFO: {first_result.get('org_info', '')}
+BENEFITS: {first_result.get('benefits', '')}
+SUMMARY (PT): {first_result.get('summary_pt', '')}
+ORG INFO (PT): {first_result.get('org_info_pt', '')}
+BENEFITS (PT): {first_result.get('benefits_pt', '')}
+IMAGE PROMPT: {first_result.get('image_prompt', '')}
+
+Пожалуйста, верните улучшенную версию в том же JSON формате."""
+
+        logger.debug("📤 Отправляем во второй ассистент (assistant_id=%s)", assistant_id)
+
+        # Создаём сообщение
+        openai.beta.threads.messages.create(
+            thread_id=thread.id,
+            role="user",
+            content=edit_text
+        )
+
+        # Запускаем второго ассистента
+        run = openai.beta.threads.runs.create(
+            thread_id=thread.id,
+            assistant_id=assistant_id
+        )
+
+        # Ждём завершения
+        while True:
+            status = openai.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+            if status.status == "completed":
+                break
+            elif status.status in ["failed", "cancelled"]:
+                logger.error("❌ Ошибка выполнения второго ассистента")
+                return None
+            time.sleep(2)
+
+        messages = openai.beta.threads.messages.list(thread_id=thread.id)
+        reply = messages.data[0].content[0].text.value
+        return json.loads(reply)
+
+    except Exception as e:
+        logger.error(f"❌ Ошибка второго ассистента: {e}")
+        return None
+
 def get_coordinates_from_location(location: str):
     if not location:
         return None, None
