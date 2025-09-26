@@ -43,8 +43,8 @@ USER racefinder
 COPY --chown=racefinder:racefinder run/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Копируем код приложения из папки run/
-COPY --chown=racefinder:racefinder run/ .
+# Код приложения будет монтироваться через volume в docker-compose.yml
+# COPY --chown=racefinder:racefinder run/ .
 
 # Устанавливаем правильные права доступа к файлам
 RUN chmod 644 google-credentials.json 2>/dev/null || true && \

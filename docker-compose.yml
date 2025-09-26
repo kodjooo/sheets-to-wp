@@ -31,6 +31,8 @@ services:
     volumes:
       # Монтируем только необходимые файлы
       - ./run/google-credentials.json:/app/google-credentials.json:ro
+      # Подмонтируем папку run для автоматического обновления кода
+      - ./run:/app:ro
       # Временные файлы (для PDF и изображений)
       - temp_volume:/tmp/app_temp
     networks:
