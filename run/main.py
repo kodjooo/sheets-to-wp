@@ -30,6 +30,7 @@ from _1_google_loader import (
 from _2_content_generation import (
     extract_text_from_url,
     call_openai_assistant,
+    call_second_openai_assistant,
     generate_image,
     get_coordinates_from_location,
     translate_title_to_pt
@@ -146,16 +147,25 @@ def run_automation():
                         "image_prompt": "Placeholder image"
                     }
                 else:
-                    logging.info(f"🤖 Вызываем OpenAI ассистента (has_pdf={has_pdf})")
-                    result = call_openai_assistant(
+                    # Вызываем первый ассистент
+                    first_result = call_openai_assistant(
                         combined_text,
                         file_ids=file_ids if has_pdf else None,
                         has_pdf=has_pdf
                     )
+                    
+                    if first_result is None:
+                        logging.error("❌ Первый ассистент не вернул результат")
+                        continue
+                    
+                    logging.info("✅ Первый ассистент завершил работу, передаём результат во второй ассистент")
+                    
+                    # Вызываем второй ассистент с результатом первого
+                    result = call_second_openai_assistant(first_result)
+                    
                     if result is None:
-                        logging.error("❌ Ассистент вернул None")
-                        raise Exception("Ошибка OpenAI ассистента")
-                    logging.info("✅ Ассистент успешно обработал запрос")
+                        logging.error("❌ Второй ассистент не вернул результат")
+                        continue
 
                 # Генерация картинки
                 if SKIP_IMAGE or SKIP_AI:
