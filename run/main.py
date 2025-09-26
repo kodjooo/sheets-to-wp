@@ -124,7 +124,6 @@ def run_automation():
                             upload_response = openai.files.create(file=f, purpose="assistants")
                         file_ids.append(upload_response.id)
 
-                has_pdf = bool(file_ids)
                 combined_text = ""
                 if regulations_url:
                     combined_text += f"\n\nREGULATIONS LINK:\n{regulations_url}"
@@ -150,8 +149,7 @@ def run_automation():
                     # Вызываем первый ассистент
                     first_result = call_openai_assistant(
                         combined_text,
-                        file_ids=file_ids if has_pdf else None,
-                        has_pdf=has_pdf
+                        file_ids=file_ids
                     )
                     
                     if first_result is None:

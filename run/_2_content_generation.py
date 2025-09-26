@@ -93,12 +93,12 @@ def translate_title_to_pt(title: str) -> str:
         logger.error(f"❌ Ошибка при переводе заголовка: {e}")
         return ""
 
-def call_openai_assistant(text, file_ids=None, has_pdf=False):
+def call_openai_assistant(text, file_ids=None):
     try:
         thread = openai.beta.threads.create()
         logger.info("💬 Создан новый тред")
 
-        assistant_id = config["assistant_id_pdf"] if has_pdf else config["assistant_id_text"]
+        assistant_id = config["assistant_id_text"]
 
         logger.debug("📤 Отправляем в GPT (assistant_id=%s):\n%s", assistant_id, text[:40000])
 

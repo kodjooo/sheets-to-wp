@@ -58,7 +58,6 @@ nano .env  # Заполните реальными значениями
 # OpenAI API (обязательно)
 OPENAI_API_KEY=sk-proj-ваш-ключ-openai
 ASSISTANT_ID_TEXT=asst_ваш-text-assistant-id
-ASSISTANT_ID_PDF=asst_ваш-pdf-assistant-id
 
 # OpenCage Geocoding API (обязательно)
 OPENCAGE_API_KEY=ваш-opencage-ключ

@@ -11,7 +11,6 @@ def load_config():
         "worksheet_name": os.getenv("GOOGLE_WORKSHEET_NAME", "RACES"),
         "openai_api_key": os.getenv("OPENAI_API_KEY"),
         "assistant_id_text": os.getenv("ASSISTANT_ID_TEXT"),
-        "assistant_id_pdf": os.getenv("ASSISTANT_ID_PDF"),
         "assistant_id_second": os.getenv("ASSISTANT_ID_SECOND"),
         "opencage_api_key": os.getenv("OPENCAGE_API_KEY"),
         "wp_url": os.getenv("WP_URL"),
@@ -25,7 +24,7 @@ def load_config():
     # Проверяем, что все обязательные переменные заданы
     required_vars = [
         "spreadsheet_id", "openai_api_key", "assistant_id_text", 
-        "assistant_id_pdf", "opencage_api_key", "wp_url", 
+        "opencage_api_key", "wp_url", 
         "wp_admin_user", "wp_admin_pass", "consumer_key", "consumer_secret"
     ]
     
