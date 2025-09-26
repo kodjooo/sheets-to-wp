@@ -2,16 +2,22 @@
 
 import os
 import logging
-
-# Настройки из переменных окружения
-SKIP_AI = os.getenv('SKIP_AI', 'false').lower() == 'true'
-SKIP_IMAGE = os.getenv('SKIP_IMAGE', 'true').lower() == 'true'
-
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
 import time
 import json
 import openai
 import requests
+from datetime import datetime, timedelta
+import pytz
+
+# Настройки из переменных окружения
+SKIP_AI = os.getenv('SKIP_AI', 'false').lower() == 'true'
+SKIP_IMAGE = os.getenv('SKIP_IMAGE', 'true').lower() == 'true'
+RUN_ON_STARTUP = os.getenv('RUN_ON_STARTUP', 'true').lower() == 'true'
+SCHEDULED_HOUR = int(os.getenv('SCHEDULED_HOUR', '2'))
+SCHEDULED_MINUTE = int(os.getenv('SCHEDULED_MINUTE', '0'))
+TIMEZONE = os.getenv('TIMEZONE', 'Europe/Moscow')
+
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
 
 from _1_google_loader import (
     load_config,
@@ -46,7 +52,36 @@ def collect_all_attributes(variations):
             all_attributes[name].add(value)
     return {k: list(v) for k, v in all_attributes.items()}
 
-def main():
+def get_next_run_time():
+    """Вычисляет время следующего запуска по расписанию"""
+    moscow_tz = pytz.timezone(TIMEZONE)
+    now = datetime.now(moscow_tz)
+    
+    # Создаем время запуска на сегодня
+    scheduled_time = now.replace(hour=SCHEDULED_HOUR, minute=SCHEDULED_MINUTE, second=0, microsecond=0)
+    
+    # Если время уже прошло сегодня, планируем на завтра
+    if now >= scheduled_time:
+        scheduled_time += timedelta(days=1)
+    
+    return scheduled_time
+
+def wait_until_next_run():
+    """Ожидает до времени следующего запуска"""
+    next_run = get_next_run_time()
+    moscow_tz = pytz.timezone(TIMEZONE)
+    now = datetime.now(moscow_tz)
+    
+    wait_seconds = (next_run - now).total_seconds()
+    logging.info(f"⏰ Следующий запуск запланирован на {next_run.strftime('%Y-%m-%d %H:%M:%S')} МСК")
+    logging.info(f"⏳ Ожидание {wait_seconds:.0f} секунд...")
+    
+    time.sleep(wait_seconds)
+
+def run_automation():
+    """Основная функция автоматизации"""
+    logging.info("🚀 Запуск автоматизации обработки данных")
+    
     config = load_config()
     rows, headers = load_all_rows()
 
@@ -260,6 +295,37 @@ def main():
         elif status == "published":
             logging.debug(f"⏭ Пропуск Published (ID={row.get('ID')})")
             continue
+
+def main():
+    """Основная функция с расписанием"""
+    moscow_tz = pytz.timezone(TIMEZONE)
+    now = datetime.now(moscow_tz)
+    
+    logging.info(f"🕐 Текущее время: {now.strftime('%Y-%m-%d %H:%M:%S')} МСК")
+    logging.info(f"⚙️ Настройки: RUN_ON_STARTUP={RUN_ON_STARTUP}, SCHEDULED_HOUR={SCHEDULED_HOUR}:{SCHEDULED_MINUTE:02d}")
+    
+    # Тестовый запуск при старте контейнера (если включен)
+    if RUN_ON_STARTUP:
+        logging.info("🚀 Тестовый запуск при старте контейнера")
+        try:
+            run_automation()
+            logging.info("✅ Тестовый запуск завершен успешно")
+        except Exception as e:
+            logging.exception("❌ Ошибка при тестовом запуске")
+    
+    # Основной цикл с расписанием
+    while True:
+        try:
+            # Запуск по расписанию
+            logging.info("🔄 Запуск по расписанию")
+            run_automation()
+            logging.info("✅ Запуск по расписанию завершен успешно")
+            
+        except Exception as e:
+            logging.exception("❌ Ошибка при запуске по расписанию")
+        
+        # Ожидание до следующего запуска
+        wait_until_next_run()
 
 if __name__ == "__main__":
     main()

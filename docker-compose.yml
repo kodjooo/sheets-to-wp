@@ -2,7 +2,7 @@ services:
   racefinder:
     build: .
     container_name: racefinder-automation
-    restart: unless-stopped
+    restart: "no"
     
     # ========= СЕТЕВЫЕ ИСПРАВЛЕНИЯ ДЛЯ СЕРВЕРА =========
     # Принудительные DNS серверы для надежного подключения к Google API
