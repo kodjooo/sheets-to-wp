@@ -92,6 +92,10 @@ def run_automation():
 
     for i, (row_index, row) in enumerate(rows):
         status = row.get("STATUS", "").strip().lower()
+        row_id = row.get("ID", "unknown")
+        
+        # Детальное логирование для отладки
+        logging.debug(f"Строка {row_index}: ID={row_id}, STATUS='{row.get('STATUS', '')}' -> '{status}'")
 
         # Если нашли главную строку Revised
         if status == "revised":
