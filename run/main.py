@@ -135,6 +135,7 @@ def run_automation():
                     raise Exception("Нет текста для GPT")
 
                 if SKIP_AI:
+                    logging.info("🤖 SKIP_AI=true, используем заглушки")
                     result = {
                         "summary": "Заглушка summary",
                         "org_info": "Заглушка org_info",
@@ -145,11 +146,16 @@ def run_automation():
                         "image_prompt": "Placeholder image"
                     }
                 else:
+                    logging.info(f"🤖 Вызываем OpenAI ассистента (has_pdf={has_pdf})")
                     result = call_openai_assistant(
                         combined_text,
                         file_ids=file_ids if has_pdf else None,
                         has_pdf=has_pdf
                     )
+                    if result is None:
+                        logging.error("❌ Ассистент вернул None")
+                        raise Exception("Ошибка OpenAI ассистента")
+                    logging.info("✅ Ассистент успешно обработал запрос")
 
                 # Генерация картинки
                 if SKIP_IMAGE or SKIP_AI:
