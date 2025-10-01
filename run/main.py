@@ -17,7 +17,7 @@ SCHEDULED_HOUR = int(os.getenv('SCHEDULED_HOUR', '2'))
 SCHEDULED_MINUTE = int(os.getenv('SCHEDULED_MINUTE', '0'))
 TIMEZONE = os.getenv('TIMEZONE', 'Europe/Moscow')
 
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 from _1_google_loader import (
     load_config,

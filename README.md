@@ -106,6 +106,7 @@ WP_URL=https://your-wordpress-site.com
 - `GOOGLE_CREDENTIALS_FILE` — путь до файла сервисного аккаунта, если он хранится в другом месте;
 - `GOOGLE_SERVICE_ACCOUNT_JSON` — JSON сервисного аккаунта целиком (удобно для секрет-хранилищ);
 - `GOOGLE_SHEETS_CACHE_TTL_SEC`, `GOOGLE_SHEETS_UPDATE_MAX_ATTEMPTS`, `GOOGLE_SHEETS_UPDATE_BASE_DELAY_SEC` — тонкая настройка кеширования и повторных попыток при обращении к Google Sheets.
+- `WCAPI_MAX_ATTEMPTS`, `WCAPI_BASE_DELAY_SEC` — управление повторными попытками при обращении к WooCommerce API.
 
 ## 🐳 Docker сборка и запуск
 

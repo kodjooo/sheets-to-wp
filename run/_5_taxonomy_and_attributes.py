@@ -1,7 +1,10 @@
-import requests
-import json
 import logging
+import os
+import time
+
+import requests
 from woocommerce import API
+
 from _1_google_loader import load_config
 
 config = load_config()
@@ -12,19 +15,43 @@ wcapi = API(
     version="wc/v3"
 )
 
-HEADERS = {"Content-Type": "application/json"}
+_WCAPI_MAX_ATTEMPTS = int(os.getenv("WCAPI_MAX_ATTEMPTS", "4"))
+_WCAPI_BASE_DELAY_SEC = float(os.getenv("WCAPI_BASE_DELAY_SEC", "1.5"))
+
+
+def _safe_wc_request(method: str, endpoint: str, **kwargs):
+    """Execute WooCommerce API call with retry on transient connection issues."""
+    last_err = None
+    delay = _WCAPI_BASE_DELAY_SEC
+
+    for attempt in range(1, _WCAPI_MAX_ATTEMPTS + 1):
+        try:
+            return getattr(wcapi, method)(endpoint, **kwargs)
+        except requests.exceptions.RequestException as err:
+            last_err = err
+            if attempt == _WCAPI_MAX_ATTEMPTS:
+                break
+
+            logging.warning(
+                f"⚠️ Ошибка соединения с WooCommerce {method.upper()} {endpoint} (попытка {attempt}/{_WCAPI_MAX_ATTEMPTS}): {err}"
+            )
+            logging.info(f"⏳ Повторная попытка обращения к WooCommerce через {delay} сек...")
+            time.sleep(delay)
+            delay *= 2
+
+    raise last_err
 
 
 def get_or_create_attribute(name):
-    response = wcapi.get("products/attributes")
+    response = _safe_wc_request("get", "products/attributes")
     attributes = response.json()
-    
+
     for attr in attributes:
         if attr['name'].lower() == name.lower():
             return attr['id']
 
     data = {"name": name, "type": "select"}
-    new_attr = wcapi.post("products/attributes", data).json()
+    new_attr = _safe_wc_request("post", "products/attributes", data=data).json()
     return new_attr['id']
 
 
@@ -39,7 +66,7 @@ def get_or_create_attribute_term(attr_id, value):
         logging.warning(f"⚠️ Пустое значение терма для атрибута ID={attr_id}, пропускаем создание терма.")
         return None
 
-    response = wcapi.get(f"products/attributes/{attr_id}/terms")
+    response = _safe_wc_request("get", f"products/attributes/{attr_id}/terms")
     terms = response.json()
 
     for term in terms:
@@ -48,7 +75,7 @@ def get_or_create_attribute_term(attr_id, value):
 
     data = {"name": value}
     logging.debug(f"🔧 Пытаемся создать терм '{value}' в атрибуте ID={attr_id}")
-    response = wcapi.post(f"products/attributes/{attr_id}/terms", data)
+    response = _safe_wc_request("post", f"products/attributes/{attr_id}/terms", data=data)
 
     try:
         response.raise_for_status()
@@ -117,7 +144,7 @@ def assign_attributes_to_product(product_id, attributes_dict):
         })
 
     if attr_payload:
-        wcapi.put(f"products/{product_id}", {"attributes": attr_payload})
+        _safe_wc_request("put", f"products/{product_id}", data={"attributes": attr_payload})
     else:
         logging.info(f"⚠️ Ни одного атрибута не собрано для продукта ID={product_id} — пропуск wcapi.put")
 
