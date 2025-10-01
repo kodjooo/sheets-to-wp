@@ -3,6 +3,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import json
 import logging
 import os
+import time
 
 def load_config():
     # Загружаем конфигурацию только из переменных окружения
@@ -38,21 +39,47 @@ config = load_config()
 SPREADSHEET_ID = config["spreadsheet_id"]
 WORKSHEET_NAME = config["worksheet_name"]
 
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("google-credentials.json", scope)
-client = gspread.authorize(creds)
-sheet = client.open_by_key(SPREADSHEET_ID).worksheet(WORKSHEET_NAME)
+def _create_sheet_client():
+    # Ленивая инициализация клиента и листа, чтобы избежать проблем со «старыми» соединениями
+    scope = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = ServiceAccountCredentials.from_json_keyfile_name("google-credentials.json", scope)
+    client = gspread.authorize(creds)
+    worksheet = client.open_by_key(SPREADSHEET_ID).worksheet(WORKSHEET_NAME)
+    return worksheet
+
+def _get_sheet_with_retry(max_attempts: int = 3, base_delay_sec: int = 2):
+    # Пробуем создать подключение к листу с экспоненциальной задержкой между попытками
+    last_err = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return _create_sheet_client()
+        except Exception as e:
+            last_err = e
+            delay = base_delay_sec * (2 ** (attempt - 1))
+            logging.warning(f"⚠️ Не удалось инициализировать Google Sheets (попытка {attempt}/{max_attempts}): {e}")
+            if attempt < max_attempts:
+                logging.info(f"⏳ Повторная попытка через {delay} сек...")
+                time.sleep(delay)
+    # Если все попытки исчерпаны — пробрасываем исключение
+    raise last_err
 
 def load_revised_rows():
+    # Загружаем лист с ретраями на случай временных сетевых ошибок
+    sheet = _get_sheet_with_retry()
     data = sheet.get_all_records()
     headers = sheet.row_values(1)
     revised_rows = []
     for i, row in enumerate(data):
         if str(row.get("STATUS", "")).strip().lower() == "revised":
-            revised_rows.append((i + 2, row))  # +2 because of header and 1-indexing
+            revised_rows.append((i + 2, row))  # +2 из-за заголовка и 1-индексации
     return revised_rows, headers
 
 def load_all_rows():
+    # Загружаем лист с ретраями на случай временных сетевых ошибок
+    sheet = _get_sheet_with_retry()
     data = sheet.get_all_records()
     headers = sheet.row_values(1)
     all_rows = []
@@ -61,8 +88,10 @@ def load_all_rows():
     return all_rows, headers
 
 def update_cell(row_index, column_name, value, headers):
+    # Обновляем ячейку с лентой ретраев и новой сессией на каждый вызов
     try:
         col_index = headers.index(column_name) + 1
+        sheet = _get_sheet_with_retry()
         sheet.update_cell(row_index, col_index, value)
     except Exception as e:
         logging.error(f"Ошибка при обновлении ячейки {column_name} в строке {row_index}: {e}")
