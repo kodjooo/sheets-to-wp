@@ -16,14 +16,7 @@ services:
       - net.ipv6.conf.all.disable_ipv6=1
       - net.ipv6.conf.default.disable_ipv6=1
     
-    # Принудительное использование IPv4 для внешних API
-    extra_hosts:
-      - "oauth2.googleapis.com:142.250.27.95"
-      - "sheets.googleapis.com:142.250.185.78"
-      - "www.googleapis.com:142.250.185.78"
-      - "accounts.google.com:142.250.185.78"
-      - "api.opencagedata.com:104.18.1.1"
-      - "api.openai.com:104.18.1.1"
+    # Принудительное использование IPv4 для внешних API (достаточно настроенных DNS)
     # ==================================================
     
     environment:
