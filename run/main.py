@@ -10,6 +10,26 @@ import requests
 from datetime import datetime, timedelta
 import pytz
 
+# Настройки логирования
+
+
+def _resolve_log_level(value: str | int | None) -> int:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        name = value.strip().upper()
+        candidate = getattr(logging, name, None)
+        if isinstance(candidate, int):
+            return candidate
+        try:
+            return int(name)
+        except ValueError:
+            return logging.INFO
+    return logging.INFO
+
+
+LOG_LEVEL = _resolve_log_level(os.getenv("LOG_LEVEL", "INFO"))
+
 # Настройки из переменных окружения
 SKIP_AI = os.getenv('SKIP_AI', 'false').lower() == 'true'
 SKIP_IMAGE = os.getenv('SKIP_IMAGE', 'true').lower() == 'true'
@@ -18,7 +38,7 @@ SCHEDULED_HOUR = int(os.getenv('SCHEDULED_HOUR', '2'))
 SCHEDULED_MINUTE = int(os.getenv('SCHEDULED_MINUTE', '0'))
 TIMEZONE = os.getenv('TIMEZONE', 'Europe/Moscow')
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s [%(levelname)s] %(message)s")
 
 from _1_google_loader import (
     load_config,

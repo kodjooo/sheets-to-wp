@@ -13,7 +13,6 @@ from _1_google_loader import load_config, get_logger
 from _3_create_product import get_jwt_token
 
 logger = get_logger()
-logger.setLevel(logging.DEBUG)
 config = load_config()
 openai.api_key = config['openai_api_key']
 OPENCAGE_API_KEY = config.get("opencage_api_key")
@@ -220,14 +219,36 @@ def call_second_openai_assistant(first_result):
 def get_coordinates_from_location(location: str):
     if not location:
         return None, None
-    url = f"https://api.opencagedata.com/geocode/v1/json?q={location}&key={OPENCAGE_API_KEY}&language=en&limit=1"
-    response = requests.get(url)
-    response.raise_for_status()
+
+    params = {
+        "q": location,
+        "key": OPENCAGE_API_KEY,
+        "language": "en",
+        "limit": 5,
+        "countrycode": "pt",
+        "no_annotations": 1,
+    }
+
+    try:
+        response = requests.get("https://api.opencagedata.com/geocode/v1/json", params=params, timeout=15)
+        response.raise_for_status()
+    except Exception as exc:
+        logger.error("❌ Ошибка запроса координат для '%s': %s", location, exc)
+        return None, None
+
     data = response.json()
-    if data["results"]:
-        lat = data["results"][0]["geometry"]["lat"]
-        lon = data["results"][0]["geometry"]["lng"]
-        return lat, lon
+    results = data.get("results", [])
+    for result in results:
+        components = result.get("components", {})
+        if components.get("country_code") != "pt":
+            continue
+        geometry = result.get("geometry", {})
+        lat = geometry.get("lat")
+        lon = geometry.get("lng")
+        if lat is not None and lon is not None:
+            return lat, lon
+
+    logger.warning("⚠️ Не удалось найти координаты в Португалии для '%s'", location)
     return None, None
 
 def check_wp_upload(jwt_token):

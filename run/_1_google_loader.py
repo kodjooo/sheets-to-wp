@@ -1,10 +1,10 @@
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 import json
 import logging
 import os
 import threading
 import time
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 def load_config():
     # Загружаем конфигурацию только из переменных окружения
@@ -39,6 +39,24 @@ def load_config():
 config = load_config()
 SPREADSHEET_ID = config["spreadsheet_id"]
 WORKSHEET_NAME = config["worksheet_name"]
+
+
+def _resolve_log_level(value: str | int | None) -> int:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        name = value.strip().upper()
+        candidate = getattr(logging, name, None)
+        if isinstance(candidate, int):
+            return candidate
+        try:
+            return int(name)
+        except ValueError:
+            return logging.INFO
+    return logging.INFO
+
+
+_LOG_LEVEL = _resolve_log_level(os.getenv("LOG_LEVEL", "INFO"))
 
 _SCOPES = [
     "https://spreadsheets.google.com/feeds",
@@ -169,5 +187,7 @@ def batch_update_cells(row_index, updates: dict, headers):
         update_cell(row_index, key, value, headers)
 
 def get_logger():
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-    return logging.getLogger("RaceLogger")
+    logging.basicConfig(level=_LOG_LEVEL, format="%(asctime)s [%(levelname)s] %(message)s")
+    logger = logging.getLogger("RaceLogger")
+    logger.setLevel(_LOG_LEVEL)
+    return logger
