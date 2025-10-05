@@ -4,6 +4,7 @@ import os
 import logging
 import time
 import json
+import socket
 import openai
 import requests
 from datetime import datetime, timedelta
@@ -41,6 +42,26 @@ from _3_create_product import get_category_id_by_name
 from _4_create_translation import create_product_pt as create_product_pt
 from _5_taxonomy_and_attributes import assign_attributes_to_product
 from _6_create_variations import create_variations
+
+
+def log_network_diagnostics():
+    try:
+        with open("/etc/resolv.conf", "r", encoding="utf-8") as resolv_file:
+            resolv_lines = [line.strip() for line in resolv_file if line.strip()]
+        preview = " | ".join(resolv_lines[:5])
+        logging.info("🕵️ DNS resolv.conf: %s", preview)
+    except Exception as exc:
+        logging.warning("⚠️ Не удалось прочитать /etc/resolv.conf: %s", exc)
+
+    for host in ("oauth2.googleapis.com", "api.opencagedata.com", "api.openai.com"):
+        try:
+            infos = socket.getaddrinfo(host, None)
+            addresses = sorted({info[4][0] for info in infos if info[4]})
+            logging.info("🌐 DNS %s -> %s", host, ", ".join(addresses))
+        except socket.gaierror as exc:
+            logging.error("❌ DNS %s: %s", host, exc)
+        except Exception as exc:  # noqa: BLE001
+            logging.warning("⚠️ Ошибка диагностики DNS для %s: %s", host, exc)
 
 def collect_all_attributes(variations):
     all_attributes = {}
@@ -82,7 +103,9 @@ def wait_until_next_run():
 def run_automation():
     """Основная функция автоматизации"""
     logging.info("🚀 Запуск автоматизации обработки данных")
-    
+
+    log_network_diagnostics()
+
     config = load_config()
 
     # Пытаемся загрузить строки с несколькими быстрыми повторами при сетевых сбоях
