@@ -270,6 +270,7 @@ def run_automation():
                 for attr_name, col in [
                     ("Distance", "DISTANCE"),
                     ("Team", "TEAM"),
+                    ("Type", "TYPE"),
                     ("License", "LICENSE"),
                     ("Race Start Date", "RACE START DATE"),
                     ("Race Start Time", "RACE START TIME")
@@ -297,6 +298,7 @@ def run_automation():
                         for attr_name, col in [
                             ("Distance", "DISTANCE"),
                             ("Team", "TEAM"),
+                            ("Type", "TYPE"),
                             ("License", "LICENSE"),
                             ("Race Start Date", "RACE START DATE"),
                             ("Race Start Time", "RACE START TIME")
