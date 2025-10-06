@@ -44,13 +44,20 @@ def create_product_pt(row, en_product_id, attributes=None, last_variations=None,
 
     try:
         categories_raw = set()
-        if row.get("ATTRIBUTE") and row.get("VALUE"):
-            categories_raw.add((row["ATTRIBUTE"], row["VALUE"]))
-            logging.debug(f"📂 Основная категория PT: ({row['ATTRIBUTE']} → {row['VALUE']})")
+        main_category = row.get("CATEGORY")
+        main_subcategory = row.get("SUBCATEGORY")
+        if main_category:
+            categories_raw.add((main_category, main_subcategory))
+            logging.debug(f"📂 Основная категория PT: ({main_category} → {main_subcategory})")
 
         extra_cats = row.get("extra_categories")
         if isinstance(extra_cats, (set, list)):
-            valid = [item for item in extra_cats if isinstance(item, (list, tuple)) and len(item) == 2]
+            valid = []
+            for item in extra_cats:
+                if isinstance(item, (list, tuple)) and len(item) == 2:
+                    category_name, subcategory_name = item
+                    if category_name:
+                        valid.append((category_name, subcategory_name))
             if valid:
                 logging.debug(f"📚 Доп. категории PT получены: {valid}")
                 categories_raw.update(valid)
@@ -65,9 +72,10 @@ def create_product_pt(row, en_product_id, attributes=None, last_variations=None,
                 parent_id = get_category_id_by_name(parent_name)
                 if parent_id:
                     category_ids.append({"id": parent_id})
-                    child_id = get_category_id_by_name(child_name, parent_id=parent_id)
-                    if child_id:
-                        category_ids.append({"id": child_id})
+                    if child_name:
+                        child_id = get_category_id_by_name(child_name, parent_id=parent_id)
+                        if child_id:
+                            category_ids.append({"id": child_id})
             except Exception as e:
                 logging.warning(f"⚠️ Ошибка при добавлении категории ({parent_name} → {child_name}): {e}")
 

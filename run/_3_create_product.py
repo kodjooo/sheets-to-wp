@@ -193,18 +193,25 @@ def create_product(data):
         "status": "draft"
     }
 
-    # Получаем родительскую категорию
+    # Получаем категории из таблицы
     categories_raw = set()
 
-    # Добавляем основную категорию
-    categories_raw = set()
-    if data.get("ATTRIBUTE") and data.get("VALUE"):
-        categories_raw.add((data["ATTRIBUTE"], data["VALUE"]))
-        print(f"📂 Основная категория: ({data['ATTRIBUTE']} → {data['VALUE']})")
+    main_category = data.get("CATEGORY")
+    main_subcategory = data.get("SUBCATEGORY")
+    if main_category:
+        categories_raw.add((main_category, main_subcategory))
+        print(f"📂 Основная категория: ({main_category} → {main_subcategory})")
+    else:
+        print("📂 Основная категория не указана в строке")
 
     extra_cats = data.get("extra_categories")
     if isinstance(extra_cats, (list, set)):
-        valid = [item for item in extra_cats if isinstance(item, (list, tuple)) and len(item) == 2]
+        valid = []
+        for item in extra_cats:
+            if isinstance(item, (list, tuple)) and len(item) == 2:
+                category_name, subcategory_name = item
+                if category_name:
+                    valid.append((category_name, subcategory_name))
         if valid:
             print(f"📚 Доп. категории получены: {valid}")
             categories_raw.update(valid)
@@ -213,19 +220,16 @@ def create_product(data):
     else:
         print("📚 Доп. категории отсутствуют или в неправильном формате")
 
-    # Добавляем категории из подвариаций
-    if isinstance(data.get("extra_categories"), (set, list)):
-        categories_raw.update(set(data["extra_categories"]))
-
     category_ids = []
     for parent_name, child_name in categories_raw:
         try:
             parent_id = get_category_id_by_name(parent_name)
             if parent_id:
                 category_ids.append({"id": parent_id})
-                child_id = get_category_id_by_name(child_name, parent_id=parent_id)
-                if child_id:
-                    category_ids.append({"id": child_id})
+                if child_name:
+                    child_id = get_category_id_by_name(child_name, parent_id=parent_id)
+                    if child_id:
+                        category_ids.append({"id": child_id})
         except Exception as e:
             print(f"⚠️ Ошибка при добавлении категории ({parent_name} → {child_name}): {e}")
 

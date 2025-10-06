@@ -263,9 +263,13 @@ def run_automation():
                 last_main_row = row.copy()
                 last_main_row_index = row_index
                 last_main_attributes = {}
+                last_main_row["extra_categories"] = set()
+                main_category = row.get("CATEGORY")
+                main_subcategory = row.get("SUBCATEGORY")
+                if main_category:
+                    last_main_row["extra_categories"].add((main_category, main_subcategory))
                 if row.get("ATTRIBUTE") and row.get("VALUE"):
                     last_main_attributes[row["ATTRIBUTE"]] = row["VALUE"]
-                    last_main_row["extra_categories"] = {(row["ATTRIBUTE"], row["VALUE"])}
 
                 for attr_name, col in [
                     ("Distance", "DISTANCE"),
@@ -294,7 +298,9 @@ def run_automation():
                         var_attrs = []
                         if sub_row.get("ATTRIBUTE") and sub_row.get("VALUE"):
                             var_attrs.append({"name": sub_row["ATTRIBUTE"], "option": sub_row["VALUE"]})
-                            last_main_row["extra_categories"].add((sub_row["ATTRIBUTE"], sub_row["VALUE"]))
+                        variation_category = sub_row.get("CATEGORY")
+                        if variation_category:
+                            last_main_row["extra_categories"].add((variation_category, sub_row.get("SUBCATEGORY")))
                         for attr_name, col in [
                             ("Distance", "DISTANCE"),
                             ("Team", "TEAM"),
@@ -317,7 +323,11 @@ def run_automation():
                 lat, lon = get_coordinates_from_location(last_main_row.get("LOCATION", ""))
                 last_main_row["LAT"] = lat if lat is not None else ""
                 last_main_row["LON"] = lon if lon is not None else ""
-                last_main_row["extra_categories"] = list(last_main_row.get("extra_categories", []))
+                last_main_row["extra_categories"] = [
+                    (cat, sub_cat)
+                    for cat, sub_cat in last_main_row.get("extra_categories", set())
+                    if cat
+                ]
 
                 en_product_id = create_product_en(last_main_row)
                 last_main_row["en_product_id"] = en_product_id
