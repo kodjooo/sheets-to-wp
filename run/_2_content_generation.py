@@ -70,9 +70,9 @@ def extract_text_from_url(url):
         logger.error(f"❌ Ошибка загрузки из {url}: {e}")
         return "", None
 
-def translate_title_to_pt(title: str) -> str:
+def translate_title_to_en(title: str) -> str:
     """
-    Переводит заголовок с английского на португальский через GPT.
+    Переводит заголовок с португальского на английский через GPT.
     """
     if not title:
         return ""
@@ -81,13 +81,13 @@ def translate_title_to_pt(title: str) -> str:
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "You are a professional translator."},
-                {"role": "user", "content": f"Translate this race name from English to Portuguese without changing the meaning or inventing anything:\n\n{title}"}
+                {"role": "user", "content": f"Translate this race name from Portuguese to English without changing the meaning or inventing anything:\n\n{title}"}
             ],
             temperature=0.3
         )
-        pt_title = response.choices[0].message.content.strip()
-        logger.info(f"🌍 Переведён заголовок: '{title}' → '{pt_title}'")
-        return pt_title
+        en_title = response.choices[0].message.content.strip()
+        logger.info(f"🌍 Переведён заголовок (PT→EN): '{title}' → '{en_title}'")
+        return en_title
     except Exception as e:
         logger.error(f"❌ Ошибка при переводе заголовка: {e}")
         return ""

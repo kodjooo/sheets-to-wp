@@ -54,7 +54,7 @@ from _2_content_generation import (
     call_second_openai_assistant,
     generate_image,
     get_coordinates_from_location,
-    translate_title_to_pt
+    translate_title_to_en
 )
 
 from _3_create_product import create_product as create_product_en
@@ -169,10 +169,10 @@ def run_automation():
                 row["LON"] = lon if lon is not None else ""
 
                 website_text, website_pdf_path = extract_text_from_url(row.get("WEBSITE", ""))
-                original_title = row.get("RACE NAME", "").strip()
-                translated_title = translate_title_to_pt(original_title)
+                pt_title = row.get("RACE NAME (PT)", "").strip()
+                translated_title = translate_title_to_en(pt_title)
                 if translated_title:
-                    row["RACE NAME (PT)"] = translated_title
+                    row["RACE NAME"] = translated_title
 
                 regulations_url = row.get("REGULATIONS", "")
                 regulations_text, pdf_path = "", None
@@ -256,7 +256,8 @@ def run_automation():
                     "SUMMARY (PT)": row["SUMMARY (PT)"],
                     "ORG INFO (PT)": row["ORG INFO (PT)"],
                     "BENEFITS (PT)": row["BENEFITS (PT)"],
-                    "RACE NAME (PT)": row["RACE NAME (PT)"]
+                    "RACE NAME (PT)": row["RACE NAME (PT)"],
+                    "RACE NAME": row.get("RACE NAME", "")
                 }, headers)
 
                 # --- 2. Собираем атрибуты и первую вариацию ---
