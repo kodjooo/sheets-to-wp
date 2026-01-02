@@ -20,6 +20,8 @@ class EnvExampleTests(unittest.TestCase):
             "OPENAI_API_KEY",
             "OPENAI_TEXT_MODEL",
             "OPENAI_SECOND_MODEL",
+            "OPENAI_TEXT_REASONING_EFFORT",
+            "OPENAI_SECOND_REASONING_EFFORT",
             "OPENAI_SYSTEM_PROMPT_FILE",
             "OPENAI_SECOND_SYSTEM_PROMPT_FILE",
             "OPENCAGE_API_KEY",

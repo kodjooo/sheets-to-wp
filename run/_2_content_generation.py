@@ -134,10 +134,16 @@ def call_openai_assistant(text, file_ids=None):
             )
         input_payload.append({"role": "user", "content": user_content})
 
-        response = _OPENAI_CLIENT.responses.create(
-            model=model,
-            input=input_payload,
-        )
+        request_kwargs = {
+            "model": model,
+            "input": input_payload,
+        }
+        reasoning_effort = config.get("openai_text_reasoning_effort")
+        if reasoning_effort:
+            logger.info("🧠 Уровень размышления для текста: %s", reasoning_effort)
+            request_kwargs["reasoning"] = {"effort": reasoning_effort}
+
+        response = _OPENAI_CLIENT.responses.create(**request_kwargs)
 
         reply = response.output_text
         return json.loads(reply)
@@ -171,10 +177,16 @@ def call_second_openai_assistant(first_result):
             {"role": "user", "content": [{"type": "input_text", "text": user_prompt[:40000]}]}
         )
 
-        response = _OPENAI_CLIENT.responses.create(
-            model=model,
-            input=input_payload,
-        )
+        request_kwargs = {
+            "model": model,
+            "input": input_payload,
+        }
+        reasoning_effort = config.get("openai_second_reasoning_effort")
+        if reasoning_effort:
+            logger.info("🧠 Уровень размышления для второго шага: %s", reasoning_effort)
+            request_kwargs["reasoning"] = {"effort": reasoning_effort}
+
+        response = _OPENAI_CLIENT.responses.create(**request_kwargs)
 
         reply = response.output_text
         return json.loads(reply)
