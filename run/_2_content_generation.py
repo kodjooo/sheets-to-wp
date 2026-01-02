@@ -142,6 +142,10 @@ def call_openai_assistant(text, file_ids=None):
         if reasoning_effort:
             logger.info("🧠 Уровень размышления для текста: %s", reasoning_effort)
             request_kwargs["reasoning"] = {"effort": reasoning_effort}
+        temperature = config.get("openai_text_temperature")
+        if temperature:
+            request_kwargs["temperature"] = float(temperature)
+            logger.info("🌡️ Температура для текста: %s", temperature)
 
         response = _OPENAI_CLIENT.responses.create(**request_kwargs)
 
@@ -185,6 +189,10 @@ def call_second_openai_assistant(first_result):
         if reasoning_effort:
             logger.info("🧠 Уровень размышления для второго шага: %s", reasoning_effort)
             request_kwargs["reasoning"] = {"effort": reasoning_effort}
+        temperature = config.get("openai_second_temperature")
+        if temperature:
+            request_kwargs["temperature"] = float(temperature)
+            logger.info("🌡️ Температура для второго шага: %s", temperature)
 
         response = _OPENAI_CLIENT.responses.create(**request_kwargs)
 

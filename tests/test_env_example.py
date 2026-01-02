@@ -22,6 +22,8 @@ class EnvExampleTests(unittest.TestCase):
             "OPENAI_SECOND_MODEL",
             "OPENAI_TEXT_REASONING_EFFORT",
             "OPENAI_SECOND_REASONING_EFFORT",
+            "OPENAI_TEXT_TEMPERATURE",
+            "OPENAI_SECOND_TEMPERATURE",
             "OPENAI_SYSTEM_PROMPT_FILE",
             "OPENAI_SECOND_SYSTEM_PROMPT_FILE",
             "OPENCAGE_API_KEY",

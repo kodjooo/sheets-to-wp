@@ -104,6 +104,7 @@ class OpenAIResponsesTests(unittest.TestCase):
             system_file.write("SYSTEM")
         self.content.config["openai_text_model"] = "test-model"
         self.content.config["openai_text_reasoning_effort"] = "high"
+        self.content.config["openai_text_temperature"] = "0.7"
         self.content.config["openai_system_prompt_file"] = system_file.name
 
         dummy_client = _DummyClient()
@@ -115,6 +116,7 @@ class OpenAIResponsesTests(unittest.TestCase):
         kwargs = dummy_client.responses.last_kwargs
         self.assertEqual(kwargs["model"], "test-model")
         self.assertEqual(kwargs["reasoning"]["effort"], "high")
+        self.assertEqual(kwargs["temperature"], 0.7)
 
         payload = kwargs["input"]
         self.assertEqual(payload[0]["role"], "system")
@@ -131,6 +133,7 @@ class OpenAIResponsesTests(unittest.TestCase):
             system_file.write("SECOND_SYSTEM")
         self.content.config["openai_second_model"] = "second-model"
         self.content.config["openai_second_reasoning_effort"] = "low"
+        self.content.config["openai_second_temperature"] = "0.2"
         self.content.config["openai_second_system_prompt_file"] = system_file.name
 
         dummy_client = _DummyClient()
@@ -142,6 +145,7 @@ class OpenAIResponsesTests(unittest.TestCase):
         kwargs = dummy_client.responses.last_kwargs
         self.assertEqual(kwargs["model"], "second-model")
         self.assertEqual(kwargs["reasoning"]["effort"], "low")
+        self.assertEqual(kwargs["temperature"], 0.2)
         payload = kwargs["input"]
         self.assertEqual(payload[0]["role"], "system")
         self.assertEqual(payload[0]["content"][0]["text"], "SECOND_SYSTEM")

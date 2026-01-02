@@ -16,6 +16,8 @@ def load_config():
         "openai_second_model": os.getenv("OPENAI_SECOND_MODEL", "gpt-4o-mini"),
         "openai_text_reasoning_effort": os.getenv("OPENAI_TEXT_REASONING_EFFORT"),
         "openai_second_reasoning_effort": os.getenv("OPENAI_SECOND_REASONING_EFFORT"),
+        "openai_text_temperature": os.getenv("OPENAI_TEXT_TEMPERATURE"),
+        "openai_second_temperature": os.getenv("OPENAI_SECOND_TEMPERATURE"),
         "openai_system_prompt_file": os.getenv("OPENAI_SYSTEM_PROMPT_FILE", "prompts/assistant_system.txt"),
         "openai_second_system_prompt_file": os.getenv(
             "OPENAI_SECOND_SYSTEM_PROMPT_FILE",
