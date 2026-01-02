@@ -2,9 +2,9 @@
 
 Автоматизированная система для создания продуктов в WooCommerce на основе данных из Google Sheets с использованием OpenAI для генерации контента.
 
-[![GitHub](https://img.shields.io/github/license/kodjooo/sheets-to-wp)](https://github.com/kodjooo/sheets-to-wp)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://github.com/kodjooo/sheets-to-wp)
-[![OpenAI](https://img.shields.io/badge/OpenAI-GPT%20Integration-green)](https://github.com/kodjooo/sheets-to-wp)
+[![GitHub](https://img.shields.io/github/license/kodjooo/content-publisher)](https://github.com/kodjooo/content-publisher)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://github.com/kodjooo/content-publisher)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT%20Integration-green)](https://github.com/kodjooo/content-publisher)
 
 ## 🎯 Функционал
 
@@ -38,15 +38,15 @@ run/
 ### 1. Клонирование репозитория
 
 ```bash
-git clone https://github.com/kodjooo/sheets-to-wp.git
-cd sheets-to-wp
+git clone https://github.com/kodjooo/content-publisher.git
+cd content-publisher
 ```
 
 ### 2. Настройка окружения
 
 ```bash
 # Создание файла переменных окружения
-cp env.template .env
+cp .env.example .env
 nano .env  # Заполните реальными значениями
 ```
 
@@ -86,7 +86,7 @@ SKIP_IMAGE=true
 
 **Конфигурация:**
 - Все настройки загружаются из переменных окружения в `.env` файле
-- Скопируйте `env.template` в `.env` и заполните реальными значениями
+- Скопируйте `.env.example` в `.env` и заполните реальными значениями
 - Файл `config.json` больше не используется
 
 ```bash
@@ -143,6 +143,25 @@ docker-compose exec racefinder bash
 
 # Выполнение скрипта в контейнере
 docker-compose exec racefinder python main.py
+```
+
+## 🌐 Развертывание на удаленном сервере
+
+1. Установите Docker и docker-compose на сервере.
+2. Клонируйте репозиторий и перейдите в папку проекта.
+3. Создайте `.env` из `.env.example` и заполните значения.
+4. Скопируйте сервисный аккаунт Google в `run/google-credentials.json`.
+5. Запустите контейнеры:
+
+```bash
+docker-compose up -d --build
+```
+
+6. Проверьте логи и состояние:
+
+```bash
+docker-compose logs -f
+docker-compose ps
 ```
 
 ## 📊 Мониторинг и логи
@@ -218,11 +237,12 @@ docker-compose build --no-cache
 ## 📁 Структура проекта
 
 ```
-sheets-to-wp/
+content-publisher/
 ├── README.md                 # Этот файл
 ├── docker-compose.yml        # Конфигурация Docker
 ├── Dockerfile               # Образ приложения
-├── .env                     # Переменные окружения (создать из env.template)
+├── .env                     # Переменные окружения (создать из .env.example)
+├── .env.example             # Пример переменных окружения
 ├── env.template             # Шаблон переменных окружения
 └── run/                     # Код приложения
     ├── main.py
@@ -273,7 +293,7 @@ sudo ufw enable
 
 Если у вас возникли вопросы или проблемы:
 
-1. Проверьте [Issues](https://github.com/kodjooo/sheets-to-wp/issues)
+1. Проверьте [Issues](https://github.com/kodjooo/content-publisher/issues)
 2. Создайте новый Issue с подробным описанием проблемы
 3. Приложите логи и конфигурацию (без секретных данных)
 
@@ -281,4 +301,4 @@ sudo ufw enable
 
 **🎉 Готово! Ваш проект Sheets to WordPress Automation готов к работе.**
 
-[GitHub Repository](https://github.com/kodjooo/sheets-to-wp) | [Issues](https://github.com/kodjooo/sheets-to-wp/issues) | [Documentation](https://github.com/kodjooo/sheets-to-wp#readme)
+[GitHub Repository](https://github.com/kodjooo/content-publisher) | [Issues](https://github.com/kodjooo/content-publisher/issues) | [Documentation](https://github.com/kodjooo/content-publisher#readme)
