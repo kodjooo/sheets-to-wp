@@ -111,7 +111,7 @@ class OpenAIResponsesTests(unittest.TestCase):
         with NamedTemporaryFile("w", delete=False) as system_file:
             system_file.write("SYSTEM")
         with NamedTemporaryFile("w", delete=False) as user_file:
-            user_file.write("USER {input_text}")
+            user_file.write("{input_text}")
 
         self.content.config["openai_text_model"] = "test-model"
         self.content.config["openai_system_prompt_file"] = system_file.name
@@ -132,7 +132,7 @@ class OpenAIResponsesTests(unittest.TestCase):
         self.assertEqual(payload[1]["role"], "user")
         content_items = payload[1]["content"]
         self.assertEqual(content_items[0]["type"], "input_text")
-        self.assertEqual(content_items[0]["text"], "USER hello")
+        self.assertEqual(content_items[0]["text"], "hello")
         self.assertEqual(content_items[1]["type"], "input_file")
         self.assertEqual(content_items[1]["file_id"], "file_1")
 
@@ -140,7 +140,7 @@ class OpenAIResponsesTests(unittest.TestCase):
         with NamedTemporaryFile("w", delete=False) as system_file:
             system_file.write("SECOND_SYSTEM")
         with NamedTemporaryFile("w", delete=False) as user_file:
-            user_file.write("SECOND {input_text}")
+            user_file.write("{input_text}")
 
         self.content.config["openai_second_model"] = "second-model"
         self.content.config["openai_second_system_prompt_file"] = system_file.name
@@ -158,7 +158,7 @@ class OpenAIResponsesTests(unittest.TestCase):
         self.assertEqual(payload[0]["role"], "system")
         self.assertEqual(payload[0]["content"][0]["text"], "SECOND_SYSTEM")
         self.assertEqual(payload[1]["role"], "user")
-        self.assertEqual(payload[1]["content"][0]["text"], "SECOND {\n  \"a\": 1\n}")
+        self.assertEqual(payload[1]["content"][0]["text"], "{\n  \"a\": 1\n}")
 
 
 if __name__ == "__main__":

@@ -1,17 +1,1 @@
-Use the input text to produce a JSON object with these keys:
-- summary (string)
-- org_info (string)
-- benefits (array of strings)
-- summary_pt (string)
-- org_info_pt (string)
-- benefits_pt (array of strings)
-- image_prompt (string)
-
-Rules:
-- Answer with JSON only.
-- Keep it concise and factual.
-- Use Portuguese for *_pt fields.
-- If data is missing, return an empty string or empty array.
-
-Input text:
 {input_text}
