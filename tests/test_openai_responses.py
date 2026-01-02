@@ -95,14 +95,6 @@ class OpenAIResponsesTests(unittest.TestCase):
             sys.modules["wordpress_xmlrpc.methods"] = methods_stub
             sys.modules["wordpress_xmlrpc.compat"] = compat_stub
 
-    def test_render_user_prompt_replaces_placeholder(self):
-        text = self.content._render_user_prompt("Hello {input_text}", "world")
-        self.assertEqual(text, "Hello world")
-
-    def test_render_user_prompt_appends_when_no_placeholder(self):
-        text = self.content._render_user_prompt("Header", "body")
-        self.assertEqual(text, "Header\n\nbody")
-
     def test_load_prompt_file_missing_returns_empty(self):
         value = self.content._load_prompt_file("/missing/prompt.txt")
         self.assertEqual(value, "")
@@ -110,12 +102,8 @@ class OpenAIResponsesTests(unittest.TestCase):
     def test_call_openai_assistant_builds_payload_with_files(self):
         with NamedTemporaryFile("w", delete=False) as system_file:
             system_file.write("SYSTEM")
-        with NamedTemporaryFile("w", delete=False) as user_file:
-            user_file.write("{input_text}")
-
         self.content.config["openai_text_model"] = "test-model"
         self.content.config["openai_system_prompt_file"] = system_file.name
-        self.content.config["openai_user_prompt_file"] = user_file.name
 
         dummy_client = _DummyClient()
         self.content._OPENAI_CLIENT = dummy_client
@@ -139,12 +127,8 @@ class OpenAIResponsesTests(unittest.TestCase):
     def test_call_second_openai_assistant_uses_model(self):
         with NamedTemporaryFile("w", delete=False) as system_file:
             system_file.write("SECOND_SYSTEM")
-        with NamedTemporaryFile("w", delete=False) as user_file:
-            user_file.write("{input_text}")
-
         self.content.config["openai_second_model"] = "second-model"
         self.content.config["openai_second_system_prompt_file"] = system_file.name
-        self.content.config["openai_second_user_prompt_file"] = user_file.name
 
         dummy_client = _DummyClient()
         self.content._OPENAI_CLIENT = dummy_client

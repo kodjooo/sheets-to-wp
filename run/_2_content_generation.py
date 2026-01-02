@@ -39,13 +39,6 @@ def _load_prompt_file(path: str) -> str:
     return ""
 
 
-def _render_user_prompt(template: str, input_text: str) -> str:
-    if template and "{input_text}" in template:
-        return template.replace("{input_text}", input_text)
-    if template:
-        return f"{template}\n\n{input_text}".strip()
-    return input_text
-
 def convert_google_drive_url(url):
     """
     Преобразует Google Drive ссылку в прямую ссылку для скачивания.
@@ -125,8 +118,7 @@ def call_openai_assistant(text, file_ids=None):
     try:
         model = config["openai_text_model"]
         system_prompt = _load_prompt_file(config["openai_system_prompt_file"])
-        user_template = _load_prompt_file(config["openai_user_prompt_file"])
-        user_prompt = _render_user_prompt(user_template, text)
+        user_prompt = text
 
         logger.info("🤖 Отправка в OpenAI Responses API, модель: %s", model)
         logger.debug("📤 Пользовательский промпт (до 40000 символов):\n%s", user_prompt[:40000])
@@ -161,14 +153,11 @@ def call_second_openai_assistant(first_result):
     try:
         model = config["openai_second_model"]
         system_prompt = _load_prompt_file(config["openai_second_system_prompt_file"])
-        user_template = _load_prompt_file(config["openai_second_user_prompt_file"])
-
         if isinstance(first_result, dict):
             text_content = json.dumps(first_result, ensure_ascii=False, indent=2)
         else:
             text_content = str(first_result)
-
-        user_prompt = _render_user_prompt(user_template, text_content)
+        user_prompt = text_content
 
         logger.info("🤖 Отправка во второй Responses API, модель: %s", model)
         logger.debug("📤 Второй промпт (до 40000 символов):\n%s", user_prompt[:40000])

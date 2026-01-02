@@ -60,11 +60,9 @@ OPENAI_API_KEY=sk-proj-ваш-ключ-openai
 # Модели Responses API
 OPENAI_TEXT_MODEL=gpt-4o-mini
 OPENAI_SECOND_MODEL=gpt-4o-mini
-# Файлы промптов (путь относительно папки run или абсолютный путь)
+# Файлы системных промптов (путь относительно папки run или абсолютный путь)
 OPENAI_SYSTEM_PROMPT_FILE=prompts/assistant_system.txt
-OPENAI_USER_PROMPT_FILE=prompts/assistant_user.txt
 OPENAI_SECOND_SYSTEM_PROMPT_FILE=prompts/second_system.txt
-OPENAI_SECOND_USER_PROMPT_FILE=prompts/second_user.txt
 
 # OpenCage Geocoding API (обязательно)
 OPENCAGE_API_KEY=ваш-opencage-ключ
@@ -261,9 +259,7 @@ sheets-to-wp/
     ├── _6_create_variations.py
     ├── prompts/
     │   ├── assistant_system.txt
-    │   ├── assistant_user.txt
     │   ├── second_system.txt
-    │   └── second_user.txt
     ├── .env
     ├── google-credentials.json
     └── requirements.txt
