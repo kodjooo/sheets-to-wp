@@ -2,9 +2,9 @@
 
 Автоматизированная система для создания продуктов в WooCommerce на основе данных из Google Sheets с использованием OpenAI для генерации контента.
 
-[![GitHub](https://img.shields.io/github/license/kodjooo/content-publisher)](https://github.com/kodjooo/content-publisher)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://github.com/kodjooo/content-publisher)
-[![OpenAI](https://img.shields.io/badge/OpenAI-GPT%20Integration-green)](https://github.com/kodjooo/content-publisher)
+[![GitHub](https://img.shields.io/github/license/kodjooo/sheets-to-wp)](https://github.com/kodjooo/sheets-to-wp)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue)](https://github.com/kodjooo/sheets-to-wp)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT%20Integration-green)](https://github.com/kodjooo/sheets-to-wp)
 
 ## 🎯 Функционал
 
@@ -38,8 +38,8 @@ run/
 ### 1. Клонирование репозитория
 
 ```bash
-git clone https://github.com/kodjooo/content-publisher.git
-cd content-publisher
+git clone https://github.com/kodjooo/sheets-to-wp.git
+cd sheets-to-wp
 ```
 
 ### 2. Настройка окружения
@@ -237,7 +237,7 @@ docker-compose build --no-cache
 ## 📁 Структура проекта
 
 ```
-content-publisher/
+sheets-to-wp/
 ├── README.md                 # Этот файл
 ├── docker-compose.yml        # Конфигурация Docker
 ├── Dockerfile               # Образ приложения
@@ -293,7 +293,7 @@ sudo ufw enable
 
 Если у вас возникли вопросы или проблемы:
 
-1. Проверьте [Issues](https://github.com/kodjooo/content-publisher/issues)
+1. Проверьте [Issues](https://github.com/kodjooo/sheets-to-wp/issues)
 2. Создайте новый Issue с подробным описанием проблемы
 3. Приложите логи и конфигурацию (без секретных данных)
 
@@ -301,4 +301,4 @@ sudo ufw enable
 
 **🎉 Готово! Ваш проект Sheets to WordPress Automation готов к работе.**
 
-[GitHub Repository](https://github.com/kodjooo/content-publisher) | [Issues](https://github.com/kodjooo/content-publisher/issues) | [Documentation](https://github.com/kodjooo/content-publisher#readme)
+[GitHub Repository](https://github.com/kodjooo/sheets-to-wp) | [Issues](https://github.com/kodjooo/sheets-to-wp/issues) | [Documentation](https://github.com/kodjooo/sheets-to-wp#readme)
