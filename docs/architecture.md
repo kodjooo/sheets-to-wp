@@ -7,6 +7,7 @@
 - `run/main.py`: оркестрация пайплайна, расписание запуска, логирование.
 - `run/_1_google_loader.py`: доступ к Google Sheets, кеширование, обновления ячеек.
 - `run/_2_content_generation.py`: извлечение текста, вызовы OpenAI, генерация изображений, геокодинг.
+- `run/prompts/*.txt`: системные и пользовательские промпты для Responses API.
 - `run/_3_create_product.py`: создание товара и категорий в WooCommerce, JWT токен.
 - `run/_4_create_translation.py`: создание перевода товара и привязка через WPML API.
 - `run/_5_taxonomy_and_attributes.py`: создание атрибутов и терминов, назначение атрибутов товару.
@@ -22,12 +23,13 @@
 
 ## Интеграции
 - Google Sheets API (gspread + Service Account).
-- OpenAI API (ассистенты + генерация изображений).
+- OpenAI Responses API (генерация текста) и OpenAI Images API (генерация изображений).
 - OpenCage Geocoding API.
 - WooCommerce REST API, WordPress JWT Auth, WPML custom API.
 
 ## Конфигурация
 - Все параметры задаются через `.env` (см. `.env.example`).
+- Модели и пути к промптам задаются через переменные `OPENAI_*`.
 - Файл `run/google-credentials.json` монтируется в контейнер и используется для доступа к Google API.
 
 ## Развертывание

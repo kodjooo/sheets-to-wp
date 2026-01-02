@@ -1,14 +1,16 @@
-import requests
-import time
 import json
+import logging
+import os
+import re
+import time
+import base64
+from io import BytesIO
+import requests
 import openai
 from bs4 import BeautifulSoup
 from PyPDF2 import PdfReader
 from PIL import Image
-from io import BytesIO
-import base64
-import logging
-import re
+from openai import OpenAI
 from _1_google_loader import load_config, get_logger
 from _3_create_product import get_jwt_token
 
@@ -16,6 +18,33 @@ logger = get_logger()
 config = load_config()
 openai.api_key = config['openai_api_key']
 OPENCAGE_API_KEY = config.get("opencage_api_key")
+_OPENAI_CLIENT = OpenAI()
+
+
+def _load_prompt_file(path: str) -> str:
+    if not path:
+        return ""
+
+    full_path = path
+    if not os.path.isabs(path):
+        full_path = os.path.join(os.path.dirname(__file__), path)
+
+    try:
+        with open(full_path, "r", encoding="utf-8") as prompt_file:
+            return prompt_file.read().strip()
+    except FileNotFoundError:
+        logger.error("❌ Не найден файл промпта: %s", full_path)
+    except Exception as exc:
+        logger.error("❌ Ошибка чтения промпта %s: %s", full_path, exc)
+    return ""
+
+
+def _render_user_prompt(template: str, input_text: str) -> str:
+    if template and "{input_text}" in template:
+        return template.replace("{input_text}", input_text)
+    if template:
+        return f"{template}\n\n{input_text}".strip()
+    return input_text
 
 def convert_google_drive_url(url):
     """
@@ -94,126 +123,75 @@ def translate_title_to_en(title: str) -> str:
 
 def call_openai_assistant(text, file_ids=None):
     try:
-        thread = openai.beta.threads.create()
-        logger.info("💬 Создан новый тред")
+        model = config["openai_text_model"]
+        system_prompt = _load_prompt_file(config["openai_system_prompt_file"])
+        user_template = _load_prompt_file(config["openai_user_prompt_file"])
+        user_prompt = _render_user_prompt(user_template, text)
 
-        assistant_id = config["assistant_id_text"]
+        logger.info("🤖 Отправка в OpenAI Responses API, модель: %s", model)
+        logger.debug("📤 Пользовательский промпт (до 40000 символов):\n%s", user_prompt[:40000])
 
-        logger.debug("📤 Отправляем в GPT (assistant_id=%s):\n%s", assistant_id, text[:40000])
+        user_content = [{"type": "input_text", "text": user_prompt[:40000]}]
+        for file_id in file_ids or []:
+            user_content.append({"type": "input_file", "file_id": file_id})
 
-        # Создаём сообщение — прикрепляем файлы, если есть
-        if file_ids:
-            openai.beta.threads.messages.create(
-                thread_id=thread.id,
-                role="user",
-                content=text[:40000],
-                attachments=[{"file_id": file_id, "tools": [{"type": "file_search"}]} for file_id in file_ids]
+        input_payload = []
+        if system_prompt:
+            input_payload.append(
+                {"role": "system", "content": [{"type": "input_text", "text": system_prompt}]}
             )
-        else:
-            openai.beta.threads.messages.create(
-                thread_id=thread.id,
-                role="user",
-                content=text[:40000]
-            )
+        input_payload.append({"role": "user", "content": user_content})
 
-        # Запускаем ассистента
-        run = openai.beta.threads.runs.create(
-            thread_id=thread.id,
-            assistant_id=assistant_id
-            # ⬅️ Больше ничего сюда не передаём!
+        response = _OPENAI_CLIENT.responses.create(
+            model=model,
+            input=input_payload,
         )
 
-        # Ждём завершения с таймаутом
-        max_attempts = 60  # 2 минуты максимум (60 * 2 секунды)
-        attempt = 0
-        
-        while attempt < max_attempts:
-            status = openai.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-            if status.status == "completed":
-                break
-            elif status.status in ["failed", "cancelled"]:
-                logger.error("❌ Ошибка выполнения ассистента")
-                return None
-            elif status.status == "expired":
-                logger.error("❌ Время выполнения ассистента истекло")
-                return None
-            
-            attempt += 1
-            logger.debug(f"⏳ Попытка {attempt}/{max_attempts}, статус: {status.status}")
-            time.sleep(2)
-        
-        if attempt >= max_attempts:
-            logger.error("❌ Превышено время ожидания OpenAI ассистента")
-            return None
-
-        messages = openai.beta.threads.messages.list(thread_id=thread.id)
-        reply = messages.data[0].content[0].text.value
+        reply = response.output_text
         return json.loads(reply)
 
     except Exception as e:
-        logger.error(f"❌ Ошибка OpenAI: {e}")
+        logger.error(f"❌ Ошибка OpenAI Responses API: {e}")
         return None
 
 def call_second_openai_assistant(first_result):
     """
-    Вызывает второй ассистент GPT с результатом первого ассистента.
+    Вызывает второй запрос OpenAI Responses API с результатом первого ассистента.
     """
     try:
-        thread = openai.beta.threads.create()
-        logger.info("💬 Создан новый тред для второго ассистента")
+        model = config["openai_second_model"]
+        system_prompt = _load_prompt_file(config["openai_second_system_prompt_file"])
+        user_template = _load_prompt_file(config["openai_second_user_prompt_file"])
 
-        assistant_id = config["assistant_id_second"]
-        
-        # Конвертируем результат первого ассистента в текст для отправки
         if isinstance(first_result, dict):
             text_content = json.dumps(first_result, ensure_ascii=False, indent=2)
         else:
             text_content = str(first_result)
 
-        logger.debug("📤 Отправляем во второй ассистент (assistant_id=%s):\n%s", assistant_id, text_content[:40000])
+        user_prompt = _render_user_prompt(user_template, text_content)
 
-        # Создаём сообщение
-        openai.beta.threads.messages.create(
-            thread_id=thread.id,
-            role="user",
-            content=text_content[:40000]
+        logger.info("🤖 Отправка во второй Responses API, модель: %s", model)
+        logger.debug("📤 Второй промпт (до 40000 символов):\n%s", user_prompt[:40000])
+
+        input_payload = []
+        if system_prompt:
+            input_payload.append(
+                {"role": "system", "content": [{"type": "input_text", "text": system_prompt}]}
+            )
+        input_payload.append(
+            {"role": "user", "content": [{"type": "input_text", "text": user_prompt[:40000]}]}
         )
 
-        # Запускаем второй ассистент
-        run = openai.beta.threads.runs.create(
-            thread_id=thread.id,
-            assistant_id=assistant_id
+        response = _OPENAI_CLIENT.responses.create(
+            model=model,
+            input=input_payload,
         )
 
-        # Ждём завершения с таймаутом
-        max_attempts = 60  # 2 минуты максимум
-        attempt = 0
-        
-        while attempt < max_attempts:
-            status = openai.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
-            if status.status == "completed":
-                break
-            elif status.status in ["failed", "cancelled"]:
-                logger.error("❌ Ошибка выполнения второго ассистента")
-                return None
-            elif status.status == "expired":
-                logger.error("❌ Время выполнения второго ассистента истекло")
-                return None
-            
-            attempt += 1
-            logger.debug(f"⏳ Попытка {attempt}/{max_attempts}, статус: {status.status}")
-            time.sleep(2)
-        
-        if attempt >= max_attempts:
-            logger.error("❌ Превышено время ожидания второго OpenAI ассистента")
-            return None
-
-        messages = openai.beta.threads.messages.list(thread_id=thread.id)
-        reply = messages.data[0].content[0].text.value
+        reply = response.output_text
         return json.loads(reply)
 
     except Exception as e:
-        logger.error(f"❌ Ошибка второго ассистента OpenAI: {e}")
+        logger.error(f"❌ Ошибка второго OpenAI Responses API: {e}")
         return None
 
 def get_coordinates_from_location(location: str):

@@ -12,8 +12,18 @@ def load_config():
         "spreadsheet_id": os.getenv("GOOGLE_SPREADSHEET_ID"),
         "worksheet_name": os.getenv("GOOGLE_WORKSHEET_NAME", "RACES"),
         "openai_api_key": os.getenv("OPENAI_API_KEY"),
-        "assistant_id_text": os.getenv("ASSISTANT_ID_TEXT"),
-        "assistant_id_second": os.getenv("ASSISTANT_ID_SECOND"),
+        "openai_text_model": os.getenv("OPENAI_TEXT_MODEL", "gpt-4o-mini"),
+        "openai_second_model": os.getenv("OPENAI_SECOND_MODEL", "gpt-4o-mini"),
+        "openai_system_prompt_file": os.getenv("OPENAI_SYSTEM_PROMPT_FILE", "prompts/assistant_system.txt"),
+        "openai_user_prompt_file": os.getenv("OPENAI_USER_PROMPT_FILE", "prompts/assistant_user.txt"),
+        "openai_second_system_prompt_file": os.getenv(
+            "OPENAI_SECOND_SYSTEM_PROMPT_FILE",
+            "prompts/second_system.txt",
+        ),
+        "openai_second_user_prompt_file": os.getenv(
+            "OPENAI_SECOND_USER_PROMPT_FILE",
+            "prompts/second_user.txt",
+        ),
         "opencage_api_key": os.getenv("OPENCAGE_API_KEY"),
         "wp_url": os.getenv("WP_URL"),
         "wp_admin_user": os.getenv("WP_ADMIN_USER"),
@@ -25,9 +35,14 @@ def load_config():
     
     # Проверяем, что все обязательные переменные заданы
     required_vars = [
-        "spreadsheet_id", "openai_api_key", "assistant_id_text", 
-        "opencage_api_key", "wp_url", 
-        "wp_admin_user", "wp_admin_pass", "consumer_key", "consumer_secret"
+        "spreadsheet_id",
+        "openai_api_key",
+        "opencage_api_key",
+        "wp_url",
+        "wp_admin_user",
+        "wp_admin_pass",
+        "consumer_key",
+        "consumer_secret",
     ]
     
     missing_vars = [var for var in required_vars if not config.get(var)]

@@ -18,8 +18,12 @@ class EnvExampleTests(unittest.TestCase):
 
         required = {
             "OPENAI_API_KEY",
-            "ASSISTANT_ID_TEXT",
-            "ASSISTANT_ID_SECOND",
+            "OPENAI_TEXT_MODEL",
+            "OPENAI_SECOND_MODEL",
+            "OPENAI_SYSTEM_PROMPT_FILE",
+            "OPENAI_USER_PROMPT_FILE",
+            "OPENAI_SECOND_SYSTEM_PROMPT_FILE",
+            "OPENAI_SECOND_USER_PROMPT_FILE",
             "OPENCAGE_API_KEY",
             "GOOGLE_SPREADSHEET_ID",
             "GOOGLE_WORKSHEET_NAME",
