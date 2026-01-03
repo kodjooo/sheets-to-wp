@@ -147,7 +147,16 @@ def call_openai_assistant(text, file_ids=None):
             request_kwargs["temperature"] = float(temperature)
             logger.info("🌡️ Температура для текста: %s", temperature)
 
-        response = _OPENAI_CLIENT.responses.create(**request_kwargs)
+        try:
+            response = _OPENAI_CLIENT.responses.create(**request_kwargs)
+        except Exception as e:
+            message = str(e)
+            if "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
+                logger.warning("⚠️ Модель не поддерживает temperature, повторяем без неё.")
+                request_kwargs.pop("temperature", None)
+                response = _OPENAI_CLIENT.responses.create(**request_kwargs)
+            else:
+                raise
 
         reply = response.output_text
         return json.loads(reply)
@@ -194,7 +203,16 @@ def call_second_openai_assistant(first_result):
             request_kwargs["temperature"] = float(temperature)
             logger.info("🌡️ Температура для второго шага: %s", temperature)
 
-        response = _OPENAI_CLIENT.responses.create(**request_kwargs)
+        try:
+            response = _OPENAI_CLIENT.responses.create(**request_kwargs)
+        except Exception as e:
+            message = str(e)
+            if "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
+                logger.warning("⚠️ Модель не поддерживает temperature, повторяем без неё.")
+                request_kwargs.pop("temperature", None)
+                response = _OPENAI_CLIENT.responses.create(**request_kwargs)
+            else:
+                raise
 
         reply = response.output_text
         return json.loads(reply)
