@@ -144,8 +144,12 @@ def call_openai_assistant(text, file_ids=None):
             request_kwargs["reasoning"] = {"effort": reasoning_effort}
         temperature = config.get("openai_text_temperature")
         if temperature:
-            request_kwargs["temperature"] = float(temperature)
-            logger.info("🌡️ Температура для текста: %s", temperature)
+            lowered_model = (model or "").lower()
+            if lowered_model.startswith(("gpt-5", "o1")):
+                logger.info("🌡️ Температура для текста пропущена для модели: %s", model)
+            else:
+                request_kwargs["temperature"] = float(temperature)
+                logger.info("🌡️ Температура для текста: %s", temperature)
 
         try:
             response = _OPENAI_CLIENT.responses.create(**request_kwargs)
@@ -200,8 +204,12 @@ def call_second_openai_assistant(first_result):
             request_kwargs["reasoning"] = {"effort": reasoning_effort}
         temperature = config.get("openai_second_temperature")
         if temperature:
-            request_kwargs["temperature"] = float(temperature)
-            logger.info("🌡️ Температура для второго шага: %s", temperature)
+            lowered_model = (model or "").lower()
+            if lowered_model.startswith(("gpt-5", "o1")):
+                logger.info("🌡️ Температура для второго шага пропущена для модели: %s", model)
+            else:
+                request_kwargs["temperature"] = float(temperature)
+                logger.info("🌡️ Температура для второго шага: %s", temperature)
 
         try:
             response = _OPENAI_CLIENT.responses.create(**request_kwargs)
