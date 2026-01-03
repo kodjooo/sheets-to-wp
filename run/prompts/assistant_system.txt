@@ -91,103 +91,40 @@ image_prompt
 
 Пример:
 
-summary 
-The Alta Montanha Trail Run will be held on September 14, 2025, in Portugal’s Serra da Estrela mountains. This trail running event features 12 km, 26 km, and 52 km distances, with technical terrain and major elevation gain.
-Open to all runners 18+, no license required. It’s part of the Portugal SkyRunning Cup, attracting both elite athletes and ambitious amateurs. The course winds through alpine trails, ridgelines, and river crossings, offering dramatic scenery.
-The event includes a 52 km relay, a family hike, and a kids’ trail run, making it a full weekend for all ages.
-
-org_info
-<strong> <a class="" href="https://assets.acorrer.pt/media/7618/68825adbc0a4c_regulamento.pdf" target="_new" rel="noopener">Regulation link ↗</a></strong>
-
-<strong>Age categories/divisions:</strong>
- • Youth (16–19)
- • Adults (20–39)
- • Masters (40–59)
- • Veterans (60+)
- • Relay teams (Open)
-
-<strong>Start/finish locations:</strong> All disciplines start/finish at Praia da Califórnia, Sesimbra
-
-<strong>Start times per category/distance:</strong>
- • Long (46 km): 08:00
- • Olympic (30 km): 08:45
- • Sprint (10 km): 09:30
-
-<strong>Cut-off times:</strong>
- • Long: swim 90min, bike 4h30, run 2h30
- • Olympic: swim 45min, bike 2h30, run 1h30
- • Sprint: swim 30min, bike 1h30, run 1h
-
-<strong>Bib pick-up time and location:</strong>
- • September 18, 14:00–19:00
- • September 19, 06:30–07:30
- • Location: Sesimbra City Hall – Athlete Village Desk
-
-<strong>Participant limit:</strong>
- • 21.1 km – 4,000
- • 10 km – 1,000
- • 5 km – 1,000
- • Kids’ Run – 500.
-
-<strong>Registration deadline:</strong> September 10, 2025 at 23:59 (local time)
-
-<strong>Surface types:</strong>
- • Swim: open ocean (bay protected)
- • Bike: paved coastal roads with rolling hills
- • Run: asphalt with some cobblestone sections, mostly flat
-
-<strong>Course format:</strong> Looped course for all distances, 2–3 laps per discipline depending on distance
-
-<strong>Running Half Marathon 21,1 km ROUTE:</strong>
-Start line: Av. de Dom Carlos I, Rua Coronel Raúl Peres, Av. do Brasil, Av. de Montevideu, retorno (antes da Praça de Gonçalves Zarco), Av. de Montevideu, Av. do Brasil, Rua da Sra. da Luz, Esplanada do Castelo, Rua do Passeio Alegre, Rua de Sobreiras, Rua do Ouro, Alameda Basílio Teles, Viaduto do Cais das Pedras, Rua de Monchique, Rua Nova da Alfândega, Rua do Infante D. Henrique, Rua da Ribeira Negra, Av. Gustavo Eiffel, retorno (antes da Rua de Sabrosa), Av. Gustavo Eiffel, Rua da Ribeira Negra, Rua do Infante D. Henrique, Rua Nova da Alfândega, Rua de Monchique, Viaduto do Cais das Pedras, Alameda Basílio Teles, Rua do Ouro, Largo António Calém, Rua de Sobreiras, Rua do Passeio Alegre, Rua Dom Luís Filipe, Av. de Dom Carlos I :Finish line.
-
-<strong>Running Road Running 5 km ROUTE:</strong>
-Start line: Av. de Dom Carlos I, Rua Coronel Raúl Peres, Av. do Brasil, Av. de Montevideu, retorno (antes da Praça de Gonçalves Zarco), Av. de Montevideu, Av. do Brasil, Rua da Sra. da Luz, Esplanada do Castelo :Finish line.
-
-<strong>Timing method:</strong> Electronic chip timing with individual and relay team classifications
-
-<strong>Toilets and aid station placement:</strong>
-   • Toilets at start/finish zone and every transition
-   • Aid stations every 5km on bike/run legs with water, isotonic, bananas, gels
-
-<strong>Parking and shuttle details:</strong>
-   • Free parking available at Sesimbra Public Parking Zone B (1km from start)
-   • Shuttles from Lisbon Oriente Station (pre-book online)
-
-<strong>Drop bag policy:</strong> Drop bags accepted on swim day by 07:00. It will be transported to athlete tent at finish area
-
-<strong>Prizes:</strong>  Trophies, vouchers, sponsor gifts (top 3 overall – 21.1 km & 10 km), medals for all main race finishers, gifts for Kids’ Run participants.
-
-benefits
-Пожалуйста, предоставь раздел “benefits” как JSON-массив строк, где каждый пункт — отдельное преимущество.
-Каждое преимущество должно быть лаконичным, чётко отделённым и может содержать эмодзи.
-Ответ должен быть строго валидным JSON:
-
-"benefits": [
-  "🎽 Athlete kit: bib number, swim cap, bike and helmet stickers, transition bag, event wristband",
-  "🏅 Finisher prize: custom medal, technical finisher t-shirt, microfiber towel",
-  "⏱️ Timing + live results by category and age group via RaceTracker",
-  "🛟 Safety support: certified lifeguards, on-course paramedics, mobile medical units, and local police escorts",
-  "🛡️ Insurance: race fee includes personal accident and third-party liability coverage",
-  "🥤 Aid stations: water, isotonic drinks, gels, bananas every 5 km and at transitions",
-  "🚿 Showers, changing tents, and recovery zone with cold tubs and foam rollers at finish line",
-  "🧳 Drop-bag and gear transport between start and finish zones included",
-  "📸 Professional photography and drone video highlights available 48h after the event",
-  "🚌 Free shuttle service for athletes and spectators between venue zones and parking areas",
-  "🧖 Post-race massage, hot meals, and athlete lounge with recovery drinks",
-  "🏆 Podium awards for top 3 male and female finishers per distance and age group"
-]
-
-Формат ответа должен быть строго JSON:
-
 {
-  "org_info": "...",
-  "summary": "...",
-  "benefits": "...",
-  "org_info_pt": "...",
-  "summary_pt": "...",
-  "benefits_pt": "...",
-  "image_prompt": "..."
+  "org_info": "<strong><a class=\"\" href=\"https://assets.acorrer.pt/media/7618/68825adbc0a4c_regulamento.pdf\" target=\"_new\" rel=\"noopener\">Regulation link ↗</a></strong>\n\n<strong>Age categories/divisions:</strong>\n• Youth (16–19)\n• Adults (20–39)\n• Masters (40–59)\n• Veterans (60+)\n• Relay teams (Open)\n\n<strong>Start/finish locations:</strong> All disciplines start/finish at Praia da Califórnia, Sesimbra\n\n<strong>Start times per category/distance:</strong>\n• Long (46 km): 08:00\n• Olympic (30 km): 08:45\n• Sprint (10 km): 09:30\n\n<strong>Cut-off times:</strong>\n• Long: swim 90min, bike 4h30, run 2h30\n• Olympic: swim 45min, bike 2h30, run 1h30\n• Sprint: swim 30min, bike 1h30, run 1h\n\n<strong>Bib pick-up time and location:</strong>\n• September 18, 14:00–19:00\n• September 19, 06:30–07:30\n• Location: Sesimbra City Hall – Athlete Village Desk\n\n<strong>Participant limit:</strong>\n• 21.1 km – 4,000\n• 10 km – 1,000\n• 5 km – 1,000\n• Kids’ Run – 500\n\n<strong>Registration deadline:</strong> September 10, 2025 at 23:59 (local time)\n\n<strong>Surface types:</strong>\n• Swim: open ocean (bay protected)\n• Bike: paved coastal roads with rolling hills\n• Run: asphalt with some cobblestone sections, mostly flat\n\n<strong>Course format:</strong> Looped course for all distances, 2–3 laps per discipline depending on distance\n\n<strong>Running Half Marathon 21,1 km ROUTE:</strong> Start line: Av. de Dom Carlos I, Rua Coronel Raúl Peres, Av. do Brasil, Av. de Montevideu, retorno (antes da Praça de Gonçalves Zarco), Av. de Montevideu, Av. do Brasil, Rua da Sra. da Luz, Esplanada do Castelo, Rua do Passeio Alegre, Rua de Sobreiras, Rua do Ouro, Alameda Basílio Teles, Viaduto do Cais das Pedras, Rua de Monchique, Rua Nova da Alfândega, Rua do Infante D. Henrique, Rua da Ribeira Negra, Av. Gustavo Eiffel, retorno (antes da Rua de Sabrosa), Av. Gustavo Eiffel, Rua da Ribeira Negra, Rua do Infante D. Henrique, Rua Nova da Alfândega, Rua de Monchique, Viaduto do Cais das Pedras, Alameda Basílio Teles, Rua do Ouro, Largo António Calém, Rua de Sobreiras, Rua do Passeio Alegre, Rua Dom Luís Filipe, Av. de Dom Carlos I :Finish line.\n\n<strong>Running Road Running 5 km ROUTE:</strong> Start line: Av. de Dom Carlos I, Rua Coronel Raúl Peres, Av. do Brasil, Av. de Montevideu, retorno (antes da Praça de Gonçalves Zarco), Av. de Montevideu, Av. do Brasil, Rua da Sra. da Luz, Esplanada do Castelo :Finish line.\n\n<strong>Timing method:</strong> Electronic chip timing with individual and relay team classifications\n\n<strong>Toilets and aid station placement:</strong>\n• Toilets at start/finish zone and every transition\n• Aid stations every 5km on bike/run legs with water, isotonic, bananas, gels\n\n<strong>Parking and shuttle details:</strong>\n• Free parking available at Sesimbra Public Parking Zone B (1km from start)\n• Shuttles from Lisbon Oriente Station (pre-book online)\n\n<strong>Drop bag policy:</strong> Drop bags accepted on swim day by 07:00. It will be transported to athlete tent at finish area\n\n<strong>Prizes:</strong> Trophies, vouchers, sponsor gifts (top 3 overall – 21.1 km & 10 km), medals for all main race finishers, gifts for Kids’ Run participants.",
+  "summary": "<p>The Alta Montanha Trail Run will be held on September 14, 2025, in Portugal’s Serra da Estrela mountains. This trail running event features 12 km, 26 km, and 52 km distances, with technical terrain and major elevation gain.</p><p>Open to all runners 18+, no license required. It’s part of the Portugal SkyRunning Cup, attracting both elite athletes and ambitious amateurs. The course winds through alpine trails, ridgelines, and river crossings, offering dramatic scenery.</p><p>The event includes a 52 km relay, a family hike, and a kids’ trail run, making it a full weekend for all ages.</p>",
+  "benefits": [
+    "🎽 Athlete kit: bib number, swim cap, bike and helmet stickers, transition bag, event wristband",
+    "🏅 Finisher prize: custom medal, technical finisher t-shirt, microfiber towel",
+    "⏱️ Timing + live results by category and age group via RaceTracker",
+    "🛟 Safety support: certified lifeguards, on-course paramedics, mobile medical units, and local police escorts",
+    "🛡️ Insurance: race fee includes personal accident and third-party liability coverage",
+    "🥤 Aid stations: water, isotonic drinks, gels, bananas every 5 km and at transitions",
+    "🚿 Showers, changing tents, and recovery zone with cold tubs and foam rollers at finish line",
+    "🧳 Drop-bag and gear transport between start and finish zones included",
+    "📸 Professional photography and drone video highlights available 48h after the event",
+    "🚌 Free shuttle service for athletes and spectators between venue zones and parking areas",
+    "🧖 Post-race massage, hot meals, and athlete lounge with recovery drinks",
+    "🏆 Podium awards for top 3 male and female finishers per distance and age group"
+  ],
+  "org_info_pt": "<strong><a class=\"\" href=\"https://assets.acorrer.pt/media/7618/68825adbc0a4c_regulamento.pdf\" target=\"_new\" rel=\"noopener\">Regulamento ↗</a></strong>\n\n<strong>Escalões/categorias:</strong>\n• Jovens (16–19)\n• Adultos (20–39)\n• Masters (40–59)\n• Veteranos (60+)\n• Equipas de estafeta (Open)\n\n<strong>Locais de partida/chegada:</strong> Todas as disciplinas com partida/chegada na Praia da Califórnia, Sesimbra\n\n<strong>Horários de partida por categoria/distância:</strong>\n• Long (46 km): 08:00\n• Olympic (30 km): 08:45\n• Sprint (10 km): 09:30\n\n<strong>Tempos limite:</strong>\n• Long: natação 90min, ciclismo 4h30, corrida 2h30\n• Olympic: natação 45min, ciclismo 2h30, corrida 1h30\n• Sprint: natação 30min, ciclismo 1h30, corrida 1h\n\n<strong>Levantamento de dorsais (data/hora e local):</strong>\n• 18 de setembro, 14:00–19:00\n• 19 de setembro, 06:30–07:30\n• Local: Câmara Municipal de Sesimbra – Balcão da Aldeia do Atleta\n\n<strong>Limite de participantes:</strong>\n• 21,1 km – 4.000\n• 10 km – 1.000\n• 5 km – 1.000\n• Corrida Kids – 500\n\n<strong>Prazo de inscrição:</strong> 10 de setembro de 2025 às 23:59 (hora local)\n\n<strong>Tipos de piso:</strong>\n• Natação: mar aberto (baía protegida)\n• Ciclismo: estradas asfaltadas costeiras com ondulação\n• Corrida: asfalto com alguns troços de calçada, maioritariamente plano\n\n<strong>Formato do percurso:</strong> Percurso em voltas para todas as distâncias, 2–3 voltas por disciplina conforme a distância\n\n<strong>Running Half Marathon 21,1 km ROUTE:</strong> Start line: Av. de Dom Carlos I, Rua Coronel Raúl Peres, Av. do Brasil, Av. de Montevideu, retorno (antes da Praça de Gonçalves Zarco), Av. de Montevideu, Av. do Brasil, Rua da Sra. da Luz, Esplanada do Castelo, Rua do Passeio Alegre, Rua de Sobreiras, Rua do Ouro, Alameda Basílio Teles, Viaduto do Cais das Pedras, Rua de Monchique, Rua Nova da Alfândega, Rua do Infante D. Henrique, Rua da Ribeira Negra, Av. Gustavo Eiffel, retorno (antes da Rua de Sabrosa), Av. Gustavo Eiffel, Rua da Ribeira Negra, Rua do Infante D. Henrique, Rua Nova da Alfândega, Rua de Monchique, Viaduto do Cais das Pedras, Alameda Basílio Teles, Rua do Ouro, Largo António Calém, Rua de Sobreiras, Rua do Passeio Alegre, Rua Dom Luís Filipe, Av. de Dom Carlos I :Finish line.\n\n<strong>Running Road Running 5 km ROUTE:</strong> Start line: Av. de Dom Carlos I, Rua Coronel Raúl Peres, Av. do Brasil, Av. de Montevideu, retorno (antes da Praça de Gonçalves Zarco), Av. de Montevideu, Av. do Brasil, Rua da Sra. da Luz, Esplanada do Castelo :Finish line.\n\n<strong>Método de cronometragem:</strong> Cronometragem eletrónica por chip com classificações individuais e por equipas de estafeta\n\n<strong>WC e localização dos abastecimentos:</strong>\n• WC na zona de partida/chegada e em cada transição\n• Abastecimentos a cada 5 km no ciclismo/corrida com água, isotónico, bananas, géis\n\n<strong>Estacionamento e shuttles:</strong>\n• Estacionamento gratuito disponível no Sesimbra Public Parking Zone B (1 km da partida)\n• Shuttles desde a Estação Lisboa Oriente (pré-reserva online)\n\n<strong>Política de saco de atleta (drop bag):</strong> Drop bags aceites no dia da natação até às 07:00. Serão transportados para a tenda do atleta na zona de meta\n\n<strong>Prémios:</strong> Troféus, vouchers e brindes de patrocinadores (top 3 absolutos – 21,1 km e 10 km), medalhas para todos os finalistas das provas principais, brindes para participantes da Corrida Kids.",
+  "summary_pt": "<p>O Trail Run de Alta Montanha realiza-se a 14 de setembro de 2025, na Serra da Estrela, em Portugal. Esta prova de trail apresenta distâncias de 12 km, 26 km e 52 km, com terreno técnico e grande desnível acumulado.</p><p>Aberto a todos os atletas com 18+ anos, sem necessidade de licença. Integra a Portugal SkyRunning Cup, atraindo tanto atletas de elite como amadores ambiciosos. O percurso percorre trilhos alpinos, cristas e travessias de rio, com paisagens marcantes.</p><p>O evento inclui ainda uma estafeta de 52 km, uma caminhada familiar e uma corrida infantil, tornando-o num fim de semana completo para todas as idades.</p>",
+  "benefits_pt": [
+    "🎽 Kit do atleta: dorsal, touca de natação, autocolantes para bicicleta e capacete, saco de transição, pulseira do evento",
+    "🏅 Prémio de finalista: medalha personalizada, t-shirt técnica de finisher, toalha de microfibra",
+    "⏱️ Cronometragem + resultados ao vivo por categoria e escalão via RaceTracker",
+    "🛟 Apoio de segurança: nadadores-salvadores certificados, paramédicos no percurso, unidades médicas móveis e escolta policial local",
+    "🛡️ Seguro: inscrição inclui seguro de acidentes pessoais e responsabilidade civil",
+    "🥤 Abastecimentos: água, bebidas isotónicas, géis e bananas a cada 5 km e nas transições",
+    "🚿 Duches, tendas de muda de roupa e zona de recuperação com banheiras frias e rolos de espuma na meta",
+    "🧳 Transporte de drop-bag e equipamento entre zonas de partida e chegada incluído",
+    "📸 Fotografia profissional e destaques de vídeo com drone disponíveis 48h após o evento",
+    "🚌 Shuttle gratuito para atletas e espectadores entre zonas do recinto e áreas de estacionamento",
+    "🧖 Massagem pós-prova, refeições quentes e lounge do atleta com bebidas de recuperação",
+    "🏆 Pódios para top 3 masculino e feminino por distância e escalão"
+  ],
+  "image_prompt": "Photorealistic action photo of trail runners climbing a steep rocky mountain path at golden hour, warm sunlight grazing the ridge, dramatic clouds, athletes wearing hydration vests and technical shoes, visible effort and determination on their faces, a mix of male and female runners spaced along the trail, dust and small stones kicked up, sharp focus, high dynamic range, cinematic depth of field, natural colors, wide-angle perspective capturing alpine terrain and distant peaks."
 }
 
 Не добавляй ничего лишнего в ответ: никаких отступов, комментариев, обёрток. Только то, что указано. Только выделение заголовков с помощью <strong>.
