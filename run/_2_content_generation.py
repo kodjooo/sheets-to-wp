@@ -162,8 +162,12 @@ def call_openai_assistant(text, file_ids=None):
             else:
                 raise
 
-        reply = response.output_text
-        return json.loads(reply)
+        reply = response.output_text or ""
+        try:
+            return json.loads(reply)
+        except json.JSONDecodeError:
+            logger.error("❌ Ответ OpenAI не является JSON: %s", reply[:2000])
+            return None
 
     except Exception as e:
         logger.error(f"❌ Ошибка OpenAI Responses API: {e}")
@@ -222,8 +226,12 @@ def call_second_openai_assistant(first_result):
             else:
                 raise
 
-        reply = response.output_text
-        return json.loads(reply)
+        reply = response.output_text or ""
+        try:
+            return json.loads(reply)
+        except json.JSONDecodeError:
+            logger.error("❌ Ответ второго OpenAI не является JSON: %s", reply[:2000])
+            return None
 
     except Exception as e:
         logger.error(f"❌ Ошибка второго OpenAI Responses API: {e}")
