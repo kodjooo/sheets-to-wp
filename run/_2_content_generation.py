@@ -122,7 +122,7 @@ def call_openai_assistant(text, file_ids=None):
 
         logger.info("🤖 Отправка в OpenAI Responses API, модель: %s", model)
         if system_prompt:
-            logger.debug("🧾 System промпт (до 2000 символов):\n%s", system_prompt[:2000])
+            logger.debug("🧾 System промпт (до 10000 символов):\n%s", system_prompt[:10000])
         logger.debug("🧾 User промпт (до 40000 символов):\n%s", user_prompt[:40000])
         if file_ids:
             logger.info("📎 Файлы для OpenAI: %s", ", ".join(file_ids))
