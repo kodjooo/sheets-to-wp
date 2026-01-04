@@ -115,131 +115,137 @@ def translate_title_to_en(title: str) -> str:
         return ""
 
 def call_openai_assistant(text, file_ids=None):
-    try:
-        model = config["openai_text_model"]
-        system_prompt = _load_prompt_file(config["openai_system_prompt_file"])
-        user_prompt = text
-
-        logger.info("🤖 Отправка в OpenAI Responses API, модель: %s", model)
-        if system_prompt:
-            logger.debug("🧾 System промпт (до 10000 символов):\n%s", system_prompt[:10000])
-        logger.debug("🧾 User промпт (до 40000 символов):\n%s", user_prompt[:40000])
-        if file_ids:
-            logger.info("📎 Файлы для OpenAI: %s", ", ".join(file_ids))
-
-        user_content = [{"type": "input_text", "text": user_prompt[:40000]}]
-        for file_id in file_ids or []:
-            user_content.append({"type": "input_file", "file_id": file_id})
-
-        input_payload = []
-        if system_prompt:
-            input_payload.append(
-                {"role": "system", "content": [{"type": "input_text", "text": system_prompt}]}
-            )
-        input_payload.append({"role": "user", "content": user_content})
-
-        request_kwargs = {
-            "model": model,
-            "input": input_payload,
-        }
-        reasoning_effort = config.get("openai_text_reasoning_effort")
-        if reasoning_effort:
-            logger.info("🧠 Уровень размышления для текста: %s", reasoning_effort)
-            request_kwargs["reasoning"] = {"effort": reasoning_effort}
-        temperature = config.get("openai_text_temperature")
-        if temperature:
-            lowered_model = (model or "").lower()
-            if lowered_model.startswith(("gpt-5", "o1")):
-                logger.info("🌡️ Температура для текста пропущена для модели: %s", model)
-            else:
-                request_kwargs["temperature"] = float(temperature)
-                logger.info("🌡️ Температура для текста: %s", temperature)
-
+    max_attempts = 3
+    for attempt in range(1, max_attempts + 1):
         try:
-            response = _OPENAI_CLIENT.responses.create(**request_kwargs)
-        except Exception as e:
-            message = str(e)
-            if "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
-                logger.warning("⚠️ Модель не поддерживает temperature, повторяем без неё.")
-                request_kwargs.pop("temperature", None)
+            model = config["openai_text_model"]
+            system_prompt = _load_prompt_file(config["openai_system_prompt_file"])
+            user_prompt = text
+
+            logger.info("🤖 Отправка в OpenAI Responses API, модель: %s", model)
+            if system_prompt:
+                logger.debug("🧾 System промпт (до 10000 символов):\n%s", system_prompt[:10000])
+            logger.debug("🧾 User промпт (до 40000 символов):\n%s", user_prompt[:40000])
+            if file_ids:
+                logger.info("📎 Файлы для OpenAI: %s", ", ".join(file_ids))
+
+            user_content = [{"type": "input_text", "text": user_prompt[:40000]}]
+            for file_id in file_ids or []:
+                user_content.append({"type": "input_file", "file_id": file_id})
+
+            input_payload = []
+            if system_prompt:
+                input_payload.append(
+                    {"role": "system", "content": [{"type": "input_text", "text": system_prompt}]}
+                )
+            input_payload.append({"role": "user", "content": user_content})
+
+            request_kwargs = {
+                "model": model,
+                "input": input_payload,
+            }
+            reasoning_effort = config.get("openai_text_reasoning_effort")
+            if reasoning_effort:
+                logger.info("🧠 Уровень размышления для текста: %s", reasoning_effort)
+                request_kwargs["reasoning"] = {"effort": reasoning_effort}
+            temperature = config.get("openai_text_temperature")
+            if temperature:
+                lowered_model = (model or "").lower()
+                if lowered_model.startswith(("gpt-5", "o1")):
+                    logger.info("🌡️ Температура для текста пропущена для модели: %s", model)
+                else:
+                    request_kwargs["temperature"] = float(temperature)
+                    logger.info("🌡️ Температура для текста: %s", temperature)
+
+            try:
                 response = _OPENAI_CLIENT.responses.create(**request_kwargs)
-            else:
-                raise
+            except Exception as e:
+                message = str(e)
+                if "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
+                    logger.warning("⚠️ Модель не поддерживает temperature, повторяем без неё.")
+                    request_kwargs.pop("temperature", None)
+                    response = _OPENAI_CLIENT.responses.create(**request_kwargs)
+                else:
+                    raise
 
-        reply = response.output_text or ""
-        try:
-            return json.loads(reply)
-        except json.JSONDecodeError:
-            logger.error("❌ Ответ OpenAI не является JSON: %s", reply[:2000])
-            raise ValueError("Ответ OpenAI не является JSON")
+            reply = response.output_text or ""
+            try:
+                return json.loads(reply)
+            except json.JSONDecodeError:
+                logger.error("❌ Ответ OpenAI не является JSON: %s", reply[:2000])
+                raise ValueError("Ответ OpenAI не является JSON")
 
-    except Exception as e:
-        logger.error(f"❌ Ошибка OpenAI Responses API: {e}")
-        return None
+        except Exception as e:
+            logger.error("❌ Ошибка OpenAI Responses API (попытка %s/%s): %s", attempt, max_attempts, e)
+            if attempt == max_attempts:
+                return None
 
 def call_second_openai_assistant(first_result):
     """
     Вызывает второй запрос OpenAI Responses API с результатом первого ассистента.
     """
-    try:
-        model = config["openai_second_model"]
-        system_prompt = _load_prompt_file(config["openai_second_system_prompt_file"])
-        if isinstance(first_result, dict):
-            text_content = json.dumps(first_result, ensure_ascii=False, indent=2)
-        else:
-            text_content = str(first_result)
-        user_prompt = text_content
+    max_attempts = 3
+    for attempt in range(1, max_attempts + 1):
+        try:
+            model = config["openai_second_model"]
+            system_prompt = _load_prompt_file(config["openai_second_system_prompt_file"])
+            if isinstance(first_result, dict):
+                text_content = json.dumps(first_result, ensure_ascii=False, indent=2)
+            else:
+                text_content = str(first_result)
+            user_prompt = text_content
 
-        logger.info("🤖 Отправка во второй Responses API, модель: %s", model)
-        logger.debug("📤 Второй промпт (до 40000 символов):\n%s", user_prompt[:40000])
+            logger.info("🤖 Отправка во второй Responses API, модель: %s", model)
+            logger.debug("📤 Второй промпт (до 40000 символов):\n%s", user_prompt[:40000])
 
-        input_payload = []
-        if system_prompt:
+            input_payload = []
+            if system_prompt:
+                input_payload.append(
+                    {"role": "system", "content": [{"type": "input_text", "text": system_prompt}]}
+                )
             input_payload.append(
-                {"role": "system", "content": [{"type": "input_text", "text": system_prompt}]}
+                {"role": "user", "content": [{"type": "input_text", "text": user_prompt[:40000]}]}
             )
-        input_payload.append(
-            {"role": "user", "content": [{"type": "input_text", "text": user_prompt[:40000]}]}
-        )
 
-        request_kwargs = {
-            "model": model,
-            "input": input_payload,
-        }
-        reasoning_effort = config.get("openai_second_reasoning_effort")
-        if reasoning_effort:
-            logger.info("🧠 Уровень размышления для второго шага: %s", reasoning_effort)
-            request_kwargs["reasoning"] = {"effort": reasoning_effort}
-        temperature = config.get("openai_second_temperature")
-        if temperature:
-            lowered_model = (model or "").lower()
-            if lowered_model.startswith(("gpt-5", "o1")):
-                logger.info("🌡️ Температура для второго шага пропущена для модели: %s", model)
-            else:
-                request_kwargs["temperature"] = float(temperature)
-                logger.info("🌡️ Температура для второго шага: %s", temperature)
+            request_kwargs = {
+                "model": model,
+                "input": input_payload,
+            }
+            reasoning_effort = config.get("openai_second_reasoning_effort")
+            if reasoning_effort:
+                logger.info("🧠 Уровень размышления для второго шага: %s", reasoning_effort)
+                request_kwargs["reasoning"] = {"effort": reasoning_effort}
+            temperature = config.get("openai_second_temperature")
+            if temperature:
+                lowered_model = (model or "").lower()
+                if lowered_model.startswith(("gpt-5", "o1")):
+                    logger.info("🌡️ Температура для второго шага пропущена для модели: %s", model)
+                else:
+                    request_kwargs["temperature"] = float(temperature)
+                    logger.info("🌡️ Температура для второго шага: %s", temperature)
 
-        try:
-            response = _OPENAI_CLIENT.responses.create(**request_kwargs)
-        except Exception as e:
-            message = str(e)
-            if "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
-                logger.warning("⚠️ Модель не поддерживает temperature, повторяем без неё.")
-                request_kwargs.pop("temperature", None)
+            try:
                 response = _OPENAI_CLIENT.responses.create(**request_kwargs)
-            else:
-                raise
+            except Exception as e:
+                message = str(e)
+                if "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
+                    logger.warning("⚠️ Модель не поддерживает temperature, повторяем без неё.")
+                    request_kwargs.pop("temperature", None)
+                    response = _OPENAI_CLIENT.responses.create(**request_kwargs)
+                else:
+                    raise
 
-        reply = response.output_text or ""
-        try:
-            return json.loads(reply)
-        except json.JSONDecodeError:
-            logger.error("❌ Ответ второго OpenAI не является JSON: %s", reply[:2000])
-            raise ValueError("Ответ второго OpenAI не является JSON")
+            reply = response.output_text or ""
+            try:
+                return json.loads(reply)
+            except json.JSONDecodeError:
+                logger.error("❌ Ответ второго OpenAI не является JSON: %s", reply[:2000])
+                raise ValueError("Ответ второго OpenAI не является JSON")
 
-    except Exception as e:
-        logger.error(f"❌ Ошибка второго OpenAI Responses API: {e}")
-        return None
+        except Exception as e:
+            logger.error("❌ Ошибка второго OpenAI Responses API (попытка %s/%s): %s", attempt, max_attempts, e)
+            if attempt == max_attempts:
+                return None
 
 def get_coordinates_from_location(location: str):
     if not location:
