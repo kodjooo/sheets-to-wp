@@ -219,7 +219,8 @@ def run_automation():
                     logging.info("✅ Первый ассистент завершил работу, передаём результат во второй ассистент")
                     
                     # Вызываем второй ассистент с результатом первого
-                    result = call_second_openai_assistant(first_result)
+                    regulations_hint = f"REGULATIONS LINK: {regulations_url if regulations_url else '(empty)'}"
+                    result = call_second_openai_assistant(first_result, regulations_hint=regulations_hint)
                     
                     if result is None:
                         logging.error("❌ Второй ассистент не вернул результат")

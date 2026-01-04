@@ -180,7 +180,7 @@ def call_openai_assistant(text, file_ids=None):
             if attempt == max_attempts:
                 return None
 
-def call_second_openai_assistant(first_result):
+def call_second_openai_assistant(first_result, regulations_hint: str | None = None):
     """
     Вызывает второй запрос OpenAI Responses API с результатом первого ассистента.
     """
@@ -193,7 +193,10 @@ def call_second_openai_assistant(first_result):
                 text_content = json.dumps(first_result, ensure_ascii=False, indent=2)
             else:
                 text_content = str(first_result)
-            user_prompt = text_content
+            if regulations_hint:
+                user_prompt = f"{regulations_hint}\n{text_content}"
+            else:
+                user_prompt = text_content
 
             logger.info("🤖 Отправка во второй Responses API, модель: %s", model)
             logger.debug("📤 Второй промпт (до 40000 символов):\n%s", user_prompt[:40000])
