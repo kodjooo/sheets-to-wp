@@ -187,8 +187,6 @@ def run_automation():
                 combined_text = ""
                 if regulations_url:
                     combined_text += f"\n\nREGULATIONS LINK:\n{regulations_url}"
-                if regulations_text:
-                    combined_text += f"\n\nREGULATIONS INFO:\n{regulations_text}"
                 combined_text += f"\n\nWEBSITE INFO:\n{website_text}"
 
                 if not combined_text.strip():
