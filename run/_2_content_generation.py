@@ -137,6 +137,7 @@ def call_openai_assistant(text, file_ids=None):
         request_kwargs = {
             "model": model,
             "input": input_payload,
+            "response_format": {"type": "json_object"},
         }
         reasoning_effort = config.get("openai_text_reasoning_effort")
         if reasoning_effort:
@@ -201,6 +202,7 @@ def call_second_openai_assistant(first_result):
         request_kwargs = {
             "model": model,
             "input": input_payload,
+            "response_format": {"type": "json_object"},
         }
         reasoning_effort = config.get("openai_second_reasoning_effort")
         if reasoning_effort:
