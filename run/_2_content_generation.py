@@ -156,7 +156,11 @@ def call_openai_assistant(text, file_ids=None):
             response = _OPENAI_CLIENT.responses.create(**request_kwargs)
         except Exception as e:
             message = str(e)
-            if "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
+            if "unexpected keyword argument 'response_format'" in message and "response_format" in request_kwargs:
+                logger.warning("⚠️ SDK не поддерживает response_format, повторяем без него.")
+                request_kwargs.pop("response_format", None)
+                response = _OPENAI_CLIENT.responses.create(**request_kwargs)
+            elif "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
                 logger.warning("⚠️ Модель не поддерживает temperature, повторяем без неё.")
                 request_kwargs.pop("temperature", None)
                 response = _OPENAI_CLIENT.responses.create(**request_kwargs)
@@ -221,7 +225,11 @@ def call_second_openai_assistant(first_result):
             response = _OPENAI_CLIENT.responses.create(**request_kwargs)
         except Exception as e:
             message = str(e)
-            if "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
+            if "unexpected keyword argument 'response_format'" in message and "response_format" in request_kwargs:
+                logger.warning("⚠️ SDK не поддерживает response_format, повторяем без него.")
+                request_kwargs.pop("response_format", None)
+                response = _OPENAI_CLIENT.responses.create(**request_kwargs)
+            elif "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
                 logger.warning("⚠️ Модель не поддерживает temperature, повторяем без неё.")
                 request_kwargs.pop("temperature", None)
                 response = _OPENAI_CLIENT.responses.create(**request_kwargs)

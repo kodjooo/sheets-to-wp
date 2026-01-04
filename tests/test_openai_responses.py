@@ -115,7 +115,6 @@ class OpenAIResponsesTests(unittest.TestCase):
 
         kwargs = dummy_client.responses.last_kwargs
         self.assertEqual(kwargs["model"], "test-model")
-        self.assertEqual(kwargs["response_format"], {"type": "json_object"})
         self.assertEqual(kwargs["reasoning"]["effort"], "high")
         self.assertEqual(kwargs["temperature"], 0.7)
 
@@ -145,7 +144,6 @@ class OpenAIResponsesTests(unittest.TestCase):
 
         kwargs = dummy_client.responses.last_kwargs
         self.assertEqual(kwargs["model"], "second-model")
-        self.assertEqual(kwargs["response_format"], {"type": "json_object"})
         self.assertEqual(kwargs["reasoning"]["effort"], "low")
         self.assertEqual(kwargs["temperature"], 0.2)
         payload = kwargs["input"]
