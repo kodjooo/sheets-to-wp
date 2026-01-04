@@ -141,7 +141,6 @@ def call_openai_assistant(text, file_ids=None):
         request_kwargs = {
             "model": model,
             "input": input_payload,
-            "response_format": {"type": "json_object"},
         }
         reasoning_effort = config.get("openai_text_reasoning_effort")
         if reasoning_effort:
@@ -160,11 +159,7 @@ def call_openai_assistant(text, file_ids=None):
             response = _OPENAI_CLIENT.responses.create(**request_kwargs)
         except Exception as e:
             message = str(e)
-            if "unexpected keyword argument 'response_format'" in message and "response_format" in request_kwargs:
-                logger.warning("⚠️ SDK не поддерживает response_format, повторяем без него.")
-                request_kwargs.pop("response_format", None)
-                response = _OPENAI_CLIENT.responses.create(**request_kwargs)
-            elif "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
+            if "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
                 logger.warning("⚠️ Модель не поддерживает temperature, повторяем без неё.")
                 request_kwargs.pop("temperature", None)
                 response = _OPENAI_CLIENT.responses.create(**request_kwargs)
@@ -210,7 +205,6 @@ def call_second_openai_assistant(first_result):
         request_kwargs = {
             "model": model,
             "input": input_payload,
-            "response_format": {"type": "json_object"},
         }
         reasoning_effort = config.get("openai_second_reasoning_effort")
         if reasoning_effort:
@@ -229,11 +223,7 @@ def call_second_openai_assistant(first_result):
             response = _OPENAI_CLIENT.responses.create(**request_kwargs)
         except Exception as e:
             message = str(e)
-            if "unexpected keyword argument 'response_format'" in message and "response_format" in request_kwargs:
-                logger.warning("⚠️ SDK не поддерживает response_format, повторяем без него.")
-                request_kwargs.pop("response_format", None)
-                response = _OPENAI_CLIENT.responses.create(**request_kwargs)
-            elif "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
+            if "Unsupported parameter: 'temperature'" in message and "temperature" in request_kwargs:
                 logger.warning("⚠️ Модель не поддерживает temperature, повторяем без неё.")
                 request_kwargs.pop("temperature", None)
                 response = _OPENAI_CLIENT.responses.create(**request_kwargs)
