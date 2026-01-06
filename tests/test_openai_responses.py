@@ -161,6 +161,7 @@ class OpenAIResponsesTests(unittest.TestCase):
         self.assertIn("удаляй любые блоки, чьи заголовки НЕ входят", prompt_text)
         self.assertIn("Список допустимых заголовков (ТОЛЬКО они разрешены)", prompt_text)
         self.assertIn("строка, состоящая только из \"[]\"", prompt_text)
+        self.assertIn("ЖЕСТКО удалить любые строки/блоки, содержащие ссылку на регламент", prompt_text)
 
     def test_first_prompt_requires_fact_checks(self):
         prompt_path = os.path.join(RUN_DIR, "prompts", "assistant_system.txt")
