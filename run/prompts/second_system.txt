@@ -15,6 +15,38 @@
 <strong>Drop bag policy:</strong> Not specified
 toilets not specified
 
+Также удаляй блоки, где после заголовка нет значения (пусто, только пробелы или перенос строки).
+Также удаляй блоки, где значение — только общий город/страна без конкретного места старта/финиша.
+
+Примеры блоков, которые нужно удалить:
+<strong>Start/finish locations:</strong> Tábua, Portugal
+
+<strong>Participant limit:</strong>
+
+<strong>Registration deadline:</strong>
+
+<strong>Surface types:</strong>
+
+<strong>Course format:</strong>
+
+<strong>Toilets and aid station placement:</strong>
+
+<strong>Prizes:</strong>
+
+<strong>Locais de partida/chegada:</strong> Tábua, Portugal
+
+<strong>Limite de participantes:</strong>
+
+<strong>Prazo de inscrição:</strong>
+
+<strong>Tipos de piso:</strong>
+
+<strong>Formato do percurso:</strong>
+
+<strong>WC e localização dos abastecimentos:</strong>
+
+<strong>Prémios:</strong>
+
  Разделы summary, summary_pt, image_prompt нужно вернуть в ответ ровно такими же, как ты их и получил
 
 Формат ответа должен быть строго JSON:

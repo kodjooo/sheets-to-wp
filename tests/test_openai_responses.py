@@ -152,6 +152,22 @@ class OpenAIResponsesTests(unittest.TestCase):
         self.assertEqual(payload[1]["role"], "user")
         self.assertEqual(payload[1]["content"][0]["text"], "{\n  \"a\": 1\n}")
 
+    def test_second_prompt_has_cleanup_rules(self):
+        prompt_path = os.path.join(RUN_DIR, "prompts", "second_system.txt")
+        with open(prompt_path, "r", encoding="utf-8") as handle:
+            prompt_text = handle.read()
+        self.assertIn("Также удаляй блоки, где после заголовка нет значения", prompt_text)
+        self.assertIn("<strong>Start/finish locations:</strong> Tábua, Portugal", prompt_text)
+
+    def test_first_prompt_requires_fact_checks(self):
+        prompt_path = os.path.join(RUN_DIR, "prompts", "assistant_system.txt")
+        with open(prompt_path, "r", encoding="utf-8") as handle:
+            prompt_text = handle.read()
+        self.assertIn("ПЕРЕД ГЕНЕРАЦИЕЙ:", prompt_text)
+        self.assertIn("Если есть противоречия между WEBSITE INFO и PDF — приоритет у PDF", prompt_text)
+        self.assertIn("Если подтвержденных фактов хватает только на 1 абзац", prompt_text)
+        self.assertIn("Если данных по пункту нет — не добавляй этот блок вообще", prompt_text)
+
 
 if __name__ == "__main__":
     unittest.main()

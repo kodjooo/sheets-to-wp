@@ -31,6 +31,7 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
+test.txt
 
 # Виртуальные окружения
 .venv/
