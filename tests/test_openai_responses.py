@@ -157,7 +157,7 @@ class OpenAIResponsesTests(unittest.TestCase):
         with open(prompt_path, "r", encoding="utf-8") as handle:
             prompt_text = handle.read()
         self.assertIn("Также удаляй блоки, где после заголовка нет значения", prompt_text)
-        self.assertIn("<strong>Start/finish locations:</strong> Tábua, Portugal", prompt_text)
+        self.assertIn("Также удаляй блоки, где значение — только общий город/страна", prompt_text)
 
     def test_first_prompt_requires_fact_checks(self):
         prompt_path = os.path.join(RUN_DIR, "prompts", "assistant_system.txt")
