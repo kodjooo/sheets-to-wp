@@ -62,6 +62,7 @@ from _3_create_product import get_category_id_by_name
 from _4_create_translation import create_product_pt as create_product_pt
 from _5_taxonomy_and_attributes import assign_attributes_to_product
 from _6_create_variations import create_variations
+from utils import normalize_attribute_payload
 
 
 def log_network_diagnostics():
@@ -350,11 +351,13 @@ def run_automation():
                     logging.error(f"Slug error: {e}")
                     last_main_row["LINK RACEFINDER"] = ""
 
-                attr_payload = {k: [v] if isinstance(v, str) else v for k, v in last_main_attributes.items()}
+                attr_payload = normalize_attribute_payload(last_main_attributes)
                 for var in last_variations:
                     for attr in var["attributes"]:
                         if attr["name"] not in attr_payload:
                             attr_payload[attr["name"]] = []
+                        elif not isinstance(attr_payload[attr["name"]], list):
+                            attr_payload[attr["name"]] = [attr_payload[attr["name"]]]
                         if attr["option"] not in attr_payload[attr["name"]]:
                             attr_payload[attr["name"]].append(attr["option"])
 
