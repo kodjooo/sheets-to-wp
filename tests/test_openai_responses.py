@@ -158,6 +158,8 @@ class OpenAIResponsesTests(unittest.TestCase):
             prompt_text = handle.read()
         self.assertIn("Также удаляй блоки, где после заголовка нет значения", prompt_text)
         self.assertIn("Также удаляй блоки, где значение — только общий город/страна", prompt_text)
+        self.assertIn("удаляй любые блоки, чьи заголовки НЕ входят", prompt_text)
+        self.assertIn("Список допустимых заголовков (ТОЛЬКО они разрешены)", prompt_text)
 
     def test_first_prompt_requires_fact_checks(self):
         prompt_path = os.path.join(RUN_DIR, "prompts", "assistant_system.txt")
@@ -167,6 +169,7 @@ class OpenAIResponsesTests(unittest.TestCase):
         self.assertIn("Если есть противоречия между WEBSITE INFO и PDF — приоритет у PDF", prompt_text)
         self.assertIn("Если подтвержденных фактов хватает только на 1 абзац", prompt_text)
         self.assertIn("Если данных по пункту нет — не добавляй этот блок вообще", prompt_text)
+        self.assertIn("Секция включает ТОЛЬКО следующие блоки", prompt_text)
 
 
 if __name__ == "__main__":

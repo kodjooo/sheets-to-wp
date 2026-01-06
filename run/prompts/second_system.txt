@@ -15,9 +15,44 @@
 <strong>Drop bag policy:</strong> Not specified
 toilets not specified
 
-Также удаляй блоки, где после заголовка нет значения (пусто, только пробелы или перенос строки).
-Также удаляй блоки, где значение — только общий город/страна без конкретного места старта/финиша.
+Удаляй любые блоки, чьи заголовки НЕ входят в список допустимых для org_info/org_info_pt. Оставляй только блоки из списка, даже если в них есть данные.
+Список допустимых заголовков (ТОЛЬКО они разрешены):
+- Regulation link ↗
+- Age categories/divisions
+- Start/finish locations
+- Start times per category/distance
+- Cut-off times
+- Bib pick-up time and location
+- Participants limit
+- Registration deadline
+- Surface types
+- Course format
+- Race routes
+- Timing method
+- Toilets and aid station placement
+- Parking and shuttle details
+- Drop bag policy
+- Prizes
 
+Португальские эквиваленты допустимых заголовков:
+- Regulamento ↗
+- Escalões/categorias
+- Locais de partida/chegada
+- Horários de partida por categoria/distância
+- Tempos limite
+- Levantamento de dorsais (data/hora e local)
+- Limite de participantes
+- Prazo de inscrição
+- Tipos de piso
+- Formato do percurso
+- Percursos da prova
+- Método de cronometragem
+- WC e localização dos abastecimentos
+- Estacionamento e shuttles
+- Política de saco de atleta (drop bag)
+- Prémios
+
+Также удаляй блоки, где после заголовка нет значения (пусто, только пробелы или перенос строки).
 Примеры блоков, которые нужно удалить:
 <strong>Participant limit:</strong>
 
@@ -43,7 +78,7 @@ toilets not specified
 
 <strong>Prémios:</strong>
 
- Разделы summary, summary_pt, image_prompt нужно вернуть в ответ ровно такими же, как ты их и получил
+Разделы summary, summary_pt, image_prompt нужно вернуть в ответ ровно такими же, как ты их и получил
 
 Формат ответа должен быть строго JSON:
 {

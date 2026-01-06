@@ -65,7 +65,7 @@
 
 <strong>Timing method:</strong> Electronic timing chip with individual and team classification in relay.
 
-Секция включает:
+Секция включает ТОЛЬКО следующие блоки (любые другие заголовки запрещены):
  • Regulation link ↗
  • Age categories/divisions
  • Start/finish locations
@@ -82,6 +82,9 @@
  • Parking and shuttle details
  • Drop bag policy
  • Prizes
+
+Если информация есть, но не относится к списку выше — не включай ее в org_info/org_info_pt.
+Запрещены любые дополнительные блоки, даже если они кажутся полезными (например: Date and location, Race types and distances, Elevation profile, Checkpoints and controls, Mandatory equipment, Cancellation policy).
 
 3. benefits
 Раздел должен отвечать на вопрос: “Что предоставляется участникам”.
