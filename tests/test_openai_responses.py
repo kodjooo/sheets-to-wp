@@ -168,10 +168,30 @@ class OpenAIResponsesTests(unittest.TestCase):
         with open(prompt_path, "r", encoding="utf-8") as handle:
             prompt_text = handle.read()
         self.assertIn("ПЕРЕД ГЕНЕРАЦИЕЙ:", prompt_text)
-        self.assertIn("Если есть противоречия между WEBSITE INFO и PDF — приоритет у PDF", prompt_text)
+        self.assertIn("Если есть противоречия между WEBSITE INFO/REGULATIONS INFO и PDF — приоритет у PDF", prompt_text)
         self.assertIn("Если подтвержденных фактов хватает только на 1 абзац", prompt_text)
         self.assertIn("Если данных по пункту нет — не добавляй этот блок вообще", prompt_text)
         self.assertIn("Секция включает ТОЛЬКО следующие блоки", prompt_text)
+
+    def test_build_first_assistant_prompt_includes_regulations_info(self):
+        result = self.content.build_first_assistant_prompt(
+            regulations_url="https://example.com/rules",
+            regulations_text="Правила регистрации",
+            website_text="Описание события"
+        )
+        self.assertIn("REGULATIONS LINK:\nhttps://example.com/rules", result)
+        self.assertIn("REGULATIONS INFO:\nПравила регистрации", result)
+        self.assertIn("WEBSITE INFO:\nОписание события", result)
+
+    def test_build_first_assistant_prompt_skips_empty_regulations_info(self):
+        result = self.content.build_first_assistant_prompt(
+            regulations_url="https://example.com/rules.pdf",
+            regulations_text="",
+            website_text="Описание события"
+        )
+        self.assertIn("REGULATIONS LINK:\nhttps://example.com/rules.pdf", result)
+        self.assertNotIn("REGULATIONS INFO:", result)
+        self.assertIn("WEBSITE INFO:\nОписание события", result)
 
 
 if __name__ == "__main__":

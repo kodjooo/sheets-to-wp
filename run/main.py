@@ -50,6 +50,7 @@ from _1_google_loader import (
 
 from _2_content_generation import (
     extract_text_from_url,
+    build_first_assistant_prompt,
     call_openai_assistant,
     call_second_openai_assistant,
     generate_image,
@@ -185,10 +186,11 @@ def run_automation():
                             upload_response = openai.files.create(file=f, purpose="assistants")
                         file_ids.append(upload_response.id)
 
-                combined_text = ""
-                if regulations_url:
-                    combined_text += f"\n\nREGULATIONS LINK:\n{regulations_url}"
-                combined_text += f"\n\nWEBSITE INFO:\n{website_text}"
+                combined_text = build_first_assistant_prompt(
+                    regulations_url=regulations_url,
+                    regulations_text=regulations_text,
+                    website_text=website_text
+                )
 
                 if not combined_text.strip():
                     raise Exception("Нет текста для GPT")

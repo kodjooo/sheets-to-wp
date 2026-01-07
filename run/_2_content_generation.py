@@ -92,6 +92,16 @@ def extract_text_from_url(url):
         logger.error(f"❌ Ошибка загрузки из {url}: {e}")
         return "", None
 
+def build_first_assistant_prompt(regulations_url: str, regulations_text: str, website_text: str) -> str:
+    parts = []
+    if regulations_url:
+        parts.append(f"REGULATIONS LINK:\n{regulations_url}")
+    if regulations_text:
+        parts.append(f"REGULATIONS INFO:\n{regulations_text}")
+    if website_text:
+        parts.append(f"WEBSITE INFO:\n{website_text}")
+    return "\n\n".join(parts).strip()
+
 def translate_title_to_en(title: str) -> str:
     """
     Переводит заголовок с португальского на английский через GPT.
