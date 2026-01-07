@@ -214,6 +214,14 @@ class OpenAIResponsesTests(unittest.TestCase):
         )
         self.assertEqual(errors, [])
 
+    def test_normalize_regulations_link_block(self):
+        payload = {
+            "org_info": "<strong>Regulation link ↗</strong> <a href=\"https://example.com/rules.pdf\" target=\"_new\" rel=\"noopener\">https://example.com/rules.pdf</a>\n\n<strong>Timing method:</strong> Chip"
+        }
+        result = self.content.normalize_regulations_link_block(payload, "https://example.com/rules.pdf")
+        expected = '<strong><a class="" href="https://example.com/rules.pdf" target="_new" rel="noopener">Regulation link ↗</a></strong>'
+        self.assertTrue(result["org_info"].startswith(expected))
+
     def test_extract_text_from_url_retries_with_headers(self):
         class DummyResponse:
             def __init__(self, text):
