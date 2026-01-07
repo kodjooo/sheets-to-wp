@@ -10,20 +10,20 @@ wcapi = API(
     url=config["wp_url"],
     consumer_key=config["consumer_key"],
     consumer_secret=config["consumer_secret"],
-    version="wc/v3"
+    version="wc/v3",
+    timeout=float(config.get("wcapi_timeout_sec", 20))
 )
 
 def _wcapi_request_with_retry(method: str, endpoint: str, payload: dict | None = None):
     max_attempts = int(config.get("wcapi_max_attempts", 4))
     base_delay = float(config.get("wcapi_base_delay_sec", 1.5))
-    timeout = float(config.get("wcapi_timeout_sec", 20))
     last_err = None
     for attempt in range(1, max_attempts + 1):
         try:
             if method == "GET":
-                return wcapi.get(endpoint, timeout=timeout)
+                return wcapi.get(endpoint)
             if method == "POST":
-                return wcapi.post(endpoint, payload, timeout=timeout)
+                return wcapi.post(endpoint, payload)
             raise ValueError(f"Неизвестный метод запроса: {method}")
         except Exception as exc:
             last_err = exc
