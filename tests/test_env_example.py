@@ -50,6 +50,7 @@ class EnvExampleTests(unittest.TestCase):
             "WCAPI_BASE_DELAY_SEC",
             "WCAPI_TIMEOUT_SEC",
             "LOG_LEVEL",
+            "LOG_FILE",
             "HTTP_FETCH_USER_AGENT",
             "HTTP_FETCH_RETRY_DELAYS_SEC",
         }

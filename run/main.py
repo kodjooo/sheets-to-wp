@@ -29,6 +29,7 @@ def _resolve_log_level(value: str | int | None) -> int:
 
 
 LOG_LEVEL = _resolve_log_level(os.getenv("LOG_LEVEL", "INFO"))
+LOG_FILE = os.getenv("LOG_FILE", "/app/logs/automation.log")
 
 # Настройки из переменных окружения
 SKIP_AI = os.getenv('SKIP_AI', 'false').lower() == 'true'
@@ -38,7 +39,17 @@ SCHEDULED_HOUR = int(os.getenv('SCHEDULED_HOUR', '2'))
 SCHEDULED_MINUTE = int(os.getenv('SCHEDULED_MINUTE', '0'))
 TIMEZONE = os.getenv('TIMEZONE', 'Europe/Moscow')
 
-logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s [%(levelname)s] %(message)s")
+_LOG_FORMAT = "%(asctime)s [%(levelname)s] %(message)s"
+logging.basicConfig(level=LOG_LEVEL, format=_LOG_FORMAT)
+if LOG_FILE:
+    try:
+        os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+        file_handler = logging.FileHandler(LOG_FILE, encoding="utf-8")
+        file_handler.setLevel(LOG_LEVEL)
+        file_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
+        logging.getLogger().addHandler(file_handler)
+    except Exception as exc:
+        logging.warning("⚠️ Не удалось настроить лог-файл %s: %s", LOG_FILE, exc)
 
 from _1_google_loader import (
     load_config,
@@ -52,6 +63,7 @@ from _2_content_generation import (
     extract_text_from_url,
     build_first_assistant_prompt,
     validate_source_texts,
+    normalize_regulations_link_block,
     call_openai_assistant,
     call_second_openai_assistant,
     generate_image,
@@ -232,6 +244,7 @@ def run_automation():
                         continue
                     
                     logging.info("✅ Первый ассистент завершил работу, передаём результат во второй ассистент")
+                    first_result = normalize_regulations_link_block(first_result, regulations_url)
                     
                     # Вызываем второй ассистент с результатом первого
                     regulations_hint = f"REGULATIONS LINK: {regulations_url if regulations_url else '(empty)'}"
