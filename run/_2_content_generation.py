@@ -20,6 +20,51 @@ openai.api_key = config['openai_api_key']
 OPENCAGE_API_KEY = config.get("opencage_api_key")
 _OPENAI_CLIENT = OpenAI()
 
+def _parse_retry_delays(value: str | None) -> list[float]:
+    if not value:
+        return []
+    delays = []
+    for raw in value.split(","):
+        item = raw.strip()
+        if not item:
+            continue
+        try:
+            delays.append(float(item))
+        except ValueError:
+            logger.warning("⚠️ Некорректное значение задержки ретрая: %s", item)
+    return delays
+
+def _build_request_headers() -> dict:
+    user_agent = config.get("fetch_user_agent") or "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+    return {
+        "User-Agent": user_agent,
+        "Accept": "text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9,pt-PT;q=0.8,pt;q=0.7"
+    }
+
+def _fetch_with_retries(url: str):
+    delays = _parse_retry_delays(config.get("fetch_retry_delays_sec"))
+    attempts = [0.0] + delays
+    last_err = None
+    for attempt_index, delay in enumerate(attempts, start=1):
+        if delay:
+            logger.info("⏳ Повторная попытка загрузки через %s сек...", delay)
+            time.sleep(delay)
+        try:
+            response = requests.get(url, headers=_build_request_headers(), timeout=20)
+            response.raise_for_status()
+            return response
+        except Exception as exc:
+            last_err = exc
+            logger.warning(
+                "⚠️ Ошибка загрузки из %s (попытка %s/%s): %s",
+                url,
+                attempt_index,
+                len(attempts),
+                exc
+            )
+    raise last_err
+
 
 def _load_prompt_file(path: str) -> str:
     if not path:
@@ -65,8 +110,7 @@ def extract_text_from_url(url):
         
         if direct_url.lower().endswith(".pdf") or "drive.google.com/uc?export=download" in direct_url:
             # Для PDF файлов (включая Google Drive)
-            response = requests.get(direct_url)
-            response.raise_for_status()
+            response = _fetch_with_retries(direct_url)
             
             # Проверяем, что получили именно PDF, а не HTML страницу с ошибкой
             content_type = response.headers.get('content-type', '').lower()
@@ -82,8 +126,7 @@ def extract_text_from_url(url):
             return "", pdf_path
         else:
             # Для обычных веб-страниц
-            response = requests.get(direct_url)
-            response.raise_for_status()
+            response = _fetch_with_retries(direct_url)
             soup = BeautifulSoup(response.text, 'html.parser')
             text = soup.get_text(separator=' ', strip=True)
             logger.info(f"🌐 Обработан сайт: {url}")
@@ -101,6 +144,20 @@ def build_first_assistant_prompt(regulations_url: str, regulations_text: str, we
     if website_text:
         parts.append(f"WEBSITE INFO:\n{website_text}")
     return "\n\n".join(parts).strip()
+
+def validate_source_texts(
+    website_url: str,
+    website_text: str,
+    regulations_url: str,
+    regulations_text: str,
+    regulations_pdf_path: str | None
+) -> list[str]:
+    errors = []
+    if website_url and not (website_text or "").strip():
+        errors.append("WEBSITE parse failed")
+    if regulations_url and not (regulations_text or "").strip() and not regulations_pdf_path:
+        errors.append("REGULATIONS parse failed")
+    return errors
 
 def translate_title_to_en(title: str) -> str:
     """

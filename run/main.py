@@ -51,6 +51,7 @@ from _1_google_loader import (
 from _2_content_generation import (
     extract_text_from_url,
     build_first_assistant_prompt,
+    validate_source_texts,
     call_openai_assistant,
     call_second_openai_assistant,
     generate_image,
@@ -185,6 +186,19 @@ def run_automation():
                         with open(pdf_path, "rb") as f:
                             upload_response = openai.files.create(file=f, purpose="assistants")
                         file_ids.append(upload_response.id)
+
+                errors = validate_source_texts(
+                    website_url=row.get("WEBSITE", ""),
+                    website_text=website_text,
+                    regulations_url=regulations_url,
+                    regulations_text=regulations_text,
+                    regulations_pdf_path=pdf_path
+                )
+                if errors:
+                    status_message = "Error: " + "; ".join(errors)
+                    logging.error("❌ Не удалось получить источники: %s", status_message)
+                    batch_update_cells(row_index, {"STATUS": status_message}, headers)
+                    continue
 
                 combined_text = build_first_assistant_prompt(
                     regulations_url=regulations_url,

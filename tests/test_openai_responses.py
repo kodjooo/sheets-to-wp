@@ -193,6 +193,65 @@ class OpenAIResponsesTests(unittest.TestCase):
         self.assertNotIn("REGULATIONS INFO:", result)
         self.assertIn("WEBSITE INFO:\nОписание события", result)
 
+    def test_validate_source_texts_requires_sources(self):
+        errors = self.content.validate_source_texts(
+            website_url="https://example.com",
+            website_text="",
+            regulations_url="https://example.com/rules",
+            regulations_text="",
+            regulations_pdf_path=None
+        )
+        self.assertIn("WEBSITE parse failed", errors)
+        self.assertIn("REGULATIONS parse failed", errors)
+
+    def test_validate_source_texts_accepts_pdf_regulations(self):
+        errors = self.content.validate_source_texts(
+            website_url="https://example.com",
+            website_text="ok",
+            regulations_url="https://example.com/rules.pdf",
+            regulations_text="",
+            regulations_pdf_path="/tmp/test.pdf"
+        )
+        self.assertEqual(errors, [])
+
+    def test_extract_text_from_url_retries_with_headers(self):
+        class DummyResponse:
+            def __init__(self, text):
+                self.text = text
+                self.headers = {"content-type": "text/html"}
+
+            def raise_for_status(self):
+                return None
+
+        class DummyRequests:
+            def __init__(self):
+                self.calls = []
+                self.attempt = 0
+
+            def get(self, url, headers=None, timeout=None):
+                self.calls.append({"url": url, "headers": headers, "timeout": timeout})
+                self.attempt += 1
+                if self.attempt < 3:
+                    raise Exception("temporary error")
+                return DummyResponse("Привет мир")
+
+        sleep_calls = []
+        dummy_requests = DummyRequests()
+        self.content.requests = dummy_requests
+        self.content.time.sleep = lambda seconds: sleep_calls.append(seconds)
+        self.content.BeautifulSoup = lambda text, parser: types.SimpleNamespace(
+            get_text=lambda separator, strip: text
+        )
+        self.content.config["fetch_retry_delays_sec"] = "60,120"
+        self.content.config["fetch_user_agent"] = "TestAgent/1.0"
+
+        text, pdf_path = self.content.extract_text_from_url("https://example.com/page")
+        self.assertEqual(text, "Привет мир")
+        self.assertIsNone(pdf_path)
+        self.assertEqual(sleep_calls, [60.0, 120.0])
+        self.assertEqual(dummy_requests.calls[-1]["headers"]["User-Agent"], "TestAgent/1.0")
+        self.assertEqual(dummy_requests.calls[-1]["headers"]["Accept-Language"], "en-US,en;q=0.9,pt-PT;q=0.8,pt;q=0.7")
+
 
 if __name__ == "__main__":
     unittest.main()

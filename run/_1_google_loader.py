@@ -29,7 +29,9 @@ def load_config():
         "wp_admin_pass": os.getenv("WP_ADMIN_PASS"),
         "consumer_key": os.getenv("WP_CONSUMER_KEY"),
         "consumer_secret": os.getenv("WP_CONSUMER_SECRET"),
-        "sleep_seconds": int(os.getenv("SLEEP_SECONDS", "3"))
+        "sleep_seconds": int(os.getenv("SLEEP_SECONDS", "3")),
+        "fetch_user_agent": os.getenv("HTTP_FETCH_USER_AGENT"),
+        "fetch_retry_delays_sec": os.getenv("HTTP_FETCH_RETRY_DELAYS_SEC", "60,120")
     }
     
     # Проверяем, что все обязательные переменные заданы

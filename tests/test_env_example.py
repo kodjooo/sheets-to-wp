@@ -49,6 +49,8 @@ class EnvExampleTests(unittest.TestCase):
             "WCAPI_MAX_ATTEMPTS",
             "WCAPI_BASE_DELAY_SEC",
             "LOG_LEVEL",
+            "HTTP_FETCH_USER_AGENT",
+            "HTTP_FETCH_RETRY_DELAYS_SEC",
         }
 
         missing = [key for key in sorted(required) if key not in keys]
