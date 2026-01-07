@@ -1,7 +1,7 @@
-import requests
 from woocommerce import API
 import json
 import logging
+import time
 
 from _1_google_loader import load_config
 config = load_config()
@@ -13,6 +13,34 @@ wcapi = API(
     version="wc/v3"
 )
 
+def _wcapi_request_with_retry(method: str, endpoint: str, payload: dict | None = None):
+    max_attempts = int(config.get("wcapi_max_attempts", 4))
+    base_delay = float(config.get("wcapi_base_delay_sec", 1.5))
+    timeout = float(config.get("wcapi_timeout_sec", 20))
+    last_err = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            if method == "GET":
+                return wcapi.get(endpoint, timeout=timeout)
+            if method == "POST":
+                return wcapi.post(endpoint, payload, timeout=timeout)
+            raise ValueError(f"Неизвестный метод запроса: {method}")
+        except Exception as exc:
+            last_err = exc
+            if attempt < max_attempts:
+                delay = base_delay * (2 ** (attempt - 1))
+                logging.warning(
+                    "⚠️ Ошибка запроса WooCommerce %s %s (попытка %s/%s): %s",
+                    method,
+                    endpoint,
+                    attempt,
+                    max_attempts,
+                    exc
+                )
+                logging.info("⏳ Повтор через %.1f сек...", delay)
+                time.sleep(delay)
+    raise last_err
+
 def create_variations(product_id, variation_data_list):
     """
     Создаёт вариации для variable-продукта.
@@ -23,7 +51,7 @@ def create_variations(product_id, variation_data_list):
     """
 
     # Получаем список атрибутов продукта (чтобы взять их id)
-    response = wcapi.get(f"products/{product_id}")
+    response = _wcapi_request_with_retry("GET", f"products/{product_id}")
     product = response.json()
     product_attributes = product.get("attributes", [])
 
@@ -31,7 +59,7 @@ def create_variations(product_id, variation_data_list):
     attr_name_to_id = {attr["name"]: attr["id"] for attr in product_attributes if "id" in attr}
 
     # Получаем уже существующие вариации
-    existing_response = wcapi.get(f"products/{product_id}/variations")
+    existing_response = _wcapi_request_with_retry("GET", f"products/{product_id}/variations")
     existing_response.raise_for_status()
     existing_variations = existing_response.json()
 
@@ -73,7 +101,7 @@ def create_variations(product_id, variation_data_list):
 
         try:
             logging.debug(f"📤 Отправка вариации для товара {product_id}: {json.dumps(payload, ensure_ascii=False)}")
-            res = wcapi.post(f"products/{product_id}/variations", payload)
+            res = _wcapi_request_with_retry("POST", f"products/{product_id}/variations", payload)
             res.raise_for_status()
             logging.debug(f"📥 Ответ WooCommerce: {res.status_code} — {res.text}")
             print("✅ Вариация создана:", payload)

@@ -30,6 +30,9 @@ def load_config():
         "consumer_key": os.getenv("WP_CONSUMER_KEY"),
         "consumer_secret": os.getenv("WP_CONSUMER_SECRET"),
         "sleep_seconds": int(os.getenv("SLEEP_SECONDS", "3")),
+        "wcapi_max_attempts": int(os.getenv("WCAPI_MAX_ATTEMPTS", "4")),
+        "wcapi_base_delay_sec": float(os.getenv("WCAPI_BASE_DELAY_SEC", "1.5")),
+        "wcapi_timeout_sec": float(os.getenv("WCAPI_TIMEOUT_SEC", "20")),
         "fetch_user_agent": os.getenv("HTTP_FETCH_USER_AGENT"),
         "fetch_retry_delays_sec": os.getenv("HTTP_FETCH_RETRY_DELAYS_SEC", "60,120")
     }

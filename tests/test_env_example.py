@@ -48,6 +48,7 @@ class EnvExampleTests(unittest.TestCase):
             "TIMEZONE",
             "WCAPI_MAX_ATTEMPTS",
             "WCAPI_BASE_DELAY_SEC",
+            "WCAPI_TIMEOUT_SEC",
             "LOG_LEVEL",
             "HTTP_FETCH_USER_AGENT",
             "HTTP_FETCH_RETRY_DELAYS_SEC",
