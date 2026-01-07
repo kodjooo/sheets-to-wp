@@ -159,6 +159,35 @@ def validate_source_texts(
         errors.append("REGULATIONS parse failed")
     return errors
 
+def normalize_regulations_link_block(payload: dict, regulations_url: str) -> dict:
+    if not isinstance(payload, dict) or not regulations_url:
+        return payload
+    link_html = (
+        f'<strong><a class="" href="{regulations_url}" target="_new" rel="noopener">'
+        "Regulation link ↗</a></strong>"
+    )
+    link_html_pt = (
+        f'<strong><a class="" href="{regulations_url}" target="_new" rel="noopener">'
+        "Regulamento ↗</a></strong>"
+    )
+    org_info = payload.get("org_info", "")
+    if isinstance(org_info, str) and "Regulation link ↗" in org_info:
+        lines = org_info.splitlines()
+        for i, line in enumerate(lines):
+            if "Regulation link ↗" in line:
+                lines[i] = link_html
+                break
+        payload["org_info"] = "\n".join(lines)
+    org_info_pt = payload.get("org_info_pt", "")
+    if isinstance(org_info_pt, str) and "Regulamento ↗" in org_info_pt:
+        lines = org_info_pt.splitlines()
+        for i, line in enumerate(lines):
+            if "Regulamento ↗" in line:
+                lines[i] = link_html_pt
+                break
+        payload["org_info_pt"] = "\n".join(lines)
+    return payload
+
 def translate_title_to_en(title: str) -> str:
     """
     Переводит заголовок с португальского на английский через GPT.
