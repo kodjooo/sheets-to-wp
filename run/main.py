@@ -76,7 +76,7 @@ from _3_create_product import get_category_id_by_name
 from _4_create_translation import create_product_pt as create_product_pt
 from _5_taxonomy_and_attributes import assign_attributes_to_product
 from _6_create_variations import create_variations
-from utils import normalize_attribute_payload
+from utils import normalize_attribute_payload, parse_subcategory_values
 
 
 def log_network_diagnostics():
@@ -297,7 +297,12 @@ def run_automation():
                 main_category = row.get("CATEGORY")
                 main_subcategory = row.get("SUBCATEGORY")
                 if main_category:
-                    last_main_row["extra_categories"].add((main_category, main_subcategory))
+                    subcategories = parse_subcategory_values(main_subcategory)
+                    if subcategories:
+                        for subcategory in subcategories:
+                            last_main_row["extra_categories"].add((main_category, subcategory))
+                    else:
+                        last_main_row["extra_categories"].add((main_category, None))
                 if row.get("ATTRIBUTE") and row.get("VALUE"):
                     last_main_attributes[row["ATTRIBUTE"]] = row["VALUE"]
 
@@ -330,7 +335,12 @@ def run_automation():
                             var_attrs.append({"name": sub_row["ATTRIBUTE"], "option": sub_row["VALUE"]})
                         variation_category = sub_row.get("CATEGORY")
                         if variation_category:
-                            last_main_row["extra_categories"].add((variation_category, sub_row.get("SUBCATEGORY")))
+                            variation_subcategories = parse_subcategory_values(sub_row.get("SUBCATEGORY"))
+                            if variation_subcategories:
+                                for subcategory in variation_subcategories:
+                                    last_main_row["extra_categories"].add((variation_category, subcategory))
+                            else:
+                                last_main_row["extra_categories"].add((variation_category, None))
                         for attr_name, col in [
                             ("Distance", "DISTANCE"),
                             ("Team", "TEAM"),

@@ -11,6 +11,7 @@ from wordpress_xmlrpc.methods import media, posts
 from wordpress_xmlrpc.compat import xmlrpc_client
 
 from _1_google_loader import load_config
+from utils import normalize_category_pairs
 
 config = load_config()
 
@@ -194,12 +195,12 @@ def create_product(data):
     }
 
     # Получаем категории из таблицы
-    categories_raw = set()
+    categories_raw = []
 
     main_category = data.get("CATEGORY")
     main_subcategory = data.get("SUBCATEGORY")
     if main_category:
-        categories_raw.add((main_category, main_subcategory))
+        categories_raw.append((main_category, main_subcategory))
         print(f"📂 Основная категория: ({main_category} → {main_subcategory})")
     else:
         print("📂 Основная категория не указана в строке")
@@ -214,22 +215,31 @@ def create_product(data):
                     valid.append((category_name, subcategory_name))
         if valid:
             print(f"📚 Доп. категории получены: {valid}")
-            categories_raw.update(valid)
+            categories_raw.extend(valid)
         else:
             print(f"⚠️ Доп. категории найдены, но не в формате пар (name, value): {extra_cats}")
     else:
         print("📚 Доп. категории отсутствуют или в неправильном формате")
 
+    categories_normalized = normalize_category_pairs(categories_raw)
+    if categories_normalized:
+        print(f"📦 Нормализованные категории: {categories_normalized}")
+
     category_ids = []
-    for parent_name, child_name in categories_raw:
+    category_ids_seen = set()
+    for parent_name, child_name in categories_normalized:
         try:
             parent_id = get_category_id_by_name(parent_name)
             if parent_id:
-                category_ids.append({"id": parent_id})
+                if parent_id not in category_ids_seen:
+                    category_ids.append({"id": parent_id})
+                    category_ids_seen.add(parent_id)
                 if child_name:
                     child_id = get_category_id_by_name(child_name, parent_id=parent_id)
                     if child_id:
-                        category_ids.append({"id": child_id})
+                        if child_id not in category_ids_seen:
+                            category_ids.append({"id": child_id})
+                            category_ids_seen.add(child_id)
         except Exception as e:
             print(f"⚠️ Ошибка при добавлении категории ({parent_name} → {child_name}): {e}")
 

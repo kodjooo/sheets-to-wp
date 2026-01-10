@@ -5,6 +5,7 @@ from _5_taxonomy_and_attributes import assign_attributes_to_product
 from _6_create_variations import create_variations
 from _3_create_product import get_jwt_token
 from _3_create_product import get_category_id_by_name
+from utils import normalize_category_pairs
 import logging
 import json  
 
@@ -43,11 +44,11 @@ def create_product_pt(row, en_product_id, attributes=None, last_variations=None,
     logging.debug("📦 Данные для перевода: %s", json.dumps(data, ensure_ascii=False))
 
     try:
-        categories_raw = set()
+        categories_raw = []
         main_category = row.get("CATEGORY")
         main_subcategory = row.get("SUBCATEGORY")
         if main_category:
-            categories_raw.add((main_category, main_subcategory))
+            categories_raw.append((main_category, main_subcategory))
             logging.debug(f"📂 Основная категория PT: ({main_category} → {main_subcategory})")
 
         extra_cats = row.get("extra_categories")
@@ -60,22 +61,31 @@ def create_product_pt(row, en_product_id, attributes=None, last_variations=None,
                         valid.append((category_name, subcategory_name))
             if valid:
                 logging.debug(f"📚 Доп. категории PT получены: {valid}")
-                categories_raw.update(valid)
+                categories_raw.extend(valid)
             else:
                 logging.debug(f"⚠️ Доп. категории PT найдены, но не в формате пар (name, value): {extra_cats}")
         else:
             logging.debug("📚 Доп. категории PT отсутствуют или в неправильном формате")
 
+        categories_normalized = normalize_category_pairs(categories_raw)
+        if categories_normalized:
+            logging.debug("📦 Нормализованные категории PT: %s", categories_normalized)
+
         category_ids = []
-        for parent_name, child_name in categories_raw:
+        category_ids_seen = set()
+        for parent_name, child_name in categories_normalized:
             try:
                 parent_id = get_category_id_by_name(parent_name)
                 if parent_id:
-                    category_ids.append({"id": parent_id})
+                    if parent_id not in category_ids_seen:
+                        category_ids.append({"id": parent_id})
+                        category_ids_seen.add(parent_id)
                     if child_name:
                         child_id = get_category_id_by_name(child_name, parent_id=parent_id)
                         if child_id:
-                            category_ids.append({"id": child_id})
+                            if child_id not in category_ids_seen:
+                                category_ids.append({"id": child_id})
+                                category_ids_seen.add(child_id)
             except Exception as e:
                 logging.warning(f"⚠️ Ошибка при добавлении категории ({parent_name} → {child_name}): {e}")
 
