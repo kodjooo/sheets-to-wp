@@ -197,7 +197,7 @@ def translate_title_to_en(title: str) -> str:
         return ""
     try:
         response = openai.chat.completions.create(
-            model="gpt-4.1-mini",
+            model="gpt-4o-mini",
             messages=build_translation_messages(title),
             temperature=0.3
         )
