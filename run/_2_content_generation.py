@@ -14,6 +14,7 @@ from openai import OpenAI
 from _1_google_loader import load_config, get_logger
 from _3_create_product import get_jwt_token
 from translation_prompt import build_translation_messages
+from url_utils import normalize_http_url
 
 logger = get_logger()
 config = load_config()
@@ -107,7 +108,11 @@ def convert_google_drive_url(url):
 def extract_text_from_url(url):
     try:
         # Преобразуем Google Drive ссылку в прямую ссылку, если необходимо
-        direct_url = convert_google_drive_url(url)
+        normalized_url = normalize_http_url(url)
+        if not normalized_url:
+            logger.warning("⚠️ Пустой URL, пропускаем загрузку")
+            return "", None
+        direct_url = convert_google_drive_url(normalized_url)
         
         if direct_url.lower().endswith(".pdf") or "drive.google.com/uc?export=download" in direct_url:
             # Для PDF файлов (включая Google Drive)
@@ -130,7 +135,13 @@ def extract_text_from_url(url):
             response = _fetch_with_retries(direct_url)
             soup = BeautifulSoup(response.text, 'html.parser')
             text = soup.get_text(separator=' ', strip=True)
-            logger.info(f"🌐 Обработан сайт: {url}")
+            logger.info("🌐 Обработан сайт: %s", url)
+            logger.debug(
+                "🌐 Метаданные сайта: status=%s, content-type=%s, text_len=%s",
+                response.status_code,
+                response.headers.get("content-type", ""),
+                len(text.strip())
+            )
             return text.strip(), None
     except Exception as e:
         logger.error(f"❌ Ошибка загрузки из {url}: {e}")

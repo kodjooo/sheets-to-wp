@@ -8,6 +8,7 @@ if RUN_DIR not in sys.path:
     sys.path.insert(0, RUN_DIR)
 
 from translation_prompt import build_translation_messages
+from url_utils import normalize_http_url
 
 
 class TranslationPromptTests(unittest.TestCase):
@@ -24,6 +25,11 @@ class TranslationPromptTests(unittest.TestCase):
         self.assertIn("Terra de Pão", user_content)
         self.assertIn("2° -> 2nd", user_content)
         self.assertIn("X -> 10th", user_content)
+
+    def test_normalize_http_url(self):
+        self.assertEqual(normalize_http_url("aoa.pt/movetavira/"), "https://aoa.pt/movetavira/")
+        self.assertEqual(normalize_http_url("https://aoa.pt/movetavira/"), "https://aoa.pt/movetavira/")
+        self.assertEqual(normalize_http_url(""), "")
 
 
 if __name__ == "__main__":
