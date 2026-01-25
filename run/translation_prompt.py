@@ -3,18 +3,18 @@ def build_translation_messages(title: str) -> list[dict]:
         {
             "role": "system",
             "content": (
-                "You are a professional translator. Keep proper names, places, and people in Portuguese, "
-                "do not translate them. Translate only generic race terms and numbers/ordinals. "
-                "Output only the translated race name with no extra words, punctuation, or quotes."
+                "Ты профессиональный переводчик. Сохраняй имена собственные, топонимы и имена людей на португальском, "
+                "не переводи их. Переводи только общие термины забегов и числа/порядковые числительные. "
+                "Выводи только переведенное название гонки без лишних слов, пунктуации и кавычек."
             )
         },
         {
             "role": "user",
             "content": (
-                "Translate this race name from Portuguese to English. "
-                "Keep names unchanged, translate only terms like Triathlon, Half Marathon, Trail, Run, "
-                "and numbers/ordinals (e.g., 2° -> 2nd). "
-                "Return only the translated name and nothing else:\n\n"
+                "Переведи название гонки с португальского на английский. "
+                "Сохраняй имена без изменений, переводи только термины типа Triathlon, Half Marathon, Trail, Run, "
+                "и числа/порядковые (например, 2° -> 2nd). "
+                "Верни только переведенное название и ничего больше:\n\n"
                 f"{title}"
             )
         }

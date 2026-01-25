@@ -16,10 +16,10 @@ class TranslationPromptTests(unittest.TestCase):
         self.assertEqual(len(messages), 2)
         system_content = messages[0]["content"]
         user_content = messages[1]["content"]
-        self.assertIn("Keep proper names", system_content)
-        self.assertIn("Translate only generic race terms", system_content)
-        self.assertIn("numbers/ordinals", system_content)
-        self.assertIn("Keep names unchanged", user_content)
+        self.assertIn("Сохраняй имена собственные", system_content)
+        self.assertIn("Переводи только общие термины", system_content)
+        self.assertIn("числа/порядковые", system_content)
+        self.assertIn("Сохраняй имена без изменений", user_content)
         self.assertIn("2° -> 2nd", user_content)
 
 
