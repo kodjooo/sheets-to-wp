@@ -19,8 +19,10 @@ class TranslationPromptTests(unittest.TestCase):
         self.assertIn("Сохраняй имена собственные", system_content)
         self.assertIn("Переводи только общие термины", system_content)
         self.assertIn("числа/порядковые", system_content)
+        self.assertIn("Римские цифры", system_content)
         self.assertIn("Сохраняй имена без изменений", user_content)
         self.assertIn("2° -> 2nd", user_content)
+        self.assertIn("X -> 10th", user_content)
 
 
 if __name__ == "__main__":
