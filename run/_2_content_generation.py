@@ -13,6 +13,7 @@ from PIL import Image
 from openai import OpenAI
 from _1_google_loader import load_config, get_logger
 from _3_create_product import get_jwt_token
+from translation_prompt import build_translation_messages
 
 logger = get_logger()
 config = load_config()
@@ -197,10 +198,7 @@ def translate_title_to_en(title: str) -> str:
     try:
         response = openai.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a professional translator."},
-                {"role": "user", "content": f"Translate this race name from Portuguese to English without changing the meaning or inventing anything:\n\n{title}"}
-            ],
+            messages=build_translation_messages(title),
             temperature=0.3
         )
         en_title = response.choices[0].message.content.strip()
