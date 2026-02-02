@@ -240,8 +240,11 @@ def call_openai_assistant(text, file_ids=None):
 
             input_payload = []
             if system_prompt:
+                strict_note = ""
+                if attempt > 1:
+                    strict_note = "\n\nСТРОГО: Верни только валидный завершённый JSON без обрезанных строк, без текста вне JSON."
                 input_payload.append(
-                    {"role": "system", "content": [{"type": "input_text", "text": system_prompt}]}
+                    {"role": "system", "content": [{"type": "input_text", "text": system_prompt + strict_note}]}
                 )
             input_payload.append({"role": "user", "content": user_content})
 
@@ -278,7 +281,9 @@ def call_openai_assistant(text, file_ids=None):
                 return json.loads(reply)
             except json.JSONDecodeError:
                 logger.error("❌ Ответ OpenAI не является JSON: %s", reply[:2000])
-                raise ValueError("Ответ OpenAI не является JSON")
+                if attempt == max_attempts:
+                    raise ValueError("Ответ OpenAI не является JSON")
+                continue
 
         except Exception as e:
             logger.error("❌ Ошибка OpenAI Responses API (попытка %s/%s): %s", attempt, max_attempts, e)
