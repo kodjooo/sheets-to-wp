@@ -227,9 +227,11 @@ def run_automation():
                         "summary": "Заглушка summary",
                         "org_info": "Заглушка org_info",
                         "benefits": "Заглушка benefits",
+                        "faq": "",
                         "summary_pt": "Заглушка summary_pt",
                         "org_info_pt": "Заглушка org_info_pt",
                         "benefits_pt": "Заглушка benefits_pt",
+                        "faq_pt": "",
                         "image_prompt": "Placeholder image"
                     }
                 else:
@@ -264,11 +266,13 @@ def run_automation():
                     "SUMMARY": result.get("summary", ""),
                     "ORG INFO": result.get("org_info", ""),
                     "BENEFITS": "\n".join(result["benefits"]) if isinstance(result.get("benefits"), list) else result.get("benefits", ""),
+                    "FAQ": result.get("faq", ""),
                     "IMAGE URL": image_info.get("url", ""),
                     "IMAGE ID": image_info.get("id", ""),
                     "SUMMARY (PT)": result.get("summary_pt", ""),
                     "ORG INFO (PT)": result.get("org_info_pt", ""),
                     "BENEFITS (PT)": "\n".join(result["benefits_pt"]) if isinstance(result.get("benefits_pt"), list) else result.get("benefits_pt", ""),
+                    "FAQ (PT)": result.get("faq_pt", ""),
                     "LAT": row["LAT"],
                     "LON": row["LON"],
                     "RACE NAME (PT)": row.get("RACE NAME (PT)", ""),
@@ -280,11 +284,13 @@ def run_automation():
                     "SUMMARY": row["SUMMARY"],
                     "ORG INFO": row["ORG INFO"],
                     "BENEFITS": row["BENEFITS"],
+                    "FAQ": row["FAQ"],
                     "IMAGE URL": row["IMAGE URL"],
                     "IMAGE ID": row["IMAGE ID"],
                     "SUMMARY (PT)": row["SUMMARY (PT)"],
                     "ORG INFO (PT)": row["ORG INFO (PT)"],
                     "BENEFITS (PT)": row["BENEFITS (PT)"],
+                    "FAQ (PT)": row["FAQ (PT)"],
                     "RACE NAME (PT)": row["RACE NAME (PT)"],
                     "RACE NAME": row.get("RACE NAME", "")
                 }, headers)
