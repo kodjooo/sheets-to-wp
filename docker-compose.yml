@@ -27,7 +27,7 @@ services:
       # Монтируем только необходимые файлы
       - ./run/google-credentials.json:/app/google-credentials.json:ro
       # Подмонтируем папку run для автоматического обновления кода
-      - ./run:/app:ro
+      - ./run:/app/run:ro
       # Логи на хосте
       - /var/log/racefinder:/app/logs
       # Временные файлы (для PDF и изображений)
@@ -35,6 +35,7 @@ services:
     networks:
       - racefinder_network
     # Запуск по расписанию (можно заменить на cron)
+    working_dir: /app/run
     command: python main.py
     
     # Мониторинг здоровья контейнера

@@ -21,6 +21,14 @@ class PromptTests(unittest.TestCase):
         self.assertIn("\"faq\":", content)
         self.assertIn("\"faq_pt\":", content)
 
+    def test_docker_compose_mounts_run_subdir(self):
+        compose_path = os.path.join(
+            os.path.dirname(__file__), "..", "docker-compose.yml"
+        )
+        with open(compose_path, "r", encoding="utf-8") as compose_file:
+            content = compose_file.read()
+        self.assertIn("./run:/app/run:ro", content)
+
 
 if __name__ == "__main__":
     unittest.main()
