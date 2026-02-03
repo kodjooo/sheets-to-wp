@@ -10,6 +10,34 @@ def normalize_attribute_payload(raw_attributes: dict) -> dict:
     return normalized
 
 
+def get_missing_pt_fields(result: dict) -> list[str]:
+    if not isinstance(result, dict):
+        return []
+    missing = []
+
+    def _has_text(value) -> bool:
+        return isinstance(value, str) and value.strip() != ""
+
+    def _has_list(value) -> bool:
+        return isinstance(value, list) and len(value) > 0
+
+    pairs = [
+        ("summary", "summary_pt"),
+        ("org_info", "org_info_pt"),
+        ("faq", "faq_pt"),
+    ]
+    for en_key, pt_key in pairs:
+        if _has_text(result.get(en_key, "")) and not _has_text(result.get(pt_key, "")):
+            missing.append(pt_key)
+
+    benefits_en = result.get("benefits", [])
+    benefits_pt = result.get("benefits_pt", [])
+    if _has_list(benefits_en) and not _has_list(benefits_pt):
+        missing.append("benefits_pt")
+
+    return missing
+
+
 def parse_subcategory_values(raw_value):
     # Нормализуем список подкатегорий из строки/списка, разделитель — запятая.
     if raw_value is None:

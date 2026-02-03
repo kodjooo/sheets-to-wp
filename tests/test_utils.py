@@ -7,7 +7,12 @@ RUN_DIR = os.path.join(os.path.dirname(__file__), "..", "run")
 if RUN_DIR not in sys.path:
     sys.path.insert(0, RUN_DIR)
 
-from utils import normalize_attribute_payload, normalize_category_pairs, parse_subcategory_values
+from utils import (
+    normalize_attribute_payload,
+    normalize_category_pairs,
+    parse_subcategory_values,
+    get_missing_pt_fields,
+)
 
 
 class UtilsTests(unittest.TestCase):
@@ -44,6 +49,32 @@ class UtilsTests(unittest.TestCase):
             normalized,
             [("Run", "Road"), ("Run", "Trail"), ("Run", None), ("Cycle", None)]
         )
+
+    def test_get_missing_pt_fields(self):
+        result = {
+            "summary": "<p>Text</p>",
+            "summary_pt": "",
+            "org_info": "Info",
+            "org_info_pt": "Info PT",
+            "faq": "Q",
+            "faq_pt": "",
+            "benefits": ["A"],
+            "benefits_pt": [],
+        }
+        missing = get_missing_pt_fields(result)
+        self.assertEqual(missing, ["summary_pt", "faq_pt", "benefits_pt"])
+
+        result_ok = {
+            "summary": "<p>Text</p>",
+            "summary_pt": "<p>Texto</p>",
+            "org_info": "",
+            "org_info_pt": "",
+            "faq": "",
+            "faq_pt": "",
+            "benefits": [],
+            "benefits_pt": [],
+        }
+        self.assertEqual(get_missing_pt_fields(result_ok), [])
 
 
 if __name__ == "__main__":

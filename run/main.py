@@ -38,6 +38,7 @@ RUN_ON_STARTUP = os.getenv('RUN_ON_STARTUP', 'true').lower() == 'true'
 SCHEDULED_HOUR = int(os.getenv('SCHEDULED_HOUR', '2'))
 SCHEDULED_MINUTE = int(os.getenv('SCHEDULED_MINUTE', '0'))
 TIMEZONE = os.getenv('TIMEZONE', 'Europe/Moscow')
+PT_RETRY_ATTEMPTS = int(os.getenv('PT_RETRY_ATTEMPTS', '2'))
 
 _LOG_FORMAT = "%(asctime)s [%(levelname)s] %(message)s"
 logging.basicConfig(level=LOG_LEVEL, format=_LOG_FORMAT)
@@ -76,7 +77,7 @@ from _3_create_product import get_category_id_by_name
 from _4_create_translation import create_product_pt as create_product_pt
 from _5_taxonomy_and_attributes import assign_attributes_to_product
 from _6_create_variations import create_variations
-from utils import normalize_attribute_payload, parse_subcategory_values
+from utils import normalize_attribute_payload, parse_subcategory_values, get_missing_pt_fields
 
 
 def log_network_diagnostics():
@@ -250,10 +251,29 @@ def run_automation():
                     
                     # Вызываем второй ассистент с результатом первого
                     regulations_hint = f"REGULATIONS LINK: {regulations_url if regulations_url else '(empty)'}"
-                    result = call_second_openai_assistant(first_result, regulations_hint=regulations_hint)
-                    
+                    result = None
+                    missing_pt_fields = []
+                    total_attempts = 1 + max(0, PT_RETRY_ATTEMPTS)
+                    for attempt in range(total_attempts):
+                        result = call_second_openai_assistant(first_result, regulations_hint=regulations_hint)
+                        if result is None:
+                            logging.error("❌ Второй ассистент не вернул результат")
+                            continue
+                        missing_pt_fields = get_missing_pt_fields(result)
+                        if not missing_pt_fields:
+                            break
+                        logging.warning(
+                            f"⚠️ Во втором ассистенте нет PT-переводов для {', '.join(missing_pt_fields)} "
+                            f"(попытка {attempt + 1}/{total_attempts})"
+                        )
+
                     if result is None:
-                        logging.error("❌ Второй ассистент не вернул результат")
+                        logging.error("❌ Второй ассистент не вернул результат после повторов")
+                        continue
+                    if missing_pt_fields:
+                        status_message = f"Error: missing PT fields ({', '.join(missing_pt_fields)})"
+                        logging.error(f"❌ {status_message}")
+                        batch_update_cells(row_index, {"STATUS": status_message}, headers)
                         continue
 
                 # Генерация картинки
