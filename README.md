@@ -193,6 +193,8 @@ docker-compose logs --tail=100
 tail -f /var/log/racefinder-cron.log
 ```
 
+Логи приложения записываются в контейнере в `/app/logs/automation.log`. В `docker-compose.yml` настроен volume, поэтому на сервере файл будет доступен по пути `/var/log/racefinder/automation.log`.
+
 ### Проверка статуса
 
 ```bash

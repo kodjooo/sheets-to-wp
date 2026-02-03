@@ -28,6 +28,8 @@ services:
       - ./run/google-credentials.json:/app/google-credentials.json:ro
       # Подмонтируем папку run для автоматического обновления кода
       - ./run:/app:ro
+      # Логи на хосте
+      - /var/log/racefinder:/app/logs
       # Временные файлы (для PDF и изображений)
       - temp_volume:/tmp/app_temp
     networks:
