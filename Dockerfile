@@ -54,6 +54,10 @@ RUN mkdir -p logs && \
 # Устанавливаем переменные окружения
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
+# Принудительно используем системный бандл сертификатов для HTTPS
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+ENV REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 
 # Expose порт (если нужен веб-интерфейс в будущем)
 EXPOSE 8000
