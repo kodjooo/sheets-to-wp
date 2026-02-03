@@ -34,7 +34,8 @@ def load_config():
         "wcapi_base_delay_sec": float(os.getenv("WCAPI_BASE_DELAY_SEC", "1.5")),
         "wcapi_timeout_sec": float(os.getenv("WCAPI_TIMEOUT_SEC", "20")),
         "fetch_user_agent": os.getenv("HTTP_FETCH_USER_AGENT"),
-        "fetch_retry_delays_sec": os.getenv("HTTP_FETCH_RETRY_DELAYS_SEC", "60,120")
+        "fetch_retry_delays_sec": os.getenv("HTTP_FETCH_RETRY_DELAYS_SEC", "60,120"),
+        "fetch_insecure_hosts": os.getenv("HTTP_FETCH_INSECURE_HOSTS", "")
     }
     
     # Проверяем, что все обязательные переменные заданы

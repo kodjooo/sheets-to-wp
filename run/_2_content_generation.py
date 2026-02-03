@@ -6,6 +6,7 @@ import time
 import base64
 from io import BytesIO
 import requests
+from urllib.parse import urlparse
 import openai
 from bs4 import BeautifulSoup
 from PyPDF2 import PdfReader
@@ -44,6 +45,26 @@ def _build_request_headers() -> dict:
         "Accept-Language": "en-US,en;q=0.9,pt-PT;q=0.8,pt;q=0.7"
     }
 
+def _parse_insecure_hosts(value: str | None) -> set[str]:
+    if not value:
+        return set()
+    hosts = set()
+    for raw in value.split(","):
+        item = raw.strip().lower()
+        if not item:
+            continue
+        hosts.add(item)
+    return hosts
+
+def _resolve_requests_verify(url: str):
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    insecure_hosts = _parse_insecure_hosts(config.get("fetch_insecure_hosts"))
+    if host and host in insecure_hosts:
+        logger.warning("⚠️ Отключена SSL-проверка для хоста: %s", host)
+        return False
+    return os.getenv("REQUESTS_CA_BUNDLE") or os.getenv("SSL_CERT_FILE") or True
+
 def _fetch_with_retries(url: str):
     delays = _parse_retry_delays(config.get("fetch_retry_delays_sec"))
     attempts = [0.0] + delays
@@ -53,7 +74,13 @@ def _fetch_with_retries(url: str):
             logger.info("⏳ Повторная попытка загрузки через %s сек...", delay)
             time.sleep(delay)
         try:
-            response = requests.get(url, headers=_build_request_headers(), timeout=20)
+            verify = _resolve_requests_verify(url)
+            response = requests.get(
+                url,
+                headers=_build_request_headers(),
+                timeout=20,
+                verify=verify
+            )
             response.raise_for_status()
             return response
         except Exception as exc:
