@@ -303,8 +303,6 @@ def create_product(data):
         benefits = "\n".join(benefits)
 
     location_city = (data.get("LOCATION (CITY)") or "").strip()
-    if not location_city:
-        location_city = data.get("LOCATION", "")
     location_city = location_city.split(",")[0].strip() if location_city else ""
 
     acf_data = {
