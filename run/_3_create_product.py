@@ -302,10 +302,15 @@ def create_product(data):
     if isinstance(benefits, list):
         benefits = "\n".join(benefits)
 
+    location_city = (data.get("LOCATION (CITY)") or "").strip()
+    if not location_city:
+        location_city = data.get("LOCATION", "")
+    location_city = location_city.split(",")[0].strip() if location_city else ""
+
     acf_data = {
         "fields": {
             "event_date_start": data["EVENT START DATE"],
-            "event_location_text": data["LOCATION"].split(",")[0] if data.get("LOCATION") else "",
+            "event_location_text": location_city,
             "event_ticket_url": data["WEBSITE"],
             "event_latitude": format_coord(data["LAT"]) if data.get("LAT") else "",
             "event_longitude": format_coord(data["LON"]) if data.get("LON") else "",
