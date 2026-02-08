@@ -422,6 +422,21 @@ def get_coordinates_from_location(location: str):
     logger.warning("⚠️ Не удалось найти координаты в Португалии для '%s'", location)
     return None, None
 
+
+def get_coordinates_with_city_fallback(location: str, location_city: str):
+    lat, lon = get_coordinates_from_location(location)
+    if lat is not None and lon is not None:
+        return lat, lon
+
+    fallback_city = (location_city or "").strip()
+    if fallback_city:
+        logger.info("📍 Пробуем fallback геокодинга по LOCATION (CITY): %s", fallback_city)
+        lat, lon = get_coordinates_from_location(fallback_city)
+        if lat is not None and lon is not None:
+            return lat, lon
+
+    return None, None
+
 def check_wp_upload(jwt_token):
     wp_url = config["wp_url"].rstrip("/") + "/wp-json/wp/v2/media"
     headers = {

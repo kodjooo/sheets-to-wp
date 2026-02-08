@@ -68,7 +68,7 @@ from _2_content_generation import (
     call_openai_assistant,
     call_second_openai_assistant,
     generate_image,
-    get_coordinates_from_location,
+    get_coordinates_with_city_fallback,
     translate_title_to_en
 )
 
@@ -180,7 +180,10 @@ def run_automation():
 
             try:
                 # --- 1. Генерация данных (GPT + картинка) ---
-                lat, lon = get_coordinates_from_location(row.get("LOCATION", ""))
+                lat, lon = get_coordinates_with_city_fallback(
+                    row.get("LOCATION", ""),
+                    row.get("LOCATION (CITY)", "")
+                )
                 row["LAT"] = lat if lat is not None else ""
                 row["LON"] = lon if lon is not None else ""
 
@@ -386,7 +389,10 @@ def run_automation():
                         break
 
                 # --- 4. Публикация в WooCommerce ---
-                lat, lon = get_coordinates_from_location(last_main_row.get("LOCATION", ""))
+                lat, lon = get_coordinates_with_city_fallback(
+                    last_main_row.get("LOCATION", ""),
+                    last_main_row.get("LOCATION (CITY)", "")
+                )
                 last_main_row["LAT"] = lat if lat is not None else ""
                 last_main_row["LON"] = lon if lon is not None else ""
                 last_main_row["extra_categories"] = [
