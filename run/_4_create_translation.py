@@ -5,7 +5,7 @@ from _5_taxonomy_and_attributes import assign_attributes_to_product
 from _6_create_variations import create_variations
 from _3_create_product import get_jwt_token
 from _3_create_product import get_category_id_by_name
-from utils import normalize_category_pairs
+from utils import normalize_category_pairs, parse_faq_items
 import logging
 import json  
 
@@ -140,12 +140,15 @@ def create_product_pt(row, en_product_id, attributes=None, last_variations=None,
         benefits_pt = row.get("BENEFITS (PT)", "")
         if isinstance(benefits_pt, list):
             benefits_pt = "\n".join(benefits_pt)
+        faq_items_pt = parse_faq_items(row.get("FAQ (PT)", ""))
 
         meta_update_payload = {
             "meta_data": [
                 {"key": "event_short_description", "value": row.get("SUMMARY (PT)", "")},
                 {"key": "organizer_description", "value": row.get("ORG INFO (PT)", "")},
-                {"key": "race_benefits", "value": benefits_pt}
+                {"key": "race_benefits", "value": benefits_pt},
+                {"key": "event_faq_headline", "value": "FAQ"},
+                {"key": "event_faq_items", "value": faq_items_pt}
             ]
         }
         meta_update_response = requests.put(

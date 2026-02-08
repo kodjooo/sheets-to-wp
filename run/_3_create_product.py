@@ -11,7 +11,7 @@ from wordpress_xmlrpc.methods import media, posts
 from wordpress_xmlrpc.compat import xmlrpc_client
 
 from _1_google_loader import load_config
-from utils import normalize_category_pairs
+from utils import normalize_category_pairs, parse_faq_items
 
 config = load_config()
 
@@ -301,6 +301,7 @@ def create_product(data):
     benefits = data.get("BENEFITS", "")
     if isinstance(benefits, list):
         benefits = "\n".join(benefits)
+    faq_items = parse_faq_items(data.get("FAQ", ""))
 
     location_city = (data.get("LOCATION (CITY)") or "").strip()
     location_city = location_city.split(",")[0].strip() if location_city else ""
@@ -315,6 +316,8 @@ def create_product(data):
             "event_short_description": data["SUMMARY"],
             "organizer_description": data["ORG INFO"],
             "race_benefits": benefits,
+            "event_faq_headline": "FAQ",
+            "event_faq_items": faq_items,
             "event_country": "portugal",
             "event_start_time": data.get("EVENT START TIME", ""),
             "event_date_end": data["EVENT END DATE"]

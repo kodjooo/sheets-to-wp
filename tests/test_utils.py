@@ -12,6 +12,7 @@ from utils import (
     normalize_category_pairs,
     parse_subcategory_values,
     get_missing_pt_fields,
+    parse_faq_items,
 )
 
 
@@ -75,6 +76,29 @@ class UtilsTests(unittest.TestCase):
             "benefits_pt": [],
         }
         self.assertEqual(get_missing_pt_fields(result_ok), [])
+
+    def test_parse_faq_items(self):
+        raw_faq = (
+            "<strong>FAQ:</strong>\n"
+            "• Q: How do I get there?\n"
+            "  A: Use shuttle from city center.\n"
+            "• Q: Can kids join?\n"
+            "  A: Yes, from 10 years old.\n"
+        )
+        items = parse_faq_items(raw_faq)
+        self.assertEqual(
+            items,
+            [
+                {
+                    "item_title": "How do I get there?",
+                    "item_description": "Use shuttle from city center.",
+                },
+                {
+                    "item_title": "Can kids join?",
+                    "item_description": "Yes, from 10 years old.",
+                },
+            ],
+        )
 
 
 if __name__ == "__main__":
