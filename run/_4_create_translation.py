@@ -9,6 +9,18 @@ from utils import normalize_category_pairs, parse_faq_items
 import logging
 import json  
 
+def send_acf_data_pt(base_url, product_id, acf_data, token):
+    acf_headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}"
+    }
+    return requests.post(
+        f"{base_url}/wp-json/acf/v3/product/{product_id}",
+        headers=acf_headers,
+        data=json.dumps(acf_data)
+    )
+
+
 def create_product_pt(row, en_product_id, attributes=None, last_variations=None, config=None):
     auth = HTTPBasicAuth(config["consumer_key"], config["consumer_secret"])
     base_url = config["wp_url"]
@@ -142,24 +154,25 @@ def create_product_pt(row, en_product_id, attributes=None, last_variations=None,
             benefits_pt = "\n".join(benefits_pt)
         faq_items_pt = parse_faq_items(row.get("FAQ (PT)", ""))
 
-        meta_update_payload = {
-            "meta_data": [
-                {"key": "event_short_description", "value": row.get("SUMMARY (PT)", "")},
-                {"key": "organizer_description", "value": row.get("ORG INFO (PT)", "")},
-                {"key": "race_benefits", "value": benefits_pt},
-                {"key": "event_faq_headline", "value": "FAQ"},
-                {"key": "event_faq_items", "value": faq_items_pt}
-            ]
+        acf_update_payload = {
+            "fields": {
+                "event_short_description": row.get("SUMMARY (PT)", ""),
+                "organizer_description": row.get("ORG INFO (PT)", ""),
+                "race_benefits": benefits_pt,
+                "event_faq_headline": "FAQ",
+                "event_faq_items": faq_items_pt
+            }
         }
-        meta_update_response = requests.put(
-            f"{base_url}/wp-json/wc/v3/products/{pt_id}",
-            auth=auth,
-            json=meta_update_payload
-        )
-        if meta_update_response.status_code == 200:
-            logging.info(f"✅ ACF-поля (meta_data) обновлены у PT-продукта ID={pt_id}")
+
+        token = get_jwt_token()
+        acf_update_response = send_acf_data_pt(base_url, pt_id, acf_update_payload, token)
+        if acf_update_response.status_code in [200, 201]:
+            logging.info(f"✅ ACF-поля обновлены у PT-продукта ID={pt_id}")
         else:
-            logging.warning(f"⚠️ meta_data не обновлены! Код={meta_update_response.status_code}, ответ={meta_update_response.text}")
+            logging.warning(
+                f"⚠️ ACF не обновлены у PT! Код={acf_update_response.status_code}, "
+                f"ответ={acf_update_response.text}"
+            )
 
         # 📡 Отправляем связку перевода на WPML
         hook_payload = {

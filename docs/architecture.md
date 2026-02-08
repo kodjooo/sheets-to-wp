@@ -44,7 +44,7 @@
 - Для доменов с некорректной цепочкой SSL можно отключить проверку через список `HTTP_FETCH_INSECURE_HOSTS` (использовать точечно).
 - Поле ACF `event_location_text` заполняется значением из столбца `LOCATION (CITY)`; если он пустой — значение не передаётся в WordPress.
 - Геокодинг сначала выполняется по `LOCATION`; если координаты не найдены, выполняется fallback по `LOCATION (CITY)`.
-- FAQ из таблицы (`FAQ`, `FAQ (PT)`) записывается в ACF: `event_faq_headline` = `FAQ`, элементы репитера `event_faq_items` заполняются из пар `Q:/A:` в поля `item_title` и `item_description`.
+- FAQ из таблицы (`FAQ`, `FAQ (PT)`) записывается в ACF: `event_faq_headline` = `FAQ`, элементы репитера `event_faq_items` заполняются из пар `Q:/A:` в поля `item_title` и `item_description`; для PT используется ACF endpoint `acf/v3/product/{id}`.
 - Файл `run/google-credentials.json` монтируется в контейнер и используется для доступа к Google API.
 - Запросы к сайтам и регламентам выполняются с заголовками User-Agent/Accept/Accept-Language и ретраями с задержками, заданными через `HTTP_FETCH_*`.
 - В Docker образе обновляются CA-сертификаты, чтобы избежать SSL ошибок при загрузке источников.
