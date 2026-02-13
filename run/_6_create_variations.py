@@ -55,8 +55,18 @@ def create_variations(product_id, variation_data_list):
     product = response.json()
     product_attributes = product.get("attributes", [])
 
-    # Создаём словарь для быстрого поиска id атрибута по имени
-    attr_name_to_id = {attr["name"]: attr["id"] for attr in product_attributes if "id" in attr}
+    def _norm_text(value):
+        if value is None:
+            return ""
+        return str(value).strip()
+
+    # Создаём словарь для быстрого поиска id атрибута по имени.
+    # Нормализуем ключ, чтобы "Running " и "Running" считались одним атрибутом.
+    attr_name_to_id = {
+        _norm_text(attr.get("name")): attr["id"]
+        for attr in product_attributes
+        if "id" in attr and _norm_text(attr.get("name"))
+    }
 
     # Получаем уже существующие вариации
     existing_response = _wcapi_request_with_retry("GET", f"products/{product_id}/variations")
@@ -66,20 +76,32 @@ def create_variations(product_id, variation_data_list):
     # Собираем множество уже существующих комбинаций атрибутов
     existing_combinations = set()
     for variation in existing_variations:
-        combo = tuple(sorted((attr["name"], attr["option"]) for attr in variation.get("attributes", [])))
+        combo = tuple(
+            sorted(
+                (_norm_text(attr.get("name")), _norm_text(attr.get("option")))
+                for attr in variation.get("attributes", [])
+                if _norm_text(attr.get("name")) and _norm_text(attr.get("option"))
+            )
+        )
         existing_combinations.add(combo)
 
     for var_data in variation_data_list:
         attrs_for_api = []
         # Проверка на дубликат
-        combo_key = tuple(sorted((attr["name"], attr["option"]) for attr in var_data.get("attributes", []) if attr.get("name") and attr.get("option")))
+        combo_key = tuple(
+            sorted(
+                (_norm_text(attr.get("name")), _norm_text(attr.get("option")))
+                for attr in var_data.get("attributes", [])
+                if _norm_text(attr.get("name")) and _norm_text(attr.get("option"))
+            )
+        )
         if combo_key in existing_combinations:
             print(f"⚠️ Вариация уже существует, пропускаем: {combo_key}")
             continue
 
         for attr in var_data.get("attributes", []):
-            name = attr.get("name")
-            option = attr.get("option")
+            name = _norm_text(attr.get("name"))
+            option = _norm_text(attr.get("option"))
 
             if not name or not option:
                 continue

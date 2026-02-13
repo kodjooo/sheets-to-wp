@@ -6,6 +6,7 @@ import requests
 from woocommerce import API
 
 from _1_google_loader import load_config
+from utils import select_attribute_id
 
 config = load_config()
 wcapi = API(
@@ -17,10 +18,6 @@ wcapi = API(
 
 _WCAPI_MAX_ATTEMPTS = int(os.getenv("WCAPI_MAX_ATTEMPTS", "4"))
 _WCAPI_BASE_DELAY_SEC = float(os.getenv("WCAPI_BASE_DELAY_SEC", "1.5"))
-
-
-def _normalize_attribute_slug(name: str) -> str:
-    return name.strip().lower().replace(" ", "-")
 
 
 def _safe_wc_request(method: str, endpoint: str, **kwargs):
@@ -49,15 +46,9 @@ def _safe_wc_request(method: str, endpoint: str, **kwargs):
 def get_or_create_attribute(name):
     response = _safe_wc_request("get", "products/attributes")
     attributes = response.json()
-
-    normalized_name = name.strip().lower()
-    normalized_slug = _normalize_attribute_slug(name)
-
-    for attr in attributes:
-        attr_name = str(attr.get("name", "")).strip().lower()
-        attr_slug = str(attr.get("slug", "")).strip().lower()
-        if attr_name == normalized_name or attr_slug == normalized_slug:
-            return attr['id']
+    existing_id = select_attribute_id(attributes, name)
+    if existing_id is not None:
+        return existing_id
 
     data = {"name": name, "type": "select"}
     logging.debug(f"🔧 Пытаемся создать атрибут '{name}'")
@@ -80,17 +71,14 @@ def get_or_create_attribute(name):
             )
             # Fallback: атрибут мог быть создан ранее/параллельно или конфликтует по slug.
             retry_attrs = _safe_wc_request("get", "products/attributes").json()
-            for attr in retry_attrs:
-                attr_name = str(attr.get("name", "")).strip().lower()
-                attr_slug = str(attr.get("slug", "")).strip().lower()
-                if attr_name == normalized_name or attr_slug == normalized_slug:
-                    existing_id = attr.get("id")
-                    logging.warning(
-                        "⚠️ Атрибут '%s' найден после 400 (ID=%s), используем его.",
-                        name,
-                        existing_id,
-                    )
-                    return existing_id
+            existing_id = select_attribute_id(retry_attrs, name)
+            if existing_id is not None:
+                logging.warning(
+                    "⚠️ Атрибут '%s' найден после 400 (ID=%s), используем его.",
+                    name,
+                    existing_id,
+                )
+                return existing_id
 
             raise RuntimeError(
                 f"Не удалось создать атрибут '{name}': WooCommerce вернул 400, и атрибут не найден при повторном поиске. "

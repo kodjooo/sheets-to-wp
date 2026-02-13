@@ -9,6 +9,7 @@ if RUN_DIR not in sys.path:
 
 from utils import (
     normalize_attribute_payload,
+    select_attribute_id,
     normalize_category_pairs,
     parse_subcategory_values,
     get_missing_pt_fields,
@@ -28,9 +29,20 @@ class UtilsTests(unittest.TestCase):
         normalized = normalize_attribute_payload(payload)
         self.assertEqual(normalized["Color"], ["Blue"])
         self.assertEqual(normalized["Size"], ["M", "L"])
-        self.assertEqual(normalized["Weight"], [10])
+        self.assertEqual(normalized["Weight"], ["10"])
         self.assertEqual(normalized["Empty"], [])
         self.assertEqual(normalized["NoneValue"], [])
+
+    def test_normalize_attribute_payload_strips_spaces(self):
+        payload = {
+            " Running ": " Road Running ",
+            "Race Start Date": [" 30/05/2026 ", " "],
+            " ": "ignored",
+        }
+        normalized = normalize_attribute_payload(payload)
+        self.assertEqual(normalized["Running"], ["Road Running"])
+        self.assertEqual(normalized["Race Start Date"], ["30/05/2026"])
+        self.assertNotIn(" ", normalized)
 
     def test_parse_subcategory_values(self):
         self.assertEqual(parse_subcategory_values("Road, Trail , ,Ultra"), ["Road", "Trail", "Ultra"])
@@ -99,6 +111,27 @@ class UtilsTests(unittest.TestCase):
                 },
             ],
         )
+
+    def test_select_attribute_id_prefers_slug(self):
+        attrs = [
+            {"id": 1, "name": "Running", "slug": "running"},
+            {"id": 2, "name": "Running", "slug": "running-alt"},
+        ]
+        self.assertEqual(select_attribute_id(attrs, "Running"), 1)
+
+    def test_select_attribute_id_fallback_name(self):
+        attrs = [
+            {"id": 5, "name": "Running", "slug": "sport-running"},
+        ]
+        self.assertEqual(select_attribute_id(attrs, "Running"), 5)
+
+    def test_select_attribute_id_raises_on_ambiguous_name(self):
+        attrs = [
+            {"id": 7, "name": "Running", "slug": "running-1"},
+            {"id": 8, "name": "Running", "slug": "running-2"},
+        ]
+        with self.assertRaises(RuntimeError):
+            select_attribute_id(attrs, "Running")
 
 
 if __name__ == "__main__":

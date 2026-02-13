@@ -1,13 +1,53 @@
 def normalize_attribute_payload(raw_attributes: dict) -> dict:
     normalized = {}
     for key, value in raw_attributes.items():
+        key_norm = str(key).strip() if key is not None else ""
+        if not key_norm:
+            continue
+
         if isinstance(value, list):
-            normalized[key] = value
+            values = [str(item).strip() for item in value if str(item).strip()]
+            normalized[key_norm] = values
         elif value in (None, ""):
-            normalized[key] = []
+            normalized[key_norm] = []
         else:
-            normalized[key] = [value]
+            value_norm = str(value).strip()
+            normalized[key_norm] = [value_norm] if value_norm else []
     return normalized
+
+
+def select_attribute_id(attributes: list, name: str):
+    normalized_name = str(name).strip().lower()
+    normalized_slug = normalized_name.replace(" ", "-")
+
+    def _id_from(attr):
+        return attr.get("id")
+
+    slug_matches = [
+        attr for attr in attributes
+        if str(attr.get("slug", "")).strip().lower() == normalized_slug and _id_from(attr) is not None
+    ]
+    if len(slug_matches) == 1:
+        return _id_from(slug_matches[0])
+    if len(slug_matches) > 1:
+        ids = [_id_from(attr) for attr in slug_matches]
+        raise RuntimeError(
+            f"Найдено несколько атрибутов по slug '{normalized_slug}' для '{name}': {ids}"
+        )
+
+    name_matches = [
+        attr for attr in attributes
+        if str(attr.get("name", "")).strip().lower() == normalized_name and _id_from(attr) is not None
+    ]
+    if len(name_matches) == 1:
+        return _id_from(name_matches[0])
+    if len(name_matches) > 1:
+        ids = [_id_from(attr) for attr in name_matches]
+        raise RuntimeError(
+            f"Найдено несколько атрибутов по name '{normalized_name}' для '{name}': {ids}"
+        )
+
+    return None
 
 
 def get_missing_pt_fields(result: dict) -> list[str]:
