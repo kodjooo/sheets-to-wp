@@ -425,12 +425,16 @@ def run_automation():
                 attr_payload = normalize_attribute_payload(last_main_attributes)
                 for var in last_variations:
                     for attr in var["attributes"]:
-                        if attr["name"] not in attr_payload:
-                            attr_payload[attr["name"]] = []
-                        elif not isinstance(attr_payload[attr["name"]], list):
-                            attr_payload[attr["name"]] = [attr_payload[attr["name"]]]
-                        if attr["option"] not in attr_payload[attr["name"]]:
-                            attr_payload[attr["name"]].append(attr["option"])
+                        attr_name = str(attr.get("name", "")).strip()
+                        attr_option = str(attr.get("option", "")).strip()
+                        if not attr_name or not attr_option:
+                            continue
+                        if attr_name not in attr_payload:
+                            attr_payload[attr_name] = []
+                        elif not isinstance(attr_payload[attr_name], list):
+                            attr_payload[attr_name] = [attr_payload[attr_name]]
+                        if attr_option not in attr_payload[attr_name]:
+                            attr_payload[attr_name].append(attr_option)
 
                 assign_attributes_to_product(en_product_id, attr_payload)
                 create_variations(en_product_id, last_variations)
