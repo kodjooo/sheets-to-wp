@@ -19,6 +19,10 @@ _WCAPI_MAX_ATTEMPTS = int(os.getenv("WCAPI_MAX_ATTEMPTS", "4"))
 _WCAPI_BASE_DELAY_SEC = float(os.getenv("WCAPI_BASE_DELAY_SEC", "1.5"))
 
 
+def _normalize_attribute_slug(name: str) -> str:
+    return name.strip().lower().replace(" ", "-")
+
+
 def _safe_wc_request(method: str, endpoint: str, **kwargs):
     """Execute WooCommerce API call with retry on transient connection issues."""
     last_err = None
@@ -46,13 +50,57 @@ def get_or_create_attribute(name):
     response = _safe_wc_request("get", "products/attributes")
     attributes = response.json()
 
+    normalized_name = name.strip().lower()
+    normalized_slug = _normalize_attribute_slug(name)
+
     for attr in attributes:
-        if attr['name'].lower() == name.lower():
+        attr_name = str(attr.get("name", "")).strip().lower()
+        attr_slug = str(attr.get("slug", "")).strip().lower()
+        if attr_name == normalized_name or attr_slug == normalized_slug:
             return attr['id']
 
     data = {"name": name, "type": "select"}
-    new_attr = _safe_wc_request("post", "products/attributes", data=data).json()
-    return new_attr['id']
+    logging.debug(f"🔧 Пытаемся создать атрибут '{name}'")
+    create_response = _safe_wc_request("post", "products/attributes", data=data)
+
+    try:
+        create_response.raise_for_status()
+        new_attr = create_response.json()
+        if "id" not in new_attr:
+            raise RuntimeError(
+                f"Ответ WooCommerce при создании атрибута '{name}' не содержит id: {new_attr}"
+            )
+        return new_attr["id"]
+    except requests.exceptions.HTTPError:
+        if create_response.status_code == 400:
+            logging.error(
+                "❌ Ошибка 400 при создании атрибута '%s': %s",
+                name,
+                create_response.text,
+            )
+            # Fallback: атрибут мог быть создан ранее/параллельно или конфликтует по slug.
+            retry_attrs = _safe_wc_request("get", "products/attributes").json()
+            for attr in retry_attrs:
+                attr_name = str(attr.get("name", "")).strip().lower()
+                attr_slug = str(attr.get("slug", "")).strip().lower()
+                if attr_name == normalized_name or attr_slug == normalized_slug:
+                    existing_id = attr.get("id")
+                    logging.warning(
+                        "⚠️ Атрибут '%s' найден после 400 (ID=%s), используем его.",
+                        name,
+                        existing_id,
+                    )
+                    return existing_id
+
+            raise RuntimeError(
+                f"Не удалось создать атрибут '{name}': WooCommerce вернул 400, и атрибут не найден при повторном поиске. "
+                f"Ответ: {create_response.text}"
+            )
+
+        raise RuntimeError(
+            f"Не удалось создать атрибут '{name}': HTTP {create_response.status_code}. "
+            f"Ответ: {create_response.text}"
+        )
 
 
 def get_or_create_attribute_term(attr_id, value):
