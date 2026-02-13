@@ -304,7 +304,6 @@ def create_product(data):
     faq_items = parse_faq_items(data.get("FAQ", ""))
 
     location_city = (data.get("LOCATION (CITY)") or "").strip()
-    location_city = location_city.split(",")[0].strip() if location_city else ""
 
     acf_data = {
         "fields": {

@@ -153,9 +153,11 @@ def create_product_pt(row, en_product_id, attributes=None, last_variations=None,
         if isinstance(benefits_pt, list):
             benefits_pt = "\n".join(benefits_pt)
         faq_items_pt = parse_faq_items(row.get("FAQ (PT)", ""))
+        location_city = (row.get("LOCATION (CITY)") or "").strip()
 
         acf_update_payload = {
             "fields": {
+                "event_location_text": location_city,
                 "event_short_description": row.get("SUMMARY (PT)", ""),
                 "organizer_description": row.get("ORG INFO (PT)", ""),
                 "race_benefits": benefits_pt,

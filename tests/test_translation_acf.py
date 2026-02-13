@@ -9,6 +9,7 @@ class TranslationAcfTests(unittest.TestCase):
             content = f.read()
 
         self.assertIn("/wp-json/acf/v3/product/", content)
+        self.assertIn("\"event_location_text\": location_city", content)
         self.assertIn("\"event_faq_items\": faq_items_pt", content)
 
 
