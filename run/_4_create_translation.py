@@ -218,3 +218,93 @@ def create_product_pt(row, en_product_id, attributes=None, last_variations=None,
 
     except Exception as e:
         raise Exception(f"Ошибка при создании перевода: {e}")
+
+
+def create_or_update_product_pt(
+    row,
+    en_product_id,
+    attributes=None,
+    last_variations=None,
+    config=None,
+    existing_pt_product_id=None
+):
+    if not existing_pt_product_id:
+        return create_product_pt(
+            row,
+            en_product_id,
+            attributes=attributes,
+            last_variations=last_variations,
+            config=config
+        )
+
+    auth = HTTPBasicAuth(config["consumer_key"], config["consumer_secret"])
+    base_url = config["wp_url"]
+    pt_id = int(existing_pt_product_id)
+
+    update_payload = {
+        "name": row.get("RACE NAME (PT)", "") or row.get("RACE NAME", ""),
+        "lang": "pt"
+    }
+
+    categories_raw = []
+    main_category = row.get("CATEGORY")
+    main_subcategory = row.get("SUBCATEGORY")
+    if main_category:
+        categories_raw.append((main_category, main_subcategory))
+    extra_cats = row.get("extra_categories")
+    if isinstance(extra_cats, (set, list, tuple)):
+        for item in extra_cats:
+            if isinstance(item, (list, tuple)) and len(item) == 2 and item[0]:
+                categories_raw.append((item[0], item[1]))
+    categories_normalized = normalize_category_pairs(categories_raw)
+    category_ids = []
+    category_ids_seen = set()
+    for parent_name, child_name in categories_normalized:
+        try:
+            parent_id = get_category_id_by_name(parent_name)
+            if parent_id and parent_id not in category_ids_seen:
+                category_ids.append({"id": parent_id})
+                category_ids_seen.add(parent_id)
+            if parent_id and child_name:
+                child_id = get_category_id_by_name(child_name, parent_id=parent_id)
+                if child_id and child_id not in category_ids_seen:
+                    category_ids.append({"id": child_id})
+                    category_ids_seen.add(child_id)
+        except Exception as e:
+            logging.warning(f"⚠️ Ошибка при добавлении категории PT ({parent_name} → {child_name}): {e}")
+    if category_ids:
+        update_payload["categories"] = category_ids
+
+    response = requests.put(
+        f"{base_url}/wp-json/wc/v3/products/{pt_id}",
+        auth=auth,
+        json=update_payload
+    )
+    response.raise_for_status()
+
+    benefits_pt = row.get("BENEFITS (PT)", "")
+    if isinstance(benefits_pt, list):
+        benefits_pt = "\n".join(benefits_pt)
+    faq_items_pt = parse_faq_items(row.get("FAQ (PT)", ""))
+    location_city = (row.get("LOCATION (CITY)") or "").strip()
+
+    acf_fields = {
+        "event_location_text": location_city,
+        "event_short_description": row.get("SUMMARY (PT)", ""),
+        "organizer_description": row.get("ORG INFO (PT)", ""),
+        "race_benefits": benefits_pt,
+        "event_faq_headline": "FAQ" if faq_items_pt else "",
+        "event_faq_items": faq_items_pt
+    }
+    acf_fields = {k: v for k, v in acf_fields.items() if v not in ("", None, [])}
+    if acf_fields:
+        token = get_jwt_token()
+        send_acf_data_pt(base_url, pt_id, {"fields": acf_fields}, token)
+
+    if attributes:
+        assign_attributes_to_product(pt_id, attributes)
+    if last_variations:
+        create_variations(pt_id, last_variations)
+
+    logging.info(f"♻️ PT-продукт обновлён: ID={pt_id}")
+    return pt_id

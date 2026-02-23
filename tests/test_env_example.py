@@ -46,6 +46,12 @@ class EnvExampleTests(unittest.TestCase):
             "SCHEDULED_HOUR",
             "SCHEDULED_MINUTE",
             "TIMEZONE",
+            "PT_RETRY_ATTEMPTS",
+            "TELEGRAM_NOTIFICATIONS_ENABLED",
+            "TELEGRAM_API_ID",
+            "TELEGRAM_API_HASH",
+            "TELEGRAM_SESSION_NAME",
+            "TELEGRAM_TARGET",
             "WCAPI_MAX_ATTEMPTS",
             "WCAPI_BASE_DELAY_SEC",
             "WCAPI_TIMEOUT_SEC",
@@ -53,6 +59,7 @@ class EnvExampleTests(unittest.TestCase):
             "LOG_FILE",
             "HTTP_FETCH_USER_AGENT",
             "HTTP_FETCH_RETRY_DELAYS_SEC",
+            "HTTP_FETCH_INSECURE_HOSTS",
         }
 
         missing = [key for key in sorted(required) if key not in keys]

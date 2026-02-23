@@ -3,7 +3,10 @@
 Автоматизация публикации забегов из Google Sheets в WooCommerce с генерацией контента через OpenAI.
 
 ## Что делает сервис
-- Читает строки из Google Sheets и обрабатывает строки со статусом `revised`.
+- Читает строки из Google Sheets и обрабатывает статусы `Revised (incomplete)` и `Revised (complete)`.
+- Для `Revised (incomplete)` публикует карточку без AI-полей `ORG INFO/SUMMARY/BENEFITS/FAQ` (EN/PT), сохраняет baseline hash `WEBSITE` и переводит строку в `Published (incomplete)`.
+- Для `Published (incomplete)` ежедневно пересчитывает hash `WEBSITE` (с нормализацией HTML) и отправляет уведомление в Telegram при изменении.
+- Для `Revised (complete)` генерирует EN/PT-контент через OpenAI и обновляет существующие EN/PT продукты в WP по сохранённым ID.
 - Загружает данные из `WEBSITE` и `REGULATIONS` (HTML/PDF) с ретраями.
 - Генерирует EN/PT-контент через OpenAI (основной и второй ассистент).
 - Переводит `RACE NAME (PT)` в `RACE NAME` (PT→EN) через OpenAI.
@@ -18,6 +21,7 @@
 - OpenAI Responses API + Chat Completions (для перевода заголовка)
 - WooCommerce REST API + JWT Auth + WPML custom API
 - OpenCage Geocoding API
+- Telegram (личный аккаунт через Telethon)
 
 ## Структура проекта
 ```text
@@ -59,6 +63,10 @@ cp .env.example .env
 3. Подготовьте Google credentials:
 - либо файл `run/google-credentials.json`;
 - либо переменную `GOOGLE_SERVICE_ACCOUNT_JSON`.
+4. Для Telegram через Telethon выполните одноразовую авторизацию сессии:
+```bash
+docker compose run --rm -it racefinder python init_telethon_session.py
+```
 
 Важно: `.env` не должен попадать в Git.
 
@@ -107,6 +115,11 @@ docker compose logs -f
 
 Операционные:
 - `PT_RETRY_ATTEMPTS`
+- `TELEGRAM_NOTIFICATIONS_ENABLED`
+- `TELEGRAM_API_ID`
+- `TELEGRAM_API_HASH`
+- `TELEGRAM_SESSION_NAME`
+- `TELEGRAM_TARGET`
 - `HTTP_FETCH_RETRY_DELAYS_SEC`
 - `HTTP_FETCH_INSECURE_HOSTS`
 - `WCAPI_MAX_ATTEMPTS`

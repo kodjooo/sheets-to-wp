@@ -24,6 +24,10 @@ def _wcapi_request_with_retry(method: str, endpoint: str, payload: dict | None =
                 return wcapi.get(endpoint)
             if method == "POST":
                 return wcapi.post(endpoint, payload)
+            if method == "PUT":
+                return wcapi.put(endpoint, payload)
+            if method == "DELETE":
+                return wcapi.delete(endpoint, params=payload or {})
             raise ValueError(f"Неизвестный метод запроса: {method}")
         except Exception as exc:
             last_err = exc
@@ -40,6 +44,162 @@ def _wcapi_request_with_retry(method: str, endpoint: str, payload: dict | None =
                 logging.info("⏳ Повтор через %.1f сек...", delay)
                 time.sleep(delay)
     raise last_err
+
+
+def _as_int(value):
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        return int(float(text))
+    except ValueError:
+        return None
+
+
+def _norm_text(value):
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def _load_all_variations(product_id):
+    items = []
+    page = 1
+    while True:
+        endpoint = f"products/{product_id}/variations?per_page=100&page={page}"
+        response = _wcapi_request_with_retry("GET", endpoint)
+        response.raise_for_status()
+        batch = response.json() or []
+        if not batch:
+            break
+        items.extend(batch)
+        if len(batch) < 100:
+            break
+        page += 1
+    return items
+
+
+def _build_product_attr_map(product_id):
+    response = _wcapi_request_with_retry("GET", f"products/{product_id}")
+    response.raise_for_status()
+    product = response.json() or {}
+    product_attributes = product.get("attributes", [])
+    return {
+        _norm_text(attr.get("name")): attr["id"]
+        for attr in product_attributes
+        if "id" in attr and _norm_text(attr.get("name"))
+    }
+
+
+def _build_payload(entry, attr_name_to_id):
+    attrs_for_api = []
+    for attr in entry.get("attributes", []):
+        name = _norm_text(attr.get("name"))
+        option = _norm_text(attr.get("option"))
+        if not name or not option:
+            continue
+        attr_id = attr_name_to_id.get(name)
+        if not attr_id:
+            logging.warning("⚠️ Атрибут '%s' не найден у продукта, пропускаем в вариации.", name)
+            continue
+        attrs_for_api.append({"id": attr_id, "option": option})
+    return {
+        "regular_price": str(entry.get("regular_price", "0")),
+        "attributes": attrs_for_api,
+    }
+
+
+def _normalize_payload(payload):
+    attrs = payload.get("attributes", [])
+    attrs_norm = sorted(
+        (int(attr.get("id", 0)), _norm_text(attr.get("option")))
+        for attr in attrs
+        if attr.get("id")
+    )
+    return {
+        "regular_price": _norm_text(payload.get("regular_price")),
+        "attributes": attrs_norm,
+    }
+
+
+def _normalize_existing_variation(variation):
+    attrs = []
+    for attr in variation.get("attributes", []):
+        attr_id = _as_int(attr.get("id"))
+        if not attr_id:
+            continue
+        attrs.append((attr_id, _norm_text(attr.get("option"))))
+    return {
+        "regular_price": _norm_text(variation.get("regular_price")),
+        "attributes": sorted(attrs),
+    }
+
+
+def sync_variations_by_ids(product_id, variation_entries):
+    """
+    Полная синхронизация вариаций продукта:
+    - update существующих по existing_variation_id,
+    - create для отсутствующих,
+    - delete всех лишних в WP.
+
+    variation_entries: список dict:
+    {
+      "row_index": int,
+      "existing_variation_id": str|int|None,
+      "regular_price": str,
+      "attributes": [{"name": "...", "option": "..."}]
+    }
+    """
+    attr_name_to_id = _build_product_attr_map(product_id)
+    existing_variations = _load_all_variations(product_id)
+    existing_by_id = {
+        int(v["id"]): v
+        for v in existing_variations
+        if v.get("id") is not None
+    }
+
+    row_to_variation_id = {}
+    kept_ids = set()
+
+    for entry in variation_entries:
+        row_index = entry.get("row_index")
+        payload = _build_payload(entry, attr_name_to_id)
+        existing_id = _as_int(entry.get("existing_variation_id"))
+
+        if existing_id and existing_id in existing_by_id:
+            current_norm = _normalize_existing_variation(existing_by_id[existing_id])
+            desired_norm = _normalize_payload(payload)
+            if current_norm != desired_norm:
+                endpoint = f"products/{product_id}/variations/{existing_id}"
+                response = _wcapi_request_with_retry("PUT", endpoint, payload)
+                response.raise_for_status()
+                logging.info("♻️ Вариация обновлена: product=%s variation=%s", product_id, existing_id)
+            final_id = existing_id
+        else:
+            endpoint = f"products/{product_id}/variations"
+            response = _wcapi_request_with_retry("POST", endpoint, payload)
+            response.raise_for_status()
+            body = response.json() or {}
+            created_id = body.get("id")
+            if not created_id:
+                raise RuntimeError(f"Не удалось получить ID созданной вариации (product_id={product_id})")
+            final_id = int(created_id)
+            logging.info("🆕 Вариация создана: product=%s variation=%s", product_id, final_id)
+
+        if row_index is not None:
+            row_to_variation_id[row_index] = final_id
+        kept_ids.add(final_id)
+
+    stale_ids = sorted(set(existing_by_id.keys()) - kept_ids)
+    for variation_id in stale_ids:
+        endpoint = f"products/{product_id}/variations/{variation_id}"
+        response = _wcapi_request_with_retry("DELETE", endpoint, {"force": True})
+        response.raise_for_status()
+        logging.info("🗑️ Вариация удалена: product=%s variation=%s", product_id, variation_id)
+
+    return row_to_variation_id
 
 def create_variations(product_id, variation_data_list):
     """

@@ -8,3 +8,4 @@ Pillow==10.4.0
 python-wordpress-xmlrpc==2.3
 woocommerce==3.0.0
 pytz==2024.2
+telethon==1.37.0

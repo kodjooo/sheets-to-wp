@@ -335,3 +335,89 @@ def create_product(data):
         print("✅ ACF поля успешно обновлены")
 
     return product_id
+
+
+def _collect_category_ids(data):
+    categories_raw = []
+    main_category = data.get("CATEGORY")
+    main_subcategory = data.get("SUBCATEGORY")
+    if main_category:
+        categories_raw.append((main_category, main_subcategory))
+
+    extra_cats = data.get("extra_categories")
+    if isinstance(extra_cats, (list, set, tuple)):
+        for item in extra_cats:
+            if isinstance(item, (list, tuple)) and len(item) == 2 and item[0]:
+                categories_raw.append((item[0], item[1]))
+
+    categories_normalized = normalize_category_pairs(categories_raw)
+    category_ids = []
+    category_ids_seen = set()
+    for parent_name, child_name in categories_normalized:
+        parent_id = get_category_id_by_name(parent_name)
+        if parent_id and parent_id not in category_ids_seen:
+            category_ids.append({"id": parent_id})
+            category_ids_seen.add(parent_id)
+        if parent_id and child_name:
+            child_id = get_category_id_by_name(child_name, parent_id=parent_id)
+            if child_id and child_id not in category_ids_seen:
+                category_ids.append({"id": child_id})
+                category_ids_seen.add(child_id)
+    return category_ids
+
+
+def _build_acf_fields_partial(data):
+    from decimal import Decimal, ROUND_DOWN
+
+    def format_coord(value):
+        return float(Decimal(value).quantize(Decimal("0.0001"), rounding=ROUND_DOWN))
+
+    benefits = data.get("BENEFITS", "")
+    if isinstance(benefits, list):
+        benefits = "\n".join(benefits)
+    faq_items = parse_faq_items(data.get("FAQ", ""))
+
+    fields = {
+        "event_date_start": data.get("EVENT START DATE", ""),
+        "event_location_text": (data.get("LOCATION (CITY)") or "").strip(),
+        "event_ticket_url": data.get("WEBSITE", ""),
+        "event_latitude": format_coord(data["LAT"]) if data.get("LAT") else "",
+        "event_longitude": format_coord(data["LON"]) if data.get("LON") else "",
+        "event_short_description": data.get("SUMMARY", ""),
+        "organizer_description": data.get("ORG INFO", ""),
+        "race_benefits": benefits,
+        "event_faq_headline": "FAQ" if faq_items else "",
+        "event_faq_items": faq_items,
+        "event_start_time": data.get("EVENT START TIME", ""),
+        "event_date_end": data.get("EVENT END DATE", ""),
+    }
+
+    # При обновлении передаём только непустые поля, чтобы не затирать данные в WP.
+    return {k: v for k, v in fields.items() if v not in ("", None, [])}
+
+
+def create_or_update_product(data, existing_product_id=None):
+    if not existing_product_id:
+        return create_product(data)
+
+    # Не передаём status при обновлении, чтобы сохранить текущее состояние публикации в WP.
+    payload = {"name": data.get("RACE NAME", "")}
+    category_ids = _collect_category_ids(data)
+    if category_ids:
+        payload["categories"] = category_ids
+
+    response = requests.put(
+        f"{WC_API_URL}/wp-json/wc/v3/products/{existing_product_id}",
+        auth=(WC_CONSUMER_KEY, WC_CONSUMER_SECRET),
+        headers=headers,
+        data=json.dumps(payload)
+    )
+    response.raise_for_status()
+
+    partial_fields = _build_acf_fields_partial(data)
+    if partial_fields:
+        token = get_jwt_token()
+        send_acf_data(existing_product_id, {"fields": partial_fields}, token)
+
+    print(f"♻️ Продукт обновлён: {existing_product_id}")
+    return existing_product_id

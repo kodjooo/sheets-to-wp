@@ -39,6 +39,17 @@ SCHEDULED_HOUR = int(os.getenv('SCHEDULED_HOUR', '2'))
 SCHEDULED_MINUTE = int(os.getenv('SCHEDULED_MINUTE', '0'))
 TIMEZONE = os.getenv('TIMEZONE', 'Europe/Moscow')
 PT_RETRY_ATTEMPTS = int(os.getenv('PT_RETRY_ATTEMPTS', '2'))
+TELEGRAM_NOTIFICATIONS_ENABLED = os.getenv("TELEGRAM_NOTIFICATIONS_ENABLED", "false").lower() == "true"
+TELEGRAM_API_ID = os.getenv("TELEGRAM_API_ID", "")
+TELEGRAM_API_HASH = os.getenv("TELEGRAM_API_HASH", "")
+TELEGRAM_SESSION_NAME = os.getenv("TELEGRAM_SESSION_NAME", "racefinder_telethon")
+TELEGRAM_TARGET = os.getenv("TELEGRAM_TARGET", "")
+
+STATUS_REVISED = "Revised"
+STATUS_REVISED_INCOMPLETE = "Revised (incomplete)"
+STATUS_REVISED_COMPLETE = "Revised (complete)"
+STATUS_PUBLISHED = "Published"
+STATUS_PUBLISHED_INCOMPLETE = "Published (incomplete)"
 
 _LOG_FORMAT = "%(asctime)s [%(levelname)s] %(message)s"
 logging.basicConfig(level=LOG_LEVEL, format=_LOG_FORMAT)
@@ -72,12 +83,17 @@ from _2_content_generation import (
     translate_title_to_en
 )
 
-from _3_create_product import create_product as create_product_en
+from _3_create_product import create_or_update_product as create_product_en
 from _3_create_product import get_category_id_by_name
-from _4_create_translation import create_product_pt as create_product_pt
+from _4_create_translation import create_or_update_product_pt as create_product_pt
 from _5_taxonomy_and_attributes import assign_attributes_to_product
-from _6_create_variations import create_variations
+from _6_create_variations import sync_variations_by_ids
 from utils import normalize_attribute_payload, parse_subcategory_values, get_missing_pt_fields
+from website_snapshot import (
+    compute_website_hash,
+    has_website_changed,
+    send_telegram_notification,
+)
 
 
 def log_network_diagnostics():
@@ -109,6 +125,20 @@ def collect_all_attributes(variations):
                 all_attributes[name] = set()
             all_attributes[name].add(value)
     return {k: list(v) for k, v in all_attributes.items()}
+
+
+def _cell_value_as_str(value) -> str:
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def _write_variation_ids_to_sheet(row_to_variation_id: dict, column_name: str, headers: dict):
+    if column_name not in headers:
+        logging.warning("⚠️ Колонка '%s' не найдена в Google Sheets, ID вариаций не будут сохранены.", column_name)
+        return
+    for target_row_index, variation_id in row_to_variation_id.items():
+        batch_update_cells(target_row_index, {column_name: str(variation_id)}, headers)
 
 def get_next_run_time():
     """Вычисляет время следующего запуска по расписанию"""
@@ -162,24 +192,25 @@ def run_automation():
         # Если все попытки исчерпаны — пробрасываем исключение, чтобы обработать выше и запланировать быстрый повтор
         raise last_error
 
-    last_main_row = None
-    last_main_row_index = None
-    last_main_attributes = {}
-    last_variations = []
+    changed_websites = []
 
     for i, (row_index, row) in enumerate(rows):
-        status = row.get("STATUS", "").strip().lower()
+        status_raw = row.get("STATUS", "").strip()
+        status = status_raw.lower()
         row_id = row.get("ID", "unknown")
-        
-        # Детальное логирование для отладки
+
         logging.debug(f"Строка {row_index}: ID={row_id}, STATUS='{row.get('STATUS', '')}' -> '{status}'")
 
-        # Если нашли главную строку Revised
-        if status == "revised":
-            logging.info(f"📌 Обработка Revised (ID={row.get('ID')})")
+        if status in (
+            STATUS_REVISED.lower(),
+            STATUS_REVISED_INCOMPLETE.lower(),
+            STATUS_REVISED_COMPLETE.lower(),
+        ):
+            is_incomplete = status == STATUS_REVISED_INCOMPLETE.lower()
+            logging.info(f"📌 Обработка {row.get('STATUS')} (ID={row.get('ID')})")
 
             try:
-                # --- 1. Генерация данных (GPT + картинка) ---
+                # --- 1. Подготовка данных ---
                 lat, lon = get_coordinates_with_city_fallback(
                     row.get("LOCATION", ""),
                     row.get("LOCATION (CITY)", "")
@@ -187,140 +218,134 @@ def run_automation():
                 row["LAT"] = lat if lat is not None else ""
                 row["LON"] = lon if lon is not None else ""
 
-                website_text, website_pdf_path = extract_text_from_url(row.get("WEBSITE", ""))
+                # Для incomplete и complete публикуем EN-название: переводим PT -> EN перед созданием/обновлением WP.
                 pt_title = row.get("RACE NAME (PT)", "").strip()
                 translated_title = translate_title_to_en(pt_title)
                 if translated_title:
                     row["RACE NAME"] = translated_title
+                    batch_update_cells(row_index, {"RACE NAME": row["RACE NAME"]}, headers)
 
-                regulations_url = row.get("REGULATIONS", "")
-                regulations_text, pdf_path = "", None
-                file_ids = []
-                if regulations_url:
-                    regulations_text, pdf_path = extract_text_from_url(regulations_url)
-                    if pdf_path:
-                        with open(pdf_path, "rb") as f:
-                            upload_response = openai.files.create(file=f, purpose="assistants")
-                        file_ids.append(upload_response.id)
+                if not is_incomplete:
+                    website_text, _ = extract_text_from_url(row.get("WEBSITE", ""))
 
-                errors = validate_source_texts(
-                    website_url=row.get("WEBSITE", ""),
-                    website_text=website_text,
-                    regulations_url=regulations_url,
-                    regulations_text=regulations_text,
-                    regulations_pdf_path=pdf_path
-                )
-                if errors:
-                    status_message = "Error: " + "; ".join(errors)
-                    logging.error("❌ Не удалось получить источники: %s", status_message)
-                    batch_update_cells(row_index, {"STATUS": status_message}, headers)
-                    continue
+                    regulations_url = row.get("REGULATIONS", "")
+                    regulations_text, pdf_path = "", None
+                    file_ids = []
+                    if regulations_url:
+                        regulations_text, pdf_path = extract_text_from_url(regulations_url)
+                        if pdf_path:
+                            with open(pdf_path, "rb") as f:
+                                upload_response = openai.files.create(file=f, purpose="assistants")
+                            file_ids.append(upload_response.id)
 
-                combined_text = build_first_assistant_prompt(
-                    regulations_url=regulations_url,
-                    regulations_text=regulations_text,
-                    website_text=website_text
-                )
-
-                if not combined_text.strip():
-                    raise Exception("Нет текста для GPT")
-
-                if SKIP_AI:
-                    logging.info("🤖 SKIP_AI=true, используем заглушки")
-                    result = {
-                        "summary": "Заглушка summary",
-                        "org_info": "Заглушка org_info",
-                        "benefits": "Заглушка benefits",
-                        "faq": "",
-                        "summary_pt": "Заглушка summary_pt",
-                        "org_info_pt": "Заглушка org_info_pt",
-                        "benefits_pt": "Заглушка benefits_pt",
-                        "faq_pt": "",
-                        "image_prompt": "Placeholder image"
-                    }
-                else:
-                    # Вызываем первый ассистент
-                    first_result = call_openai_assistant(
-                        combined_text,
-                        file_ids=file_ids
+                    errors = validate_source_texts(
+                        website_url=row.get("WEBSITE", ""),
+                        website_text=website_text,
+                        regulations_url=regulations_url,
+                        regulations_text=regulations_text,
+                        regulations_pdf_path=pdf_path
                     )
-                    
-                    if first_result is None:
-                        logging.error("❌ Первый ассистент не вернул результат")
-                        continue
-                    
-                    logging.info("✅ Первый ассистент завершил работу, передаём результат во второй ассистент")
-                    first_result = normalize_regulations_link_block(first_result, regulations_url)
-                    
-                    # Вызываем второй ассистент с результатом первого
-                    regulations_hint = f"REGULATIONS LINK: {regulations_url if regulations_url else '(empty)'}"
-                    result = None
-                    missing_pt_fields = []
-                    total_attempts = 1 + max(0, PT_RETRY_ATTEMPTS)
-                    for attempt in range(total_attempts):
-                        result = call_second_openai_assistant(first_result, regulations_hint=regulations_hint)
-                        if result is None:
-                            logging.error("❌ Второй ассистент не вернул результат")
-                            continue
-                        missing_pt_fields = get_missing_pt_fields(result)
-                        if not missing_pt_fields:
-                            break
-                        logging.warning(
-                            f"⚠️ Во втором ассистенте нет PT-переводов для {', '.join(missing_pt_fields)} "
-                            f"(попытка {attempt + 1}/{total_attempts})"
-                        )
-
-                    if result is None:
-                        logging.error("❌ Второй ассистент не вернул результат после повторов")
-                        continue
-                    if missing_pt_fields:
-                        status_message = f"Error: missing PT fields ({', '.join(missing_pt_fields)})"
-                        logging.error(f"❌ {status_message}")
+                    if errors:
+                        status_message = "Error: " + "; ".join(errors)
+                        logging.error("❌ Не удалось получить источники: %s", status_message)
                         batch_update_cells(row_index, {"STATUS": status_message}, headers)
                         continue
 
-                # Генерация картинки
-                if SKIP_IMAGE or SKIP_AI:
-                    image_info = {"url": "https://dev.racefinder.pt/wp-content/uploads/2025/07/img-placeholder.png", "id": None}
-                else:
-                    image_info = generate_image(result["image_prompt"])
+                    combined_text = build_first_assistant_prompt(
+                        regulations_url=regulations_url,
+                        regulations_text=regulations_text,
+                        website_text=website_text
+                    )
+                    if not combined_text.strip():
+                        raise Exception("Нет текста для GPT")
 
-                row.update({
-                    "SUMMARY": result.get("summary", ""),
-                    "ORG INFO": result.get("org_info", ""),
-                    "BENEFITS": "\n".join(result["benefits"]) if isinstance(result.get("benefits"), list) else result.get("benefits", ""),
-                    "FAQ": result.get("faq", ""),
-                    "IMAGE URL": image_info.get("url", ""),
-                    "IMAGE ID": image_info.get("id", ""),
-                    "SUMMARY (PT)": result.get("summary_pt", ""),
-                    "ORG INFO (PT)": result.get("org_info_pt", ""),
-                    "BENEFITS (PT)": "\n".join(result["benefits_pt"]) if isinstance(result.get("benefits_pt"), list) else result.get("benefits_pt", ""),
-                    "FAQ (PT)": result.get("faq_pt", ""),
-                    "LAT": row["LAT"],
-                    "LON": row["LON"],
-                    "RACE NAME (PT)": row.get("RACE NAME (PT)", ""),
-                    "image_id": image_info.get("id", None)
-                })
+                    if SKIP_AI:
+                        logging.info("🤖 SKIP_AI=true, используем заглушки")
+                        result = {
+                            "summary": "Заглушка summary",
+                            "org_info": "Заглушка org_info",
+                            "benefits": "Заглушка benefits",
+                            "faq": "",
+                            "summary_pt": "Заглушка summary_pt",
+                            "org_info_pt": "Заглушка org_info_pt",
+                            "benefits_pt": "Заглушка benefits_pt",
+                            "faq_pt": "",
+                            "image_prompt": "Placeholder image"
+                        }
+                    else:
+                        first_result = call_openai_assistant(combined_text, file_ids=file_ids)
+                        if first_result is None:
+                            logging.error("❌ Первый ассистент не вернул результат")
+                            continue
 
-                # 📤 Сохраняем сгенерированные данные в таблицу
-                batch_update_cells(row_index, {
-                    "SUMMARY": row["SUMMARY"],
-                    "ORG INFO": row["ORG INFO"],
-                    "BENEFITS": row["BENEFITS"],
-                    "FAQ": row["FAQ"],
-                    "IMAGE URL": row["IMAGE URL"],
-                    "IMAGE ID": row["IMAGE ID"],
-                    "SUMMARY (PT)": row["SUMMARY (PT)"],
-                    "ORG INFO (PT)": row["ORG INFO (PT)"],
-                    "BENEFITS (PT)": row["BENEFITS (PT)"],
-                    "FAQ (PT)": row["FAQ (PT)"],
-                    "RACE NAME (PT)": row["RACE NAME (PT)"],
-                    "RACE NAME": row.get("RACE NAME", "")
-                }, headers)
+                        logging.info("✅ Первый ассистент завершил работу, передаём результат во второй ассистент")
+                        first_result = normalize_regulations_link_block(first_result, regulations_url)
+                        regulations_hint = f"REGULATIONS LINK: {regulations_url if regulations_url else '(empty)'}"
+                        result = None
+                        missing_pt_fields = []
+                        total_attempts = 1 + max(0, PT_RETRY_ATTEMPTS)
+                        for attempt in range(total_attempts):
+                            result = call_second_openai_assistant(first_result, regulations_hint=regulations_hint)
+                            if result is None:
+                                logging.error("❌ Второй ассистент не вернул результат")
+                                continue
+                            missing_pt_fields = get_missing_pt_fields(result)
+                            if not missing_pt_fields:
+                                break
+                            logging.warning(
+                                f"⚠️ Во втором ассистенте нет PT-переводов для {', '.join(missing_pt_fields)} "
+                                f"(попытка {attempt + 1}/{total_attempts})"
+                            )
+
+                        if result is None:
+                            logging.error("❌ Второй ассистент не вернул результат после повторов")
+                            continue
+                        if missing_pt_fields:
+                            status_message = f"Error: missing PT fields ({', '.join(missing_pt_fields)})"
+                            logging.error(f"❌ {status_message}")
+                            batch_update_cells(row_index, {"STATUS": status_message}, headers)
+                            continue
+
+                    if SKIP_IMAGE or SKIP_AI:
+                        image_info = {"url": "https://dev.racefinder.pt/wp-content/uploads/2025/07/img-placeholder.png", "id": None}
+                    else:
+                        image_info = generate_image(result["image_prompt"])
+
+                    row.update({
+                        "SUMMARY": result.get("summary", ""),
+                        "ORG INFO": result.get("org_info", ""),
+                        "BENEFITS": "\n".join(result["benefits"]) if isinstance(result.get("benefits"), list) else result.get("benefits", ""),
+                        "FAQ": result.get("faq", ""),
+                        "IMAGE URL": image_info.get("url", ""),
+                        "IMAGE ID": image_info.get("id", ""),
+                        "SUMMARY (PT)": result.get("summary_pt", ""),
+                        "ORG INFO (PT)": result.get("org_info_pt", ""),
+                        "BENEFITS (PT)": "\n".join(result["benefits_pt"]) if isinstance(result.get("benefits_pt"), list) else result.get("benefits_pt", ""),
+                        "FAQ (PT)": result.get("faq_pt", ""),
+                        "LAT": row["LAT"],
+                        "LON": row["LON"],
+                        "RACE NAME (PT)": row.get("RACE NAME (PT)", ""),
+                        "image_id": image_info.get("id", None)
+                    })
+
+                    batch_update_cells(row_index, {
+                        "SUMMARY": row["SUMMARY"],
+                        "ORG INFO": row["ORG INFO"],
+                        "BENEFITS": row["BENEFITS"],
+                        "FAQ": row["FAQ"],
+                        "IMAGE URL": row["IMAGE URL"],
+                        "SUMMARY (PT)": row["SUMMARY (PT)"],
+                        "ORG INFO (PT)": row["ORG INFO (PT)"],
+                        "BENEFITS (PT)": row["BENEFITS (PT)"],
+                        "FAQ (PT)": row["FAQ (PT)"],
+                        "RACE NAME (PT)": row["RACE NAME (PT)"],
+                        "RACE NAME": row.get("RACE NAME", "")
+                    }, headers)
+                    if "IMAGE ID" in headers:
+                        batch_update_cells(row_index, {"IMAGE ID": row["IMAGE ID"]}, headers)
 
                 # --- 2. Собираем атрибуты и первую вариацию ---
                 last_main_row = row.copy()
-                last_main_row_index = row_index
                 last_main_attributes = {}
                 last_main_row["extra_categories"] = set()
                 main_category = row.get("CATEGORY")
@@ -347,16 +372,30 @@ def run_automation():
                         last_main_attributes[attr_name] = row[col]
 
                 variation_attributes = [{"name": k, "option": v} for k, v in last_main_attributes.items()]
-                last_variations = [{
+                variation_entries_en = [{
+                    "row_index": row_index,
+                    "existing_variation_id": _cell_value_as_str(row.get("WP VARIATION ID EN", "")),
                     "regular_price": str(row.get("PRICE", "0")),
-                    "attributes": variation_attributes
+                    "attributes": variation_attributes,
+                }]
+                variation_entries_pt = [{
+                    "row_index": row_index,
+                    "existing_variation_id": _cell_value_as_str(row.get("WP VARIATION ID PT", "")),
+                    "regular_price": str(row.get("PRICE", "0")),
+                    "attributes": variation_attributes,
                 }]
 
                 # --- 3. Собираем подвариации ---
                 for j in range(i + 1, len(rows)):
-                    sub_index, sub_row = rows[j]
+                    sub_row_index, sub_row = rows[j]
                     sub_status = sub_row.get("STATUS", "").strip().lower()
-                    if sub_status in ("revised", "published"):
+                    if sub_status in (
+                        STATUS_REVISED.lower(),
+                        STATUS_REVISED_INCOMPLETE.lower(),
+                        STATUS_REVISED_COMPLETE.lower(),
+                        STATUS_PUBLISHED.lower(),
+                        STATUS_PUBLISHED_INCOMPLETE.lower(),
+                    ):
                         break
                     if sub_status == "":
                         var_attrs = []
@@ -381,9 +420,17 @@ def run_automation():
                             if sub_row.get(col):
                                 var_attrs.append({"name": attr_name, "option": sub_row[col]})
                         if var_attrs:
-                            last_variations.append({
+                            variation_entries_en.append({
+                                "row_index": sub_row_index,
+                                "existing_variation_id": _cell_value_as_str(sub_row.get("WP VARIATION ID EN", "")),
                                 "regular_price": str(sub_row.get("PRICE", "0")),
-                                "attributes": var_attrs
+                                "attributes": var_attrs,
+                            })
+                            variation_entries_pt.append({
+                                "row_index": sub_row_index,
+                                "existing_variation_id": _cell_value_as_str(sub_row.get("WP VARIATION ID PT", "")),
+                                "regular_price": str(sub_row.get("PRICE", "0")),
+                                "attributes": var_attrs,
                             })
                     else:
                         break
@@ -401,7 +448,11 @@ def run_automation():
                     if cat
                 ]
 
-                en_product_id = create_product_en(last_main_row)
+                existing_en_product_id = _cell_value_as_str(row.get("WP PRODUCT ID EN", "")) if not is_incomplete else ""
+                en_product_id = create_product_en(
+                    last_main_row,
+                    existing_product_id=existing_en_product_id or None
+                )
                 last_main_row["en_product_id"] = en_product_id
 
                 # Получаем slug
@@ -423,7 +474,7 @@ def run_automation():
                     last_main_row["LINK RACEFINDER"] = ""
 
                 attr_payload = normalize_attribute_payload(last_main_attributes)
-                for var in last_variations:
+                for var in variation_entries_en:
                     for attr in var["attributes"]:
                         attr_name = str(attr.get("name", "")).strip()
                         attr_option = str(attr.get("option", "")).strip()
@@ -437,32 +488,95 @@ def run_automation():
                             attr_payload[attr_name].append(attr_option)
 
                 assign_attributes_to_product(en_product_id, attr_payload)
-                create_variations(en_product_id, last_variations)
+                en_row_to_variation_id = sync_variations_by_ids(en_product_id, variation_entries_en)
+                _write_variation_ids_to_sheet(en_row_to_variation_id, "WP VARIATION ID EN", headers)
 
+                existing_pt_product_id = _cell_value_as_str(row.get("WP PRODUCT ID PT", "")) if not is_incomplete else ""
                 pt_product_id = create_product_pt(
                     last_main_row,
                     en_product_id,
                     attributes=attr_payload,
-                    last_variations=last_variations,
-                    config=config
+                    last_variations=None,
+                    config=config,
+                    existing_pt_product_id=existing_pt_product_id or None
                 )
                 last_main_row["pt_product_id"] = pt_product_id
+                pt_row_to_variation_id = sync_variations_by_ids(pt_product_id, variation_entries_pt)
+                _write_variation_ids_to_sheet(pt_row_to_variation_id, "WP VARIATION ID PT", headers)
+
+                snapshot_hash = ""
+                if is_incomplete:
+                    snapshot_hash, _ = compute_website_hash(row.get("WEBSITE", ""))
 
                 # --- 5. Обновление статуса в таблице ---
-                batch_update_cells(last_main_row_index, {
-                    "STATUS": "Published",
-                    "LINK RACEFINDER": last_main_row.get("LINK RACEFINDER", "")
+                batch_update_cells(row_index, {
+                    "STATUS": STATUS_PUBLISHED_INCOMPLETE if is_incomplete else STATUS_PUBLISHED,
+                    "LINK RACEFINDER": last_main_row.get("LINK RACEFINDER", ""),
+                    "WP PRODUCT ID EN": en_product_id or "",
+                    "WP PRODUCT ID PT": pt_product_id or "",
+                    "WEBSITE SNAPSHOT HASH": snapshot_hash
                 }, headers)
 
-                logging.info(f"✅ Published ID={row.get('ID')} EN={en_product_id} PT={pt_product_id}")
+                logging.info(
+                    "✅ Published ID=%s EN=%s PT=%s MODE=%s",
+                    row.get("ID"),
+                    en_product_id,
+                    pt_product_id,
+                    "incomplete" if is_incomplete else "complete"
+                )
 
             except Exception as e:
                 logging.exception(f"❌ Ошибка при обработке Revised ID={row.get('ID')}")
                 continue
 
-        elif status == "published":
+        elif status == STATUS_PUBLISHED_INCOMPLETE.lower():
+            website_url = (row.get("WEBSITE", "") or "").strip()
+            previous_hash = (row.get("WEBSITE SNAPSHOT HASH", "") or "").strip()
+            if not previous_hash or not website_url:
+                logging.debug("⏭ Пропуск мониторинга Published (incomplete): нет WEBSITE SNAPSHOT HASH или WEBSITE (ID=%s)", row.get("ID"))
+                continue
+
+            try:
+                changed, current_hash = has_website_changed(previous_hash, website_url)
+            except Exception as exc:
+                logging.warning("⚠️ Не удалось загрузить WEBSITE для мониторинга (ID=%s): %s", row.get("ID"), exc)
+                continue
+
+            updates = {
+                "LAST DIFF CHECK AT": datetime.now(pytz.timezone(TIMEZONE)).strftime("%Y-%m-%d %H:%M:%S"),
+            }
+            if changed:
+                logging.info("🔔 Изменения WEBSITE обнаружены для ID=%s", row.get("ID"))
+                changed_websites.append(
+                    {
+                        "id": str(row.get("ID", "")).strip(),
+                        "race": str(row.get("RACE NAME", "")).strip(),
+                        "url": website_url,
+                    }
+                )
+            batch_update_cells(row_index, updates, headers)
+            continue
+
+        elif status == STATUS_PUBLISHED.lower():
             logging.debug(f"⏭ Пропуск Published (ID={row.get('ID')})")
             continue
+
+    if TELEGRAM_NOTIFICATIONS_ENABLED and changed_websites:
+        lines = ["Website changes detected", ""]
+        for item in changed_websites[:100]:
+            lines.append(f"- ID: {item['id']} | Race: {item['race']} | URL: {item['url']}")
+        if len(changed_websites) > 100:
+            lines.append(f"... and {len(changed_websites) - 100} more")
+        message = "\n".join(lines)
+        sent = send_telegram_notification(
+            TELEGRAM_API_ID,
+            TELEGRAM_API_HASH,
+            TELEGRAM_SESSION_NAME,
+            TELEGRAM_TARGET,
+            message
+        )
+        if not sent:
+            logging.warning("⚠️ Не удалось отправить агрегированное Telegram-уведомление (%s изменений).", len(changed_websites))
 
 def main():
     """Основная функция с расписанием"""
