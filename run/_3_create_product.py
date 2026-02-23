@@ -377,8 +377,11 @@ def _build_acf_fields_partial(data):
         benefits = "\n".join(benefits)
     faq_items = parse_faq_items(data.get("FAQ", ""))
 
+    event_start_date = format_date_ymd(data.get("EVENT START DATE", ""))
+    event_end_date = format_date_ymd(data.get("EVENT END DATE", ""))
+
     fields = {
-        "event_date_start": data.get("EVENT START DATE", ""),
+        "event_date_start": event_start_date,
         "event_location_text": (data.get("LOCATION (CITY)") or "").strip(),
         "event_ticket_url": data.get("WEBSITE", ""),
         "event_latitude": format_coord(data["LAT"]) if data.get("LAT") else "",
@@ -389,7 +392,7 @@ def _build_acf_fields_partial(data):
         "event_faq_headline": "FAQ" if faq_items else "",
         "event_faq_items": faq_items,
         "event_start_time": data.get("EVENT START TIME", ""),
-        "event_date_end": data.get("EVENT END DATE", ""),
+        "event_date_end": event_end_date,
     }
 
     # При обновлении передаём только непустые поля, чтобы не затирать данные в WP.
