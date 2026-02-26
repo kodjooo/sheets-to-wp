@@ -18,7 +18,7 @@
 ## Поток обработки
 1. Чтение всех строк Google Sheets.
 2. Маршрутизация по статусам:
-- `Revised (incomplete)` — публикация без AI-контента + baseline hash,
+- `Revised (incomplete)` — генерация AI-контента + публикация + baseline hash,
 - `Revised (complete)` — генерация контента + публикация/обновление,
 - `Published (incomplete)` — мониторинг WEBSITE и уведомления.
 3. Для `Revised (complete)`: геокодинг (`LOCATION`, fallback на `LOCATION (CITY)`).
@@ -36,7 +36,7 @@
 - удаление отсутствующих в таблице.
 11. Создание или обновление PT-перевода, связка WPML, ACF PT, атрибуты PT.
 12. Синхронизация вариаций PT по `WP VARIATION ID PT` (update/create/delete).
-13. Для `Revised (incomplete)` рассчитывается baseline hash `WEBSITE` и записывается в таблицу.
+13. Для `Revised (incomplete)` генерируются и записываются поля `ORG INFO/SUMMARY/BENEFITS/FAQ` (EN/PT), затем рассчитывается baseline hash `WEBSITE`.
 14. Для `Published (incomplete)` рассчитывается текущий hash `WEBSITE`; при изменениях отправляется Telegram.
 15. Обновление полей и статуса строки в Google Sheets, включая `WP VARIATION ID EN/PT` для каждой строки вариации.
 

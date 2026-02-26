@@ -225,7 +225,11 @@ def run_automation():
                     row["RACE NAME"] = translated_title
                     batch_update_cells(row_index, {"RACE NAME": row["RACE NAME"]}, headers)
 
-                if not is_incomplete:
+                if status in (
+                    STATUS_REVISED.lower(),
+                    STATUS_REVISED_INCOMPLETE.lower(),
+                    STATUS_REVISED_COMPLETE.lower(),
+                ):
                     website_text, _ = extract_text_from_url(row.get("WEBSITE", ""))
 
                     regulations_url = row.get("REGULATIONS", "")

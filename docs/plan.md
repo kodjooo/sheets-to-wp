@@ -112,3 +112,7 @@
   - create вариаций при отсутствии ID,
   - delete вариаций в WooCommerce, отсутствующих в текущем наборе таблицы.
 - Реализована запись актуальных `WP VARIATION ID EN` и `WP VARIATION ID PT` обратно в строки вариаций Google Sheets.
+
+24. Корректировка генерации для `Revised (incomplete)` — выполнено
+- Для статуса `Revised (incomplete)` включена генерация и запись полей `ORG INFO`, `ORG INFO (PT)`, `SUMMARY`, `SUMMARY (PT)`, `BENEFITS`, `BENEFITS (PT)`, `FAQ`, `FAQ (PT)` по тому же сценарию, что и для `Revised`.
+- Для `Revised (complete)` подтверждена перегенерация этих полей при повторном запуске.

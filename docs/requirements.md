@@ -9,7 +9,7 @@
 
 ## Ключевые сценарии
 - Система обрабатывает строки со статусами `Revised (incomplete)` и `Revised (complete)`.
-- Для `Revised (incomplete)` публикуется карточка события без генерации полей `ORG INFO`, `SUMMARY`, `BENEFITS`, `FAQ` (EN/PT), сохраняется baseline hash страницы `WEBSITE`, статус меняется на `Published (incomplete)`.
+- Для `Revised (incomplete)` генерируются поля `ORG INFO`, `SUMMARY`, `BENEFITS`, `FAQ` (EN/PT), затем публикуется карточка события, сохраняется baseline hash страницы `WEBSITE`, статус меняется на `Published (incomplete)`.
 - Для `Published (incomplete)` ежедневно выполняется мониторинг изменений `WEBSITE` по сравнению hash (с нормализацией HTML); при изменениях отправляется уведомление в Telegram.
 - Для `Revised (complete)` генерируется контент через OpenAI (описание, преимущества, информация об организаторе, FAQ), после чего данные публикуются/обновляются в WordPress.
 - Опционально генерируется изображение и загружается в WordPress.
