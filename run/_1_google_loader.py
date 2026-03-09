@@ -158,7 +158,7 @@ def load_revised_rows():
     headers = sheet.row_values(1)
     revised_rows = []
     for i, row in enumerate(data):
-        if str(row.get("STATUS", "")).strip().lower() == "revised":
+        if str(row.get("STATUS", "")).strip().lower() == "revised (complete)":
             revised_rows.append((i + 2, row))  # +2 из-за заголовка и 1-индексации
     return revised_rows, headers
 

@@ -45,7 +45,6 @@ TELEGRAM_API_HASH = os.getenv("TELEGRAM_API_HASH", "")
 TELEGRAM_SESSION_NAME = os.getenv("TELEGRAM_SESSION_NAME", "racefinder_telethon")
 TELEGRAM_TARGET = os.getenv("TELEGRAM_TARGET", "")
 
-STATUS_REVISED = "Revised"
 STATUS_REVISED_INCOMPLETE = "Revised (incomplete)"
 STATUS_REVISED_COMPLETE = "Revised (complete)"
 STATUS_PUBLISHED = "Published"
@@ -65,9 +64,7 @@ if LOG_FILE:
 
 from _1_google_loader import (
     load_config,
-    load_revised_rows,
     load_all_rows,
-    update_status_to_published,
     batch_update_cells
 )
 
@@ -84,7 +81,6 @@ from _2_content_generation import (
 )
 
 from _3_create_product import create_or_update_product as create_product_en
-from _3_create_product import get_category_id_by_name
 from _4_create_translation import create_or_update_product_pt as create_product_pt
 from _5_taxonomy_and_attributes import assign_attributes_to_product
 from _6_create_variations import sync_variations_by_ids
@@ -202,7 +198,6 @@ def run_automation():
         logging.debug(f"Строка {row_index}: ID={row_id}, STATUS='{row.get('STATUS', '')}' -> '{status}'")
 
         if status in (
-            STATUS_REVISED.lower(),
             STATUS_REVISED_INCOMPLETE.lower(),
             STATUS_REVISED_COMPLETE.lower(),
         ):
@@ -226,7 +221,6 @@ def run_automation():
                     batch_update_cells(row_index, {"RACE NAME": row["RACE NAME"]}, headers)
 
                 if status in (
-                    STATUS_REVISED.lower(),
                     STATUS_REVISED_INCOMPLETE.lower(),
                     STATUS_REVISED_COMPLETE.lower(),
                 ):
@@ -394,7 +388,6 @@ def run_automation():
                     sub_row_index, sub_row = rows[j]
                     sub_status = sub_row.get("STATUS", "").strip().lower()
                     if sub_status in (
-                        STATUS_REVISED.lower(),
                         STATUS_REVISED_INCOMPLETE.lower(),
                         STATUS_REVISED_COMPLETE.lower(),
                         STATUS_PUBLISHED.lower(),
