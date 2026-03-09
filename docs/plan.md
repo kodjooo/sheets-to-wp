@@ -21,18 +21,17 @@
   - `WP PRODUCT ID PT` (ID PT-товара в WooCommerce для обновлений),
   - `WEBSITE SNAPSHOT HASH` (контрольная сумма snapshot),
   - `LAST DIFF CHECK AT` (время последней проверки изменений).
-- Зафиксировать правила совместимости со статусами `Revised (complete)` и `Published`.
+- Зафиксировать рабочие статусы `Revised (incomplete)`, `Revised (complete)`, `Published (incomplete)` и `Published`.
 
 12. Реорганизация пайплайна статусов в `main.py` — выполнено
 - Разделить обработку строк на отдельные сценарии:
   - сценарий A: `Revised (incomplete)`,
   - сценарий B: `Revised (complete)`,
-  - сценарий C: `Published (incomplete)` (только мониторинг WEBSITE + уведомления),
-  - обратная совместимость: отсутствует (используется только `Revised (complete)`).
+  - сценарий C: `Published (incomplete)` (только мониторинг WEBSITE + уведомления).
 - Вынести маршрутизацию сценариев в отдельные функции для тестируемости.
 
 13. Сценарий публикации `Revised (incomplete)` — выполнено
-- Публиковать/обновлять базовый товар без генерации полей:
+- Генерировать и записывать поля:
   `ORG INFO`, `ORG INFO (PT)`, `SUMMARY`, `SUMMARY (PT)`, `BENEFITS`, `BENEFITS (PT)`, `FAQ`, `FAQ (PT)`.
 - Реализовать baseline hash WEBSITE на день публикации:
   - вычислить hash после нормализации HTML,
@@ -86,7 +85,7 @@
 20. Тестирование — выполнено
 - Добавить unit-тесты:
   - маршрутизация статусов,
-  - сценарий incomplete без генерации полей,
+  - сценарий incomplete с генерацией полей,
   - перевод статуса в `Published (incomplete)` после incomplete-публикации,
   - мониторинг только для `Published (incomplete)`,
   - сценарий complete с генерацией и selective update,
@@ -116,3 +115,7 @@
 24. Корректировка генерации для `Revised (incomplete)` — выполнено
 - Для статуса `Revised (incomplete)` включена генерация и запись полей `ORG INFO`, `ORG INFO (PT)`, `SUMMARY`, `SUMMARY (PT)`, `BENEFITS`, `BENEFITS (PT)`, `FAQ`, `FAQ (PT)` по тому же сценарию, что и для `Revised (complete)`.
 - Для `Revised (complete)` подтверждена перегенерация этих полей при повторном запуске.
+
+25. Удаление legacy-статуса `Revised` — выполнено
+- Из кода удалена отдельная обработка `Revised`.
+- В рабочем процессе используются только `Revised (incomplete)`, `Revised (complete)`, `Published (incomplete)` и `Published`.

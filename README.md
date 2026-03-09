@@ -6,7 +6,7 @@
 - Читает строки из Google Sheets и обрабатывает статусы `Revised (incomplete)` и `Revised (complete)`.
 - Для `Revised (incomplete)` генерирует и записывает AI-поля `ORG INFO/SUMMARY/BENEFITS/FAQ` (EN/PT), публикует карточку, сохраняет baseline hash `WEBSITE` и переводит строку в `Published (incomplete)`.
 - Для `Published (incomplete)` ежедневно пересчитывает hash `WEBSITE` (с нормализацией HTML) и отправляет уведомление в Telegram при изменении.
-- Для `Revised (complete)` генерирует EN/PT-контент через OpenAI и обновляет существующие EN/PT продукты в WP по сохранённым ID.
+- Для `Revised (complete)` генерирует EN/PT-контент через OpenAI и обновляет существующие EN/PT продукты в WP по сохранённым ID, а при отсутствии ID создаёт новые.
 - Загружает данные из `WEBSITE` и `REGULATIONS` (HTML/PDF) с ретраями.
 - Генерирует EN/PT-контент через OpenAI (основной и второй ассистент).
 - Переводит `RACE NAME (PT)` в `RACE NAME` (PT→EN) через OpenAI.

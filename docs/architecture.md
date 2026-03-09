@@ -21,8 +21,8 @@
 - `Revised (incomplete)` — генерация AI-контента + публикация + baseline hash,
 - `Revised (complete)` — генерация контента + публикация/обновление,
 - `Published (incomplete)` — мониторинг WEBSITE и уведомления.
-3. Для `Revised (complete)`: геокодинг (`LOCATION`, fallback на `LOCATION (CITY)`).
-4. Для `Revised (complete)`: загрузка источников:
+3. Для `Revised (incomplete)` и `Revised (complete)`: геокодинг (`LOCATION`, fallback на `LOCATION (CITY)`).
+4. Для `Revised (incomplete)` и `Revised (complete)`: загрузка источников:
 - `WEBSITE` (HTML-текст),
 - `REGULATIONS` (HTML-текст или PDF как файл для OpenAI).
 5. Проверка валидности источников; при ошибке — запись `STATUS=Error: ...` и пропуск строки.
@@ -30,6 +30,8 @@
 7. Пост-обработка вторым ассистентом (очистка блоков, проверка структуры).
 8. Проверка пар EN/PT (`summary`, `org_info`, `benefits`, `faq`) и дополнительные повторы второго ассистента по `PT_RETRY_ATTEMPTS`.
 9. Создание или обновление EN-продукта (draft), категорий, ACF.
+Для `Revised (complete)` используется update при наличии `WP PRODUCT ID EN`, иначе create.
+Для `Revised (incomplete)` сейчас используется create-flow с последующим мониторингом.
 10. Назначение атрибутов EN и синхронизация вариаций EN по `WP VARIATION ID EN`:
 - обновление существующих,
 - создание новых,
