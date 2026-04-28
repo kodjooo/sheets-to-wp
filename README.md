@@ -13,6 +13,7 @@
 - Создаёт variable-продукт в WooCommerce, категории, атрибуты и вариации.
 - Создаёт PT-перевод через WPML API и синхронизирует ACF-поля.
 - Записывает результаты и статус обратно в Google Sheets.
+- Отдельным ручным скриптом восстанавливает старые `WP PRODUCT ID EN/PT` и `WP VARIATION ID EN/PT`, если карточки уже опубликованы, а ID не были сохранены в таблице.
 
 ## Стек
 - Python 3.11
@@ -81,6 +82,26 @@ docker compose logs -f
 docker compose down
 ```
 
+## Recovery старых WP ID
+Скрипт `run/recover_wp_ids.py` не запускается ежедневным pipeline. Он нужен для ранее опубликованных карточек, где в Google Sheets пусты `WP PRODUCT ID EN`, `WP PRODUCT ID PT`, `WP VARIATION ID EN` или `WP VARIATION ID PT`.
+
+Dry-run без записи в таблицу:
+```bash
+docker compose run --rm racefinder python recover_wp_ids.py --mode dry-run
+```
+
+Apply с точечной записью только пустых ID:
+```bash
+docker compose run --rm racefinder python recover_wp_ids.py --mode apply
+```
+
+Ограничить количество основных строк:
+```bash
+docker compose run --rm racefinder python recover_wp_ids.py --mode dry-run --limit 10
+```
+
+Скрипт сначала ищет product ID из `LINK RACEFINDER`, затем PT-перевод через публичную страницу и `hreflang="pt-pt"`. Вариации EN/PT сопоставляются по нормализованному ключу атрибутов (`TYPE`, `DISTANCE`, `TEAM`, `LICENSE`, дата и время старта), а не по названию. Неоднозначные совпадения логируются и не записываются автоматически.
+
 ## Развертывание на удалённом сервере
 1. Установите Docker и Docker Compose.
 2. Клонируйте репозиторий:
@@ -122,6 +143,8 @@ docker compose logs -f
 - `TELEGRAM_TARGET`
 - `HTTP_FETCH_RETRY_DELAYS_SEC`
 - `HTTP_FETCH_INSECURE_HOSTS`
+- `RECOVERY_WP_IDS_MODE`
+- `RECOVERY_WP_IDS_LIMIT`
 - `WCAPI_MAX_ATTEMPTS`
 - `WCAPI_BASE_DELAY_SEC`
 - `WCAPI_TIMEOUT_SEC`

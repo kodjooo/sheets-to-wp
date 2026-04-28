@@ -11,6 +11,7 @@
 - `run/_4_create_translation.py` — создание/обновление PT-продукта, связка перевода с EN через WPML API, ACF PT.
 - `run/_5_taxonomy_and_attributes.py` — создание/поиск атрибутов и термов, назначение атрибутов продукту.
 - `run/_6_create_variations.py` — синхронизация вариаций (create/update/delete) с retry-запросами.
+- `run/recover_wp_ids.py` / `run/recovery_wp_ids.py` — ручной recovery-сценарий для восстановления `WP PRODUCT ID EN/PT` и `WP VARIATION ID EN/PT` у ранее опубликованных строк; не вызывается из `main.py`.
 - `run/utils.py` — нормализация атрибутов/категорий, проверка неполных PT-полей, FAQ parser.
 - `run/website_snapshot.py` — расчёт/сравнение hash `WEBSITE` с нормализацией HTML и Telegram-уведомления.
 - `run/prompts/*.txt` — системные промпты для первого и второго ассистента.
@@ -42,6 +43,25 @@
 14. Для `Published (incomplete)` рассчитывается текущий hash `WEBSITE`; при изменениях отправляется Telegram.
 15. Обновление полей и статуса строки в Google Sheets, включая `WP VARIATION ID EN/PT` для каждой строки вариации.
 
+## Recovery WP ID
+Recovery-сценарий запускается вручную командой `python recover_wp_ids.py` из контейнера/папки `run` и работает отдельно от ежедневного pipeline.
+
+Алгоритм:
+1. Читает все строки Google Sheets и группирует главную строку события с дочерними строками вариаций.
+2. Берет только главные строки со статусами `Published`, `Published (incomplete)`, `Revised (complete)`, `Revised (incomplete)`, где отсутствует хотя бы один product/variation ID.
+3. Восстанавливает EN product ID сначала из `LINK RACEFINDER` (`?p=`, `?post=`, `wp-admin/post.php?post=`), затем валидирует найденный товар через WooCommerce REST API.
+4. Восстанавливает PT product ID через публичную EN-страницу и `hreflang="pt-pt"`, затем извлекает ID из PT shortlink или JSON-ссылки страницы.
+5. Загружает вариации EN/PT через WooCommerce REST API и сопоставляет их с дочерними строками по каноническому ключу.
+6. В режиме `dry-run` только пишет отчет в лог; в режиме `apply` обновляет Google Sheets.
+
+Канонический ключ вариации строится из значимых полей `TYPE`, `DISTANCE`, `TEAM`, `LICENSE`, `RACE START DATE`, `RACE START TIME`, `ATTRIBUTE/VALUE`. `LOCATION` и `PRICE` не входят в основной ключ. Нормализация приводит EN/PT значения к общему виду: например `Walking`/`caminhada` -> `walking`, `5-km-pt` -> `5 km`, `10-05-2026-pt` -> `2026-05-10`, `1000-pt` -> `10:00`.
+
+Правила безопасности:
+- уже заполненные ID не перезаписываются;
+- при неоднозначном product или variation match запись не выполняется;
+- при провале валидации товара запись не выполняется;
+- причины пропуска логируются как `validation_failed`, `pt_translation_not_found`, `no_variation_match`, `ambiguous_variation_match`.
+
 ## Интеграции
 - Google Sheets API (`gspread`, service account).
 - OpenAI:
@@ -64,6 +84,7 @@
 - HTTP fetch: user-agent, retry delays, whitelist хостов без SSL-проверки.
 - Telegram: `TELEGRAM_NOTIFICATIONS_ENABLED`, `TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `TELEGRAM_SESSION_NAME`, `TELEGRAM_TARGET`.
 - Retry и таймауты WooCommerce: `WCAPI_*`.
+- Recovery: `RECOVERY_WP_IDS_MODE`, `RECOVERY_WP_IDS_LIMIT`.
 - Планировщик: `RUN_ON_STARTUP`, `SCHEDULED_HOUR`, `SCHEDULED_MINUTE`, `TIMEZONE`.
 - Логи: `LOG_LEVEL`, `LOG_FILE`.
 

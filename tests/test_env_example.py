@@ -60,6 +60,8 @@ class EnvExampleTests(unittest.TestCase):
             "HTTP_FETCH_USER_AGENT",
             "HTTP_FETCH_RETRY_DELAYS_SEC",
             "HTTP_FETCH_INSECURE_HOSTS",
+            "RECOVERY_WP_IDS_MODE",
+            "RECOVERY_WP_IDS_LIMIT",
         }
 
         missing = [key for key in sorted(required) if key not in keys]
