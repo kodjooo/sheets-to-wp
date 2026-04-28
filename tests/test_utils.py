@@ -7,6 +7,8 @@ RUN_DIR = os.path.join(os.path.dirname(__file__), "..", "run")
 if RUN_DIR not in sys.path:
     sys.path.insert(0, RUN_DIR)
 
+sys.modules.pop("utils", None)
+
 from utils import (
     normalize_attribute_payload,
     select_attribute_id,

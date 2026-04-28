@@ -38,6 +38,9 @@ class _DummyClient:
 class OpenAIResponsesTests(unittest.TestCase):
     def setUp(self):
         _seed_env()
+        sys.modules.pop("_1_google_loader", None)
+        sys.modules.pop("_2_content_generation", None)
+        sys.modules.pop("_3_create_product", None)
         self._install_import_stubs()
         import importlib
         import _2_content_generation as content
@@ -226,6 +229,7 @@ class OpenAIResponsesTests(unittest.TestCase):
         class DummyResponse:
             def __init__(self, text):
                 self.text = text
+                self.status_code = 200
                 self.headers = {"content-type": "text/html"}
 
             def raise_for_status(self):
@@ -236,8 +240,8 @@ class OpenAIResponsesTests(unittest.TestCase):
                 self.calls = []
                 self.attempt = 0
 
-            def get(self, url, headers=None, timeout=None):
-                self.calls.append({"url": url, "headers": headers, "timeout": timeout})
+            def get(self, url, headers=None, timeout=None, **kwargs):
+                self.calls.append({"url": url, "headers": headers, "timeout": timeout, **kwargs})
                 self.attempt += 1
                 if self.attempt < 3:
                     raise Exception("temporary error")

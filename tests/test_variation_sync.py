@@ -17,19 +17,22 @@ if "woocommerce" not in sys.modules:
     woocommerce_stub.API = _APIStub
     sys.modules["woocommerce"] = woocommerce_stub
 
-if "_1_google_loader" not in sys.modules:
-    google_loader_stub = types.ModuleType("_1_google_loader")
-    def _load_config_stub():
-        return {
-            "wp_url": "https://example.test",
-            "consumer_key": "ck",
-            "consumer_secret": "cs",
-            "wcapi_timeout_sec": "10",
-            "wcapi_max_attempts": "2",
-            "wcapi_base_delay_sec": "0.1",
-        }
-    google_loader_stub.load_config = _load_config_stub
-    sys.modules["_1_google_loader"] = google_loader_stub
+sys.modules.pop("_1_google_loader", None)
+
+google_loader_stub = types.ModuleType("_1_google_loader")
+def _load_config_stub():
+    return {
+        "wp_url": "https://example.test",
+        "consumer_key": "ck",
+        "consumer_secret": "cs",
+        "wcapi_timeout_sec": "10",
+        "wcapi_max_attempts": "2",
+        "wcapi_base_delay_sec": "0.1",
+    }
+google_loader_stub.load_config = _load_config_stub
+sys.modules["_1_google_loader"] = google_loader_stub
+
+sys.modules.pop("_6_create_variations", None)
 
 from _6_create_variations import sync_variations_by_ids
 
