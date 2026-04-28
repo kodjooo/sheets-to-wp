@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import html
 import logging
 import os
@@ -39,6 +40,12 @@ TYPE_ALIASES = {
     "wheelchair race": "wheelchair-race",
     "wheelchair-race": "wheelchair-race",
     "wheelchair-race-pt": "wheelchair-race",
+}
+
+ACF_FIELD_ALIASES = {
+    "event_ticket_url": ("event_ticket_url",),
+    "event_date_start": ("event_date_start", "event_start_date"),
+    "event_location_text": ("event_location_text", "location_city"),
 }
 
 
@@ -126,6 +133,11 @@ def normalize_date(value: str | None) -> str:
             return datetime.strptime(text, fmt).strftime("%Y-%m-%d")
         except ValueError:
             continue
+    if re.fullmatch(r"\d{8}", text):
+        try:
+            return datetime.strptime(text, "%Y%m%d").strftime("%Y-%m-%d")
+        except ValueError:
+            return ""
     return ""
 
 
@@ -140,6 +152,52 @@ def normalize_time(value: str | None) -> str:
     if match:
         return f"{int(match.group(1)):02d}:{match.group(2)}"
     return ""
+
+
+def normalize_text(value: str | None) -> str:
+    if not value:
+        return ""
+    text = html.unescape(str(value)).strip().lower()
+    text = re.sub(r"[^a-z0-9\s-]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _acf_fields(product: dict[str, Any] | None) -> dict[str, Any]:
+    if not product:
+        return {}
+    acf = product.get("acf")
+    if isinstance(acf, dict):
+        return acf
+    result = {}
+    for item in product.get("meta_data", []) or []:
+        key = item.get("key")
+        if key:
+            result[key] = item.get("value")
+    return result
+
+
+def get_acf_value(product: dict[str, Any] | None, canonical_key: str) -> Any:
+    fields = _acf_fields(product)
+    for key in ACF_FIELD_ALIASES.get(canonical_key, (canonical_key,)):
+        if key in fields and fields[key] not in ("", None, []):
+            return fields[key]
+    return None
+
+
+def product_categories(product: dict[str, Any] | None) -> set[str]:
+    values = set()
+    for category in (product or {}).get("categories", []) or []:
+        values.add(slugify(category.get("name")))
+        values.add(slugify(category.get("slug")))
+    return {value for value in values if value}
+
+
+def title_similarity(left: str | None, right: str | None) -> float:
+    left_words = set(normalize_text(left).split())
+    right_words = set(normalize_text(right).split())
+    if not left_words or not right_words:
+        return 0.0
+    return len(left_words & right_words) / len(left_words | right_words)
 
 
 def _attribute_map(attributes: list[dict[str, Any]]) -> dict[str, str]:
@@ -205,6 +263,8 @@ class RecoveryResult:
     updates: dict[str, Any] = field(default_factory=dict)
     reasons: list[str] = field(default_factory=list)
     sources: dict[str, str] = field(default_factory=dict)
+    variation_counts: dict[str, int] = field(default_factory=dict)
+    matched_variations: dict[str, int] = field(default_factory=dict)
     ambiguous: bool = False
 
 
@@ -257,6 +317,10 @@ class WordPressRecoveryClient:
     def get_variations(self, product_id: int) -> list[dict[str, Any]]:
         import requests
 
+        store_variations = self.get_store_api_variations(product_id)
+        if store_variations:
+            return store_variations
+
         result = []
         page = 1
         while True:
@@ -273,6 +337,34 @@ class WordPressRecoveryClient:
                 return result
             page += 1
 
+    def get_store_api_variations(self, product_id: int) -> list[dict[str, Any]]:
+        import requests
+
+        response = requests.get(
+            f"{self.wp_url}/wp-json/wc/store/v1/products/{product_id}",
+            timeout=self.timeout,
+            headers={"User-Agent": "racefinder-recovery/1.0"},
+        )
+        if response.status_code >= 400:
+            return []
+        product = response.json() or {}
+        variations = product.get("variations") or []
+        result = []
+        for variation in variations:
+            variation_id = variation.get("id")
+            if not variation_id:
+                continue
+            attrs = []
+            for attr in variation.get("attributes", []) or []:
+                attrs.append(
+                    {
+                        "name": attr.get("name") or attr.get("attribute"),
+                        "option": attr.get("value") or attr.get("term") or attr.get("option"),
+                    }
+                )
+            result.append({"id": variation_id, "attributes": attrs})
+        return result
+
     def search_products(self, search: str) -> list[dict[str, Any]]:
         import requests
 
@@ -287,14 +379,74 @@ class WordPressRecoveryClient:
         response.raise_for_status()
         return response.json() or []
 
+    def iter_products(self, search: str | None = None, max_pages: int = 10) -> list[dict[str, Any]]:
+        import requests
+
+        result = []
+        for page in range(1, max_pages + 1):
+            params = {"per_page": 100, "page": page, "status": "publish"}
+            if search:
+                params["search"] = search
+            response = requests.get(
+                f"{self.wp_url}/wp-json/wc/v3/products",
+                auth=self.auth,
+                params=params,
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            batch = response.json() or []
+            result.extend(batch)
+            if len(batch) < 100:
+                break
+        return result
+
     def validate_product(self, product: dict[str, Any] | None, row: dict[str, Any]) -> bool:
         if not product or product.get("type") not in ("variable", "simple", "external"):
             return False
         website = normalize_url(row.get("WEBSITE"))
-        meta_values = [normalize_url(item.get("value")) for item in product.get("meta_data", []) if item.get("key") == "event_ticket_url"]
-        if website and meta_values and website not in meta_values:
+        ticket_url = normalize_url(get_acf_value(product, "event_ticket_url"))
+        if website and ticket_url and website != ticket_url:
+            return False
+        expected_date = normalize_date(row.get("EVENT START DATE"))
+        product_date = normalize_date(get_acf_value(product, "event_date_start"))
+        if expected_date and product_date and expected_date != product_date:
             return False
         return True
+
+    def product_match_score(self, product: dict[str, Any], row: dict[str, Any]) -> tuple[int, list[str]]:
+        reasons = []
+        score = 0
+        website = normalize_url(row.get("WEBSITE"))
+        ticket_url = normalize_url(get_acf_value(product, "event_ticket_url"))
+        if website and ticket_url:
+            if website != ticket_url:
+                return 0, ["website_mismatch"]
+            score += 5
+            reasons.append("website_match")
+        expected_date = normalize_date(row.get("EVENT START DATE"))
+        product_date = normalize_date(get_acf_value(product, "event_date_start"))
+        if expected_date and product_date:
+            if expected_date != product_date:
+                return 0, ["date_mismatch"]
+            score += 3
+            reasons.append("date_match")
+        expected_city = normalize_text(row.get("LOCATION (CITY)"))
+        product_city = normalize_text(get_acf_value(product, "event_location_text"))
+        if expected_city and product_city and expected_city in product_city:
+            score += 1
+            reasons.append("city_match")
+        expected_categories = {slugify(row.get("CATEGORY")), slugify(row.get("SUBCATEGORY"))} - {""}
+        if expected_categories and expected_categories & product_categories(product):
+            score += 1
+            reasons.append("category_match")
+        title_score = max(
+            title_similarity(row.get("RACE NAME"), product.get("name")),
+            title_similarity(row.get("RACE NAME (PT)"), product.get("name")),
+        )
+        if title_score >= 0.5:
+            score += 1
+            reasons.append("title_match")
+        return score, reasons
 
 
 class RecoveryRunner:
@@ -306,15 +458,18 @@ class RecoveryRunner:
         found: dict[str, int] = {}
         sources: dict[str, str] = {}
         reasons: list[str] = []
+        if not is_missing(row.get("WP PRODUCT ID EN")):
+            found["WP PRODUCT ID EN"] = int(float(row["WP PRODUCT ID EN"]))
+            sources["WP PRODUCT ID EN"] = "sheet_existing"
         direct_id = extract_product_id_from_url(row.get("LINK RACEFINDER"))
-        if not direct_id and row.get("LINK RACEFINDER"):
+        if not found.get("WP PRODUCT ID EN") and not direct_id and row.get("LINK RACEFINDER"):
             try:
                 direct_id = self.wp.extract_product_id_from_html(self.wp.get_html(str(row.get("LINK RACEFINDER"))))
                 if direct_id:
                     sources["WP PRODUCT ID EN"] = "public_page"
             except Exception as exc:
                 self.logger.warning("Не удалось извлечь ID из публичной страницы LINK RACEFINDER: %s", exc)
-        if direct_id:
+        if not found.get("WP PRODUCT ID EN") and direct_id:
             product = self.wp.get_product(direct_id)
             if self.wp.validate_product(product, row):
                 found["WP PRODUCT ID EN"] = direct_id
@@ -322,19 +477,20 @@ class RecoveryRunner:
             else:
                 reasons.append("validation_failed")
         if not found.get("WP PRODUCT ID EN"):
-            candidates = []
-            for search_value in (row.get("WEBSITE"), row.get("RACE NAME")):
-                if not search_value:
-                    continue
-                candidates.extend(self.wp.search_products(str(search_value)))
-            valid = [item for item in candidates if self.wp.validate_product(item, row)]
-            unique = {int(item["id"]): item for item in valid if item.get("id")}
-            if len(unique) == 1:
-                found["WP PRODUCT ID EN"] = next(iter(unique))
-                sources["WP PRODUCT ID EN"] = "validated_search"
-            elif len(unique) > 1:
-                reasons.append("ambiguous_product_match")
-        if found.get("WP PRODUCT ID EN"):
+            product_id, source, reason = self.find_product_by_fallbacks(row, preferred_lang="EN")
+            if product_id:
+                found["WP PRODUCT ID EN"] = product_id
+                sources["WP PRODUCT ID EN"] = source
+            elif reason:
+                reasons.append(reason)
+        if not found.get("WP PRODUCT ID EN") and not reasons:
+            reasons.append("no_product_match")
+        if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
+            existing_pt = row.get("WP PRODUCT ID PT")
+            if not is_missing(existing_pt):
+                found["WP PRODUCT ID PT"] = int(float(existing_pt))
+                sources["WP PRODUCT ID PT"] = "sheet_existing"
+        if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
             product = self.wp.get_product(found["WP PRODUCT ID EN"])
             permalink = product.get("permalink") if product else None
             if permalink:
@@ -349,15 +505,56 @@ class RecoveryRunner:
                     else:
                         reasons.append("pt_translation_not_found")
         if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
-            pt_search = row.get("RACE NAME (PT)") or row.get("RACE NAME")
-            valid_pt = [item for item in self.wp.search_products(str(pt_search or "")) if self.wp.validate_product(item, row)]
-            unique_pt = {int(item["id"]): item for item in valid_pt if item.get("id") and int(item["id"]) != found["WP PRODUCT ID EN"]}
-            if len(unique_pt) == 1:
-                found["WP PRODUCT ID PT"] = next(iter(unique_pt))
-                sources["WP PRODUCT ID PT"] = "validated_pt_search"
-            elif len(unique_pt) > 1:
-                reasons.append("ambiguous_product_match")
+            product_id, source, reason = self.find_product_by_fallbacks(row, preferred_lang="PT", exclude_ids={found["WP PRODUCT ID EN"]})
+            if product_id:
+                found["WP PRODUCT ID PT"] = product_id
+                sources["WP PRODUCT ID PT"] = source
+            elif reason:
+                reasons.append(reason if reason == "ambiguous_product_match" else "pt_translation_not_found")
         return found, sources, reasons
+
+    def find_product_by_fallbacks(self, row: dict[str, Any], preferred_lang: str, exclude_ids: set[int] | None = None) -> tuple[int | None, str, str]:
+        exclude_ids = exclude_ids or set()
+        search_terms = []
+        if row.get("WEBSITE"):
+            search_terms.append(str(row["WEBSITE"]))
+        if preferred_lang == "PT" and row.get("RACE NAME (PT)"):
+            search_terms.append(str(row["RACE NAME (PT)"]))
+        if row.get("RACE NAME"):
+            search_terms.append(str(row["RACE NAME"]))
+
+        candidates_by_id: dict[int, dict[str, Any]] = {}
+        for term in search_terms:
+            for product in self.wp.search_products(term):
+                if product.get("id") and int(product["id"]) not in exclude_ids:
+                    candidates_by_id[int(product["id"])] = product
+
+        if row.get("WEBSITE"):
+            max_pages = int(os.getenv("RECOVERY_WP_IDS_PRODUCT_SCAN_PAGES", "10") or "10")
+            for product in self.wp.iter_products(max_pages=max_pages):
+                product_id = product.get("id")
+                if product_id and int(product_id) not in exclude_ids:
+                    candidates_by_id[int(product_id)] = product
+
+        scored = []
+        for product_id, product in candidates_by_id.items():
+            if not self.wp.validate_product(product, row):
+                continue
+            score, score_reasons = self.wp.product_match_score(product, row)
+            if score > 0:
+                scored.append((score, product_id, score_reasons))
+
+        if not scored:
+            return None, "", "no_product_match"
+        scored.sort(reverse=True)
+        best_score = scored[0][0]
+        best = [item for item in scored if item[0] == best_score]
+        if len(best) > 1:
+            return None, "", "ambiguous_product_match"
+        if best_score < 4:
+            return None, "", "validation_failed"
+        source = "website_acf" if "website_match" in best[0][2] else "composite_key"
+        return best[0][1], source, ""
 
     def recover_row(self, row_index: int, row: dict[str, Any], child_rows: list[tuple[int, dict[str, Any]]]) -> RecoveryResult:
         result = RecoveryResult(row_index=row_index, race_name=str(row.get("RACE NAME") or row.get("RACE NAME (PT)") or ""))
@@ -375,8 +572,10 @@ class RecoveryRunner:
             if not product_id:
                 continue
             variations = self.wp.get_variations(product_id)
+            result.variation_counts[lang] = len(variations)
             missing_children = [(idx, item) for idx, item in child_rows if is_missing(item.get(variation_column))]
             matches, failures = match_variations(missing_children, variations)
+            result.matched_variations[lang] = len(matches)
             for child_index, variation_id in matches.items():
                 result.updates[f"{variation_column}:{child_index}"] = variation_id
             for reason in failures.values():
@@ -413,7 +612,43 @@ def parse_args(argv: list[str] | None = None):
     parser = argparse.ArgumentParser(description="Восстановление WP product/variation ID из опубликованных карточек.")
     parser.add_argument("--mode", choices=("dry-run", "apply"), default=os.getenv("RECOVERY_WP_IDS_MODE", "dry-run"))
     parser.add_argument("--limit", type=int, default=int(os.getenv("RECOVERY_WP_IDS_LIMIT", "0") or "0"))
+    parser.add_argument("--report", default=os.getenv("RECOVERY_WP_IDS_REPORT", ""))
     return parser.parse_args(argv)
+
+
+def write_report(path: str, rows: list[RecoveryResult], mode: str) -> None:
+    if not path:
+        return
+    with open(path, "w", encoding="utf-8", newline="") as report_file:
+        writer = csv.DictWriter(
+            report_file,
+            fieldnames=[
+                "mode",
+                "row_index",
+                "race_name",
+                "updates",
+                "sources",
+                "variation_counts",
+                "matched_variations",
+                "reasons",
+                "ambiguous",
+            ],
+        )
+        writer.writeheader()
+        for result in rows:
+            writer.writerow(
+                {
+                    "mode": mode,
+                    "row_index": result.row_index,
+                    "race_name": result.race_name,
+                    "updates": result.updates,
+                    "sources": result.sources,
+                    "variation_counts": result.variation_counts,
+                    "matched_variations": result.matched_variations,
+                    "reasons": result.reasons,
+                    "ambiguous": result.ambiguous,
+                }
+            )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -426,6 +661,7 @@ def main(argv: list[str] | None = None) -> int:
     client = WordPressRecoveryClient(config["wp_url"], config["consumer_key"], config["consumer_secret"], float(config.get("wcapi_timeout_sec", 20)))
     runner = RecoveryRunner(client)
     processed = product_updates = variation_updates = manual = 0
+    report_rows: list[RecoveryResult] = []
     for row_index, row, children in group_events(rows):
         if not needs_recovery(row, children):
             continue
@@ -433,6 +669,7 @@ def main(argv: list[str] | None = None) -> int:
             break
         processed += 1
         result = runner.recover_row(row_index, row, children)
+        report_rows.append(result)
         product_updates += len([key for key in result.updates if ":" not in key])
         variation_updates += len([key for key in result.updates if ":" in key])
         if result.ambiguous or result.reasons:
@@ -454,6 +691,7 @@ def main(argv: list[str] | None = None) -> int:
                 else:
                     update_cell(row_index, key, value, headers)
     logging.info("Recovery summary processed=%s product_ids=%s variation_ids=%s manual_review=%s", processed, product_updates, variation_updates, manual)
+    write_report(args.report, report_rows, args.mode)
     return 0
 
 

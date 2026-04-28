@@ -2,16 +2,23 @@ import os
 import sys
 import unittest
 from unittest.mock import Mock, patch
+import types
 
 RUN_DIR = os.path.join(os.path.dirname(__file__), "..", "run")
 if RUN_DIR not in sys.path:
     sys.path.insert(0, RUN_DIR)
+
+if "requests" not in sys.modules:
+    requests_stub = types.ModuleType("requests")
+    requests_stub.get = Mock()
+    sys.modules["requests"] = requests_stub
 
 from recovery_wp_ids import (
     RecoveryRunner,
     WordPressRecoveryClient,
     build_variation_key,
     extract_product_id_from_url,
+    get_acf_value,
     group_events,
     match_variations,
     normalize_date,
@@ -19,6 +26,7 @@ from recovery_wp_ids import (
     normalize_time,
     normalize_type,
     normalize_url,
+    write_report,
 )
 
 
@@ -151,9 +159,107 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
         self.assertEqual(client.extract_product_id_from_html('<link rel="shortlink" href="https://site.test/?p=123">'), 123)
         self.assertEqual(client.extract_product_id_from_html('<a href="https://site.test/wp-json/wp/v2/product/456">json</a>'), 456)
 
-    @patch("recovery_wp_ids.update_cell", create=True)
-    def test_placeholder_for_apply_patch_import(self, _mock_update):
-        self.assertTrue(True)
+    def test_get_acf_value_supports_acf_and_meta_data(self):
+        self.assertEqual(get_acf_value({"acf": {"event_ticket_url": "https://race.test"}}, "event_ticket_url"), "https://race.test")
+        self.assertEqual(
+            get_acf_value({"meta_data": [{"key": "event_date_start", "value": "20260510"}]}, "event_date_start"),
+            "20260510",
+        )
+
+    def test_fallback_finds_unique_product_by_website_acf(self):
+        wp = Mock()
+        wp.search_products.return_value = []
+        wp.iter_products.return_value = [
+            {"id": 100, "type": "variable", "name": "Other", "acf": {"event_ticket_url": "https://other.test"}},
+            {
+                "id": 200,
+                "type": "variable",
+                "name": "Porto Half Marathon",
+                "acf": {"event_ticket_url": "https://race.test", "event_date_start": "20260510"},
+            },
+        ]
+        real_client = WordPressRecoveryClient("https://site.test", "ck", "cs")
+        wp.validate_product.side_effect = real_client.validate_product
+        wp.product_match_score.side_effect = real_client.product_match_score
+
+        product_id, source, reason = RecoveryRunner(wp).find_product_by_fallbacks(
+            {"WEBSITE": "https://race.test/", "EVENT START DATE": "10/05/2026", "RACE NAME": "Porto Half Marathon"},
+            preferred_lang="EN",
+        )
+
+        self.assertEqual(product_id, 200)
+        self.assertEqual(source, "website_acf")
+        self.assertEqual(reason, "")
+
+    def test_fallback_rejects_ambiguous_composite_match(self):
+        wp = Mock()
+        products = [
+            {
+                "id": 200,
+                "type": "variable",
+                "name": "Porto Half Marathon",
+                "acf": {"event_date_start": "20260510", "event_location_text": "Porto"},
+                "categories": [{"name": "Running"}],
+            },
+            {
+                "id": 201,
+                "type": "variable",
+                "name": "Porto Half Marathon",
+                "acf": {"event_date_start": "20260510", "event_location_text": "Porto"},
+                "categories": [{"name": "Running"}],
+            },
+        ]
+        wp.search_products.return_value = products
+        wp.iter_products.return_value = []
+        real_client = WordPressRecoveryClient("https://site.test", "ck", "cs")
+        wp.validate_product.side_effect = real_client.validate_product
+        wp.product_match_score.side_effect = real_client.product_match_score
+
+        product_id, _source, reason = RecoveryRunner(wp).find_product_by_fallbacks(
+            {
+                "EVENT START DATE": "10/05/2026",
+                "LOCATION (CITY)": "Porto",
+                "CATEGORY": "Running",
+                "RACE NAME": "Porto Half Marathon",
+            },
+            preferred_lang="EN",
+        )
+
+        self.assertIsNone(product_id)
+        self.assertEqual(reason, "ambiguous_product_match")
+
+    def test_store_api_variations_are_normalized(self):
+        client = WordPressRecoveryClient("https://site.test", "ck", "cs")
+        response = Mock()
+        response.status_code = 200
+        response.json.return_value = {
+            "variations": [
+                {
+                    "id": 77,
+                    "attributes": [
+                        {"name": "Type", "value": "Walking"},
+                        {"name": "Distance", "value": "5 km"},
+                    ],
+                }
+            ]
+        }
+        with patch("requests.get", return_value=response):
+            variations = client.get_store_api_variations(100)
+        self.assertEqual(variations, [{"id": 77, "attributes": [{"name": "Type", "option": "Walking"}, {"name": "Distance", "option": "5 km"}]}])
+
+    def test_write_report_creates_csv(self):
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(suffix=".csv") as report:
+            result = RecoveryRunner(Mock()).recover_row
+            self.assertTrue(callable(result))
+            from recovery_wp_ids import RecoveryResult
+
+            write_report(report.name, [RecoveryResult(row_index=2, race_name="Race", updates={"WP PRODUCT ID EN": 100})], "dry-run")
+            with open(report.name, encoding="utf-8") as report_file:
+                content = report_file.read()
+        self.assertIn("row_index", content)
+        self.assertIn("Race", content)
 
 
 if __name__ == "__main__":

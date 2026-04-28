@@ -100,7 +100,12 @@ docker compose run --rm racefinder python recover_wp_ids.py --mode apply
 docker compose run --rm racefinder python recover_wp_ids.py --mode dry-run --limit 10
 ```
 
-Скрипт сначала ищет product ID из `LINK RACEFINDER`, затем PT-перевод через публичную страницу и `hreflang="pt-pt"`. Вариации EN/PT сопоставляются по нормализованному ключу атрибутов (`TYPE`, `DISTANCE`, `TEAM`, `LICENSE`, дата и время старта), а не по названию. Неоднозначные совпадения логируются и не записываются автоматически.
+Записать CSV-отчет:
+```bash
+docker compose run --rm racefinder python recover_wp_ids.py --mode dry-run --report /app/logs/recovery_wp_ids.csv
+```
+
+Скрипт сначала ищет product ID из `LINK RACEFINDER`, затем PT-перевод через публичную страницу и `hreflang="pt-pt"`. Если прямые источники недоступны, он ищет товар по ACF `event_ticket_url`, затем по составному ключу: название, дата старта, город и категории. Вариации EN/PT загружаются через Store API с fallback на WooCommerce REST API и сопоставляются по нормализованному ключу атрибутов (`TYPE`, `DISTANCE`, `TEAM`, `LICENSE`, дата и время старта), а не по названию. Неоднозначные совпадения логируются и не записываются автоматически.
 
 ## Развертывание на удалённом сервере
 1. Установите Docker и Docker Compose.
@@ -145,6 +150,8 @@ docker compose logs -f
 - `HTTP_FETCH_INSECURE_HOSTS`
 - `RECOVERY_WP_IDS_MODE`
 - `RECOVERY_WP_IDS_LIMIT`
+- `RECOVERY_WP_IDS_PRODUCT_SCAN_PAGES`
+- `RECOVERY_WP_IDS_REPORT`
 - `WCAPI_MAX_ATTEMPTS`
 - `WCAPI_BASE_DELAY_SEC`
 - `WCAPI_TIMEOUT_SEC`

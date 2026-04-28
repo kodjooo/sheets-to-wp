@@ -50,9 +50,12 @@ Recovery-сценарий запускается вручную командой
 1. Читает все строки Google Sheets и группирует главную строку события с дочерними строками вариаций.
 2. Берет только главные строки со статусами `Published`, `Published (incomplete)`, `Revised (complete)`, `Revised (incomplete)`, где отсутствует хотя бы один product/variation ID.
 3. Восстанавливает EN product ID сначала из `LINK RACEFINDER` (`?p=`, `?post=`, `wp-admin/post.php?post=`), затем валидирует найденный товар через WooCommerce REST API.
-4. Восстанавливает PT product ID через публичную EN-страницу и `hreflang="pt-pt"`, затем извлекает ID из PT shortlink или JSON-ссылки страницы.
-5. Загружает вариации EN/PT через WooCommerce REST API и сопоставляет их с дочерними строками по каноническому ключу.
-6. В режиме `dry-run` только пишет отчет в лог; в режиме `apply` обновляет Google Sheets.
+4. Если прямой ID недоступен, ищет товар по `WEBSITE` через ACF `event_ticket_url` с нормализацией URL.
+5. Если ACF-поиск не дал результата, применяет составной fallback по названию, дате старта, городу и категориям. Совпадение только по названию не считается достаточным для записи.
+6. Восстанавливает PT product ID через публичную EN-страницу и `hreflang="pt-pt"`, затем извлекает ID из PT shortlink или JSON-ссылки страницы. Если `hreflang` недоступен, использует тот же валидируемый fallback для PT.
+7. Загружает вариации EN/PT через Store API `wc/store/v1/products/{id}`, при недоступности Store API использует WooCommerce REST `wc/v3/products/{id}/variations`.
+8. Сопоставляет вариации с дочерними строками по каноническому ключу.
+9. В режиме `dry-run` только пишет отчет в лог; в режиме `apply` обновляет Google Sheets. Дополнительно можно указать CSV-отчет через `RECOVERY_WP_IDS_REPORT` или `--report`.
 
 Канонический ключ вариации строится из значимых полей `TYPE`, `DISTANCE`, `TEAM`, `LICENSE`, `RACE START DATE`, `RACE START TIME`, `ATTRIBUTE/VALUE`. `LOCATION` и `PRICE` не входят в основной ключ. Нормализация приводит EN/PT значения к общему виду: например `Walking`/`caminhada` -> `walking`, `5-km-pt` -> `5 km`, `10-05-2026-pt` -> `2026-05-10`, `1000-pt` -> `10:00`.
 
@@ -84,7 +87,7 @@ Recovery-сценарий запускается вручную командой
 - HTTP fetch: user-agent, retry delays, whitelist хостов без SSL-проверки.
 - Telegram: `TELEGRAM_NOTIFICATIONS_ENABLED`, `TELEGRAM_API_ID`, `TELEGRAM_API_HASH`, `TELEGRAM_SESSION_NAME`, `TELEGRAM_TARGET`.
 - Retry и таймауты WooCommerce: `WCAPI_*`.
-- Recovery: `RECOVERY_WP_IDS_MODE`, `RECOVERY_WP_IDS_LIMIT`.
+- Recovery: `RECOVERY_WP_IDS_MODE`, `RECOVERY_WP_IDS_LIMIT`, `RECOVERY_WP_IDS_PRODUCT_SCAN_PAGES`, `RECOVERY_WP_IDS_REPORT`.
 - Планировщик: `RUN_ON_STARTUP`, `SCHEDULED_HOUR`, `SCHEDULED_MINUTE`, `TIMEZONE`.
 - Логи: `LOG_LEVEL`, `LOG_FILE`.
 
