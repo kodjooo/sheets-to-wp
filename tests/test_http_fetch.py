@@ -1,8 +1,14 @@
 import unittest
 from unittest.mock import patch
+import os
+import sys
+
+RUN_DIR = os.path.join(os.path.dirname(__file__), "..", "run")
+if RUN_DIR not in sys.path:
+    sys.path.insert(0, RUN_DIR)
 
 try:
-    import run._2_content_generation as content_generation
+    import _2_content_generation as content_generation
     _HAS_DEPS = True
 except ModuleNotFoundError:
     _HAS_DEPS = False
@@ -12,7 +18,7 @@ class HttpFetchTests(unittest.TestCase):
     @unittest.skipUnless(_HAS_DEPS, "requests is not available in test env")
     def test_insecure_host_disables_ssl_verify(self):
         content_generation.config["fetch_insecure_hosts"] = "www.omdceventos.com,example.com"
-        with patch("run._2_content_generation.requests.get") as mock_get:
+        with patch("_2_content_generation.requests.get") as mock_get:
             mock_get.return_value.raise_for_status.return_value = None
             mock_get.return_value.text = ""
             mock_get.return_value.headers = {}
