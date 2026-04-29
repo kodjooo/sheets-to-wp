@@ -318,7 +318,7 @@ class WordPressRecoveryClient:
         import requests
 
         store_variations = self.get_store_api_variations(product_id)
-        if store_variations:
+        if store_variations and all(variation.get("attributes") for variation in store_variations):
             return store_variations
 
         result = []

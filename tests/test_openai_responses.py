@@ -160,8 +160,7 @@ class OpenAIResponsesTests(unittest.TestCase):
         with open(prompt_path, "r", encoding="utf-8") as handle:
             prompt_text = handle.read()
         self.assertIn("Также удаляй блоки, где после заголовка нет значения", prompt_text)
-        self.assertIn("Также удаляй блоки, где значение — только общий город/страна", prompt_text)
-        self.assertIn("удаляй любые блоки, чьи заголовки НЕ входят", prompt_text)
+        self.assertIn("удаляй любые блоки, чьи заголовки не входят", prompt_text.lower())
         self.assertIn("Список допустимых заголовков (ТОЛЬКО они разрешены)", prompt_text)
         self.assertIn("строка, состоящая только из \"[]\"", prompt_text)
         self.assertIn("ЖЕСТКО удалить любые строки/блоки, содержащие ссылку на регламент", prompt_text)

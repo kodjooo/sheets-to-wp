@@ -247,6 +247,20 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
             variations = client.get_store_api_variations(100)
         self.assertEqual(variations, [{"id": 77, "attributes": [{"name": "Type", "option": "Walking"}, {"name": "Distance", "option": "5 km"}]}])
 
+    def test_get_variations_falls_back_when_store_api_has_no_attributes(self):
+        client = WordPressRecoveryClient("https://site.test", "ck", "cs")
+        store_response = Mock()
+        store_response.status_code = 200
+        store_response.json.return_value = {"variations": [{"id": 77, "attributes": []}]}
+        rest_response = Mock()
+        rest_response.raise_for_status.return_value = None
+        rest_response.json.return_value = [{"id": 88, "attributes": [{"name": "Type", "option": "Walking"}]}]
+
+        with patch("requests.get", side_effect=[store_response, rest_response]):
+            variations = client.get_variations(100)
+
+        self.assertEqual(variations, [{"id": 88, "attributes": [{"name": "Type", "option": "Walking"}]}])
+
     def test_write_report_creates_csv(self):
         import tempfile
 
