@@ -16,6 +16,17 @@ from urllib.parse import parse_qs, unquote, urlencode, urlparse
 
 PRODUCT_ID_COLUMNS = ("WP PRODUCT ID EN", "WP PRODUCT ID PT")
 VARIATION_ID_COLUMNS = ("WP VARIATION ID EN", "WP VARIATION ID PT")
+VARIATION_DATA_COLUMNS = (
+    "ATTRIBUTE",
+    "VALUE",
+    "DISTANCE",
+    "TEAM",
+    "TYPE",
+    "LICENSE",
+    "RACE START DATE",
+    "RACE START TIME",
+    "PRICE",
+)
 MAIN_STATUSES = {
     "published",
     "published (incomplete)",
@@ -51,6 +62,10 @@ ACF_FIELD_ALIASES = {
 
 def is_missing(value: Any) -> bool:
     return value is None or str(value).strip() == ""
+
+
+def has_variation_data(row: dict[str, Any]) -> bool:
+    return any(not is_missing(row.get(column)) for column in VARIATION_DATA_COLUMNS + VARIATION_ID_COLUMNS)
 
 
 def extract_product_id_from_url(url: str | None) -> int | None:
@@ -210,15 +225,34 @@ def _attribute_map(attributes: list[dict[str, Any]]) -> dict[str, str]:
     return result
 
 
+def _generic_attribute_value(attrs: dict[str, str]) -> str:
+    known = {
+        "type",
+        "pa-type",
+        "distance",
+        "pa-distance",
+        "team",
+        "pa-team",
+        "license",
+        "pa-license",
+        "race-start-date",
+        "race-start-time",
+    }
+    for name, value in sorted(attrs.items()):
+        if name not in known and value:
+            return value
+    return ""
+
+
 def build_variation_key(row: dict[str, Any]) -> tuple[tuple[str, str], ...]:
     attrs = _attribute_map(row.get("attributes", [])) if isinstance(row.get("attributes"), list) else {}
-    type_value = row.get("TYPE") or attrs.get("type") or attrs.get("pa-type") or row.get("ATTRIBUTE")
+    type_value = row.get("TYPE") or attrs.get("type") or attrs.get("pa-type")
     distance_value = row.get("DISTANCE") or attrs.get("distance") or attrs.get("pa-distance")
     team_value = row.get("TEAM") or attrs.get("team") or attrs.get("pa-team")
     license_value = row.get("LICENSE") or attrs.get("license") or attrs.get("pa-license")
     date_value = row.get("RACE START DATE") or attrs.get("race-start-date")
     time_value = row.get("RACE START TIME") or attrs.get("race-start-time")
-    value = row.get("VALUE") or attrs.get(slugify(row.get("ATTRIBUTE")))
+    value = row.get("VALUE") or attrs.get(slugify(row.get("ATTRIBUTE"))) or _generic_attribute_value(attrs)
     return tuple(
         sorted(
             {
@@ -605,7 +639,8 @@ def group_events(rows: list[tuple[int, dict[str, Any]]]) -> list[tuple[int, dict
 def needs_recovery(row: dict[str, Any], children: list[tuple[int, dict[str, Any]]]) -> bool:
     if any(is_missing(row.get(column)) for column in PRODUCT_ID_COLUMNS):
         return True
-    return any(any(is_missing(child.get(column)) for column in VARIATION_ID_COLUMNS) for _, child in children)
+    variation_rows = [(0, row)] + [(idx, child) for idx, child in children if has_variation_data(child)]
+    return any(any(is_missing(item.get(column)) for column in VARIATION_ID_COLUMNS) for _, item in variation_rows)
 
 
 def parse_args(argv: list[str] | None = None):
@@ -668,7 +703,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.limit and processed >= args.limit:
             break
         processed += 1
-        result = runner.recover_row(row_index, row, children)
+        variation_rows = [(row_index, row)] + [(idx, child) for idx, child in children if has_variation_data(child)]
+        result = runner.recover_row(row_index, row, variation_rows)
         report_rows.append(result)
         product_updates += len([key for key in result.updates if ":" not in key])
         variation_updates += len([key for key in result.updates if ":" in key])

@@ -20,7 +20,9 @@ from recovery_wp_ids import (
     extract_product_id_from_url,
     get_acf_value,
     group_events,
+    has_variation_data,
     match_variations,
+    needs_recovery,
     normalize_date,
     normalize_distance,
     normalize_time,
@@ -153,6 +155,57 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
         groups = group_events(rows)
         self.assertEqual(len(groups), 2)
         self.assertEqual(groups[0][2][0][0], 3)
+
+    def test_blank_child_rows_do_not_trigger_recovery(self):
+        row = {
+            "WP PRODUCT ID EN": "100",
+            "WP PRODUCT ID PT": "200",
+            "ATTRIBUTE": "Cycling",
+            "VALUE": "MTB",
+            "WP VARIATION ID EN": "11",
+            "WP VARIATION ID PT": "22",
+        }
+        self.assertFalse(has_variation_data({}))
+        self.assertFalse(needs_recovery(row, [(3, {})]))
+
+    def test_main_row_variation_is_recovered(self):
+        wp = Mock()
+        wp.get_product.side_effect = lambda product_id: {
+            100: {"id": 100, "type": "variable", "permalink": ""},
+            200: {"id": 200, "type": "variable", "permalink": ""},
+        }[product_id]
+        wp.get_variations.side_effect = [
+            [{"id": 11, "attributes": [{"name": "Cycling", "option": "MTB"}, {"name": "Distance", "option": "30 km"}]}],
+            [{"id": 22, "attributes": [{"name": "Cycling", "option": "MTB"}, {"name": "Distance", "option": "30 km"}]}],
+        ]
+
+        result = RecoveryRunner(wp).recover_row(
+            2,
+            {
+                "WP PRODUCT ID EN": "100",
+                "WP PRODUCT ID PT": "200",
+                "ATTRIBUTE": "Cycling",
+                "VALUE": "MTB",
+                "DISTANCE": "30 km",
+                "WP VARIATION ID EN": "",
+                "WP VARIATION ID PT": "",
+            },
+            [
+                (
+                    2,
+                    {
+                        "ATTRIBUTE": "Cycling",
+                        "VALUE": "MTB",
+                        "DISTANCE": "30 km",
+                        "WP VARIATION ID EN": "",
+                        "WP VARIATION ID PT": "",
+                    },
+                )
+            ],
+        )
+
+        self.assertEqual(result.updates["WP VARIATION ID EN:2"], 11)
+        self.assertEqual(result.updates["WP VARIATION ID PT:2"], 22)
 
     def test_client_extracts_product_id_from_html(self):
         client = WordPressRecoveryClient("https://site.test", "ck", "cs")
