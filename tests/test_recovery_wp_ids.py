@@ -49,6 +49,7 @@ class RecoveryNormalizationTests(unittest.TestCase):
         self.assertEqual(normalize_date("10-05-2026-pt"), "2026-05-10")
         self.assertEqual(normalize_time("1000-pt"), "10:00")
         self.assertEqual(normalize_distance("5-km-pt"), "5 km")
+        self.assertEqual(normalize_distance("7-36-km"), "7.36 km")
         self.assertEqual(normalize_distance("21097-km-pt"), "21.097 km")
         self.assertEqual(normalize_type("caminhada"), "walking")
         self.assertEqual(normalize_type("corrida-de-estrada"), "road-running")
@@ -313,6 +314,22 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
             variations = client.get_variations(100)
 
         self.assertEqual(variations, [{"id": 88, "attributes": [{"name": "Type", "option": "Walking"}]}])
+
+    def test_recovery_continues_when_direct_product_request_fails(self):
+        wp = Mock()
+        wp.get_product.return_value = None
+        wp.validate_product.return_value = False
+        wp.search_products.return_value = []
+        wp.iter_products.return_value = []
+
+        result = RecoveryRunner(wp).recover_row(
+            2,
+            {"LINK RACEFINDER": "https://site.test/?post_type=product&p=100", "RACE NAME": "Race"},
+            [],
+        )
+
+        self.assertEqual(result.updates, {})
+        self.assertIn("validation_failed", result.reasons)
 
     def test_write_report_creates_csv(self):
         import tempfile

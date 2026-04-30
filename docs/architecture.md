@@ -63,7 +63,7 @@ Recovery-сценарий запускается вручную командой
 - уже заполненные ID не перезаписываются;
 - при неоднозначном product или variation match запись не выполняется;
 - при провале валидации товара запись не выполняется;
-- причины пропуска логируются как `validation_failed`, `pt_translation_not_found`, `no_variation_match`, `ambiguous_variation_match`.
+- причины пропуска/ручной проверки логируются как `validation_failed`, `product_public_page_not_available`, `pt_translation_not_found`, `no_variation_match`, `ambiguous_variation_match`.
 
 ## Интеграции
 - Google Sheets API (`gspread`, service account).

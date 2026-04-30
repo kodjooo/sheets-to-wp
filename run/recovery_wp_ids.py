@@ -124,7 +124,11 @@ def normalize_type(value: str | None) -> str:
 def normalize_distance(value: str | None) -> str:
     if not value:
         return ""
-    text = slugify(value).replace("-pt", "").replace("-", " ").replace(",", ".")
+    text = slugify(value).replace("-pt", "").replace(",", ".")
+    decimal_slug_match = re.search(r"(\d+)-(\d+)-?km", text)
+    if decimal_slug_match:
+        return f"{decimal_slug_match.group(1)}.{decimal_slug_match.group(2)} km"
+    text = text.replace("-", " ")
     match = re.search(r"(\d+(?:\.\d+)?)", text)
     if not match:
         return slugify(value)
@@ -342,7 +346,11 @@ class WordPressRecoveryClient:
     def get_product(self, product_id: int) -> dict[str, Any] | None:
         import requests
 
-        response = requests.get(f"{self.wp_url}/wp-json/wc/v3/products/{product_id}", auth=self.auth, timeout=self.timeout)
+        try:
+            response = requests.get(f"{self.wp_url}/wp-json/wc/v3/products/{product_id}", auth=self.auth, timeout=self.timeout)
+        except Exception as exc:
+            logging.warning("Не удалось получить product=%s через WooCommerce REST: %s", product_id, exc)
+            return None
         if response.status_code == 404:
             return None
         response.raise_for_status()
@@ -351,20 +359,28 @@ class WordPressRecoveryClient:
     def get_variations(self, product_id: int) -> list[dict[str, Any]]:
         import requests
 
-        store_variations = self.get_store_api_variations(product_id)
+        try:
+            store_variations = self.get_store_api_variations(product_id)
+        except Exception as exc:
+            logging.warning("Store API недоступен для product=%s, используем WooCommerce REST: %s", product_id, exc)
+            store_variations = []
         if store_variations and all(variation.get("attributes") for variation in store_variations):
             return store_variations
 
         result = []
         page = 1
         while True:
-            response = requests.get(
-                f"{self.wp_url}/wp-json/wc/v3/products/{product_id}/variations",
-                auth=self.auth,
-                params={"per_page": 100, "page": page},
-                timeout=self.timeout,
-            )
-            response.raise_for_status()
+            try:
+                response = requests.get(
+                    f"{self.wp_url}/wp-json/wc/v3/products/{product_id}/variations",
+                    auth=self.auth,
+                    params={"per_page": 100, "page": page},
+                    timeout=self.timeout,
+                )
+                response.raise_for_status()
+            except Exception as exc:
+                logging.warning("Не удалось получить variations для product=%s через WooCommerce REST: %s", product_id, exc)
+                return result
             batch = response.json() or []
             result.extend(batch)
             if len(batch) < 100:
@@ -404,13 +420,17 @@ class WordPressRecoveryClient:
 
         if not search:
             return []
-        response = requests.get(
-            f"{self.wp_url}/wp-json/wc/v3/products",
-            auth=self.auth,
-            params={"search": search, "per_page": 20},
-            timeout=self.timeout,
-        )
-        response.raise_for_status()
+        try:
+            response = requests.get(
+                f"{self.wp_url}/wp-json/wc/v3/products",
+                auth=self.auth,
+                params={"search": search, "per_page": 20},
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+        except Exception as exc:
+            logging.warning("Не удалось выполнить поиск products по '%s': %s", search, exc)
+            return []
         return response.json() or []
 
     def iter_products(self, search: str | None = None, max_pages: int = 10) -> list[dict[str, Any]]:
@@ -421,13 +441,17 @@ class WordPressRecoveryClient:
             params = {"per_page": 100, "page": page, "status": "publish"}
             if search:
                 params["search"] = search
-            response = requests.get(
-                f"{self.wp_url}/wp-json/wc/v3/products",
-                auth=self.auth,
-                params=params,
-                timeout=self.timeout,
-            )
-            response.raise_for_status()
+            try:
+                response = requests.get(
+                    f"{self.wp_url}/wp-json/wc/v3/products",
+                    auth=self.auth,
+                    params=params,
+                    timeout=self.timeout,
+                )
+                response.raise_for_status()
+            except Exception as exc:
+                logging.warning("Не удалось получить страницу products page=%s: %s", page, exc)
+                break
             batch = response.json() or []
             result.extend(batch)
             if len(batch) < 100:
@@ -528,16 +552,20 @@ class RecoveryRunner:
             product = self.wp.get_product(found["WP PRODUCT ID EN"])
             permalink = product.get("permalink") if product else None
             if permalink:
-                en_html = self.wp.get_html(permalink)
-                pt_url = self.wp.find_hreflang_url(en_html)
-                if pt_url:
-                    pt_html = self.wp.get_html(pt_url)
-                    pt_id = extract_product_id_from_url(pt_url) or self.wp.extract_product_id_from_html(pt_html)
-                    if pt_id and self.wp.validate_product(self.wp.get_product(pt_id), row):
-                        found["WP PRODUCT ID PT"] = pt_id
-                        sources["WP PRODUCT ID PT"] = "hreflang_pt"
-                    else:
-                        reasons.append("pt_translation_not_found")
+                try:
+                    en_html = self.wp.get_html(permalink)
+                    pt_url = self.wp.find_hreflang_url(en_html)
+                    if pt_url:
+                        pt_html = self.wp.get_html(pt_url)
+                        pt_id = extract_product_id_from_url(pt_url) or self.wp.extract_product_id_from_html(pt_html)
+                        if pt_id and self.wp.validate_product(self.wp.get_product(pt_id), row):
+                            found["WP PRODUCT ID PT"] = pt_id
+                            sources["WP PRODUCT ID PT"] = "hreflang_pt"
+                        else:
+                            reasons.append("pt_translation_not_found")
+                except Exception as exc:
+                    self.logger.warning("Не удалось получить публичную страницу EN product=%s: %s", found["WP PRODUCT ID EN"], exc)
+                    reasons.append("product_public_page_not_available")
         if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
             product_id, source, reason = self.find_product_by_fallbacks(row, preferred_lang="PT", exclude_ids={found["WP PRODUCT ID EN"]})
             if product_id:
