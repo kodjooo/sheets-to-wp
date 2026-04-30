@@ -159,6 +159,13 @@ def sync_variations_by_ids(product_id, variation_entries):
         for v in existing_variations
         if v.get("id") is not None
     }
+    existing_norm_to_ids = {}
+    for variation_id, variation in existing_by_id.items():
+        norm = _normalize_existing_variation(variation)
+        existing_norm_to_ids.setdefault(
+            (norm["regular_price"], tuple(norm["attributes"])),
+            []
+        ).append(variation_id)
 
     row_to_variation_id = {}
     kept_ids = set()
@@ -166,27 +173,47 @@ def sync_variations_by_ids(product_id, variation_entries):
     for entry in variation_entries:
         row_index = entry.get("row_index")
         payload = _build_payload(entry, attr_name_to_id)
+        desired_norm = _normalize_payload(payload)
+        desired_key = (desired_norm["regular_price"], tuple(desired_norm["attributes"]))
         existing_id = _as_int(entry.get("existing_variation_id"))
 
-        if existing_id and existing_id in existing_by_id:
+        # Сначала пытаемся использовать ID из таблицы, но только если он реально соответствует текущей записи.
+        if existing_id and existing_id in existing_by_id and existing_id not in kept_ids:
             current_norm = _normalize_existing_variation(existing_by_id[existing_id])
-            desired_norm = _normalize_payload(payload)
-            if current_norm != desired_norm:
-                endpoint = f"products/{product_id}/variations/{existing_id}"
-                response = _wcapi_request_with_retry("PUT", endpoint, payload)
-                response.raise_for_status()
-                logging.info("♻️ Вариация обновлена: product=%s variation=%s", product_id, existing_id)
-            final_id = existing_id
+            if current_norm == desired_norm:
+                final_id = existing_id
+            else:
+                # Если ID в таблице не соответствует записи, пытаемся найти корректную существующую вариацию по содержимому.
+                matched_ids = [vid for vid in existing_norm_to_ids.get(desired_key, []) if vid not in kept_ids]
+                if len(matched_ids) == 1:
+                    final_id = matched_ids[0]
+                    logging.warning(
+                        "⚠️ existing_variation_id=%s не соответствует данным строки; использован variation=%s по ключу.",
+                        existing_id,
+                        final_id
+                    )
+                else:
+                    endpoint = f"products/{product_id}/variations/{existing_id}"
+                    response = _wcapi_request_with_retry("PUT", endpoint, payload)
+                    response.raise_for_status()
+                    logging.info("♻️ Вариация обновлена: product=%s variation=%s", product_id, existing_id)
+                    final_id = existing_id
         else:
-            endpoint = f"products/{product_id}/variations"
-            response = _wcapi_request_with_retry("POST", endpoint, payload)
-            response.raise_for_status()
-            body = response.json() or {}
-            created_id = body.get("id")
-            if not created_id:
-                raise RuntimeError(f"Не удалось получить ID созданной вариации (product_id={product_id})")
-            final_id = int(created_id)
-            logging.info("🆕 Вариация создана: product=%s variation=%s", product_id, final_id)
+            # Для пустого/битого ID из таблицы сначала пробуем найти вариацию по фактическим данным.
+            matched_ids = [vid for vid in existing_norm_to_ids.get(desired_key, []) if vid not in kept_ids]
+            if len(matched_ids) == 1:
+                final_id = matched_ids[0]
+                logging.info("🔁 Найдена существующая вариация по ключу: product=%s variation=%s", product_id, final_id)
+            else:
+                endpoint = f"products/{product_id}/variations"
+                response = _wcapi_request_with_retry("POST", endpoint, payload)
+                response.raise_for_status()
+                body = response.json() or {}
+                created_id = body.get("id")
+                if not created_id:
+                    raise RuntimeError(f"Не удалось получить ID созданной вариации (product_id={product_id})")
+                final_id = int(created_id)
+                logging.info("🆕 Вариация создана: product=%s variation=%s", product_id, final_id)
 
         if row_index is not None:
             row_to_variation_id[row_index] = final_id

@@ -5,6 +5,7 @@ import csv
 import html
 import logging
 import os
+import json
 import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
@@ -49,10 +50,42 @@ TYPE_ALIASES = {
     "kids race": "kids-race",
     "kids-race": "kids-race",
     "kids-race-pt": "kids-race",
+    "open race": "open-race",
+    "open-race": "open-race",
+    "prova aberta": "open-race",
+    "prova-aberta": "open-race",
     "wheelchair race": "wheelchair-race",
     "wheelchair-race": "wheelchair-race",
     "wheelchair-race-pt": "wheelchair-race",
 }
+
+VALUE_ALIASES = {
+    "jovem": "youth",
+}
+
+
+def load_translation_aliases(path: str = "/app/run/translation_aliases.json") -> tuple[dict[str, str], dict[str, str]]:
+    def _norm(text: str | None) -> str:
+        if not text:
+            return ""
+        value = html.unescape(str(text)).strip().lower()
+        value = value.replace("_", "-").replace("/", " ")
+        value = re.sub(r"-pt$", "", value)
+        value = re.sub(r"\s+", " ", value)
+        value = re.sub(r"[^a-z0-9.\s-]+", "", value)
+        return value.strip().replace(" ", "-")
+
+    try:
+        with open(path, encoding="utf-8") as fh:
+            payload = json.load(fh) or {}
+    except Exception:
+        return {}, {}
+    type_aliases = {_norm(k).replace("-", " "): _norm(v) for k, v in (payload.get("type_aliases") or {}).items()}
+    value_aliases = {_norm(k).replace("-", " "): _norm(v) for k, v in (payload.get("value_aliases") or {}).items()}
+    return type_aliases, value_aliases
+
+
+DYNAMIC_TYPE_ALIASES, DYNAMIC_VALUE_ALIASES = load_translation_aliases()
 
 ACF_FIELD_ALIASES = {
     "event_ticket_url": ("event_ticket_url",),
@@ -119,6 +152,8 @@ def slugify(value: str | None) -> str:
 
 def normalize_type(value: str | None) -> str:
     base = slugify(value).replace("-", " ")
+    if base in DYNAMIC_TYPE_ALIASES:
+        return DYNAMIC_TYPE_ALIASES[base]
     return TYPE_ALIASES.get(base, TYPE_ALIASES.get(slugify(value), slugify(value)))
 
 
@@ -279,6 +314,8 @@ def build_variation_key(row: dict[str, Any]) -> tuple[tuple[str, str], ...]:
     value = explicit_value or ("" if generic_value == type_value else generic_value)
     if value == type_value:
         value = ""
+    value_key = slugify(value).replace("-", " ")
+    normalized_value = DYNAMIC_VALUE_ALIASES.get(value_key, VALUE_ALIASES.get(value_key, slugify(value)))
     return tuple(
         sorted(
             {
@@ -288,7 +325,7 @@ def build_variation_key(row: dict[str, Any]) -> tuple[tuple[str, str], ...]:
                 "license": slugify(license_value),
                 "date": normalize_date(date_value),
                 "time": normalize_time(time_value),
-                "value": slugify(value),
+                "value": normalized_value,
             }.items()
         )
     )

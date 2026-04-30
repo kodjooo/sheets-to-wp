@@ -103,6 +103,64 @@ class VariationSyncTests(unittest.TestCase):
         self.assertIn(("PUT", "products/100/variations/11", {"regular_price": "15", "attributes": [{"id": 9, "option": "5 km"}]}), calls)
         self.assertIn(("DELETE", "products/100/variations/22", {"force": True}), calls)
 
+    @patch("_6_create_variations._wcapi_request_with_retry")
+    def test_sync_variations_ignores_mismatched_existing_id_and_matches_by_payload(self, mock_wcapi):
+        class DummyResponse:
+            def __init__(self, payload):
+                self._payload = payload
+                self.status_code = 200
+                self.text = ""
+
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return self._payload
+
+        calls = []
+
+        def side_effect(method, endpoint, payload=None):
+            calls.append((method, endpoint, payload))
+            if method == "GET" and endpoint == "products/100":
+                return DummyResponse({"attributes": [{"id": 9, "name": "Distance"}]})
+            if method == "GET" and endpoint == "products/100/variations?per_page=100&page=1":
+                # Вариации уже есть, но в таблице ID перепутаны между строками.
+                return DummyResponse(
+                    [
+                        {"id": 11, "regular_price": "10", "attributes": [{"id": 9, "option": "5 km"}]},
+                        {"id": 22, "regular_price": "20", "attributes": [{"id": 9, "option": "10 km"}]},
+                    ]
+                )
+            if method == "GET" and endpoint == "products/100/variations?per_page=100&page=2":
+                return DummyResponse([])
+            if method == "DELETE":
+                return DummyResponse({})
+            if method in {"PUT", "POST"}:
+                self.fail(f"Unexpected mutation call {method} {endpoint} {payload}")
+            raise AssertionError(f"Unexpected call: {method} {endpoint}")
+
+        mock_wcapi.side_effect = side_effect
+
+        mapping = sync_variations_by_ids(
+            100,
+            [
+                {
+                    "row_index": 2,
+                    "existing_variation_id": "22",  # неверный ID для этой строки
+                    "regular_price": "10",
+                    "attributes": [{"name": "Distance", "option": "5 km"}],
+                },
+                {
+                    "row_index": 3,
+                    "existing_variation_id": "11",  # неверный ID для этой строки
+                    "regular_price": "20",
+                    "attributes": [{"name": "Distance", "option": "10 km"}],
+                },
+            ],
+        )
+
+        self.assertEqual(mapping, {2: 11, 3: 22})
+
 
 if __name__ == "__main__":
     unittest.main()
