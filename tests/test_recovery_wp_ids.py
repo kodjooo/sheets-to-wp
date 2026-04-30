@@ -136,19 +136,13 @@ class RecoveryVariationMatchingTests(unittest.TestCase):
 
 
 class RecoveryIntegrationLikeTests(unittest.TestCase):
-    def test_recover_product_and_variation_ids_from_link_and_hreflang(self):
+    def test_recover_product_and_variation_ids_from_link_and_rest_translations(self):
         wp = Mock()
         wp.get_product.side_effect = lambda product_id: {
-            100: {"id": 100, "type": "variable", "permalink": "https://site.test/race-en"},
+            100: {"id": 100, "type": "variable", "permalink": "https://site.test/race-en", "translations": {"en": "100", "pt": "200"}},
             200: {"id": 200, "type": "variable", "permalink": "https://site.test/pt/race"},
         }[product_id]
         wp.validate_product.return_value = True
-        wp.get_html.side_effect = [
-            '<link rel="alternate" hreflang="pt-pt" href="https://site.test/pt/race">',
-            '<link rel="shortlink" href="https://site.test/?p=200">',
-        ]
-        wp.find_hreflang_url.return_value = "https://site.test/pt/race"
-        wp.extract_product_id_from_html.return_value = 200
         wp.get_variations.side_effect = [
             [{"id": 11, "attributes": [{"name": "Type", "option": "Walking"}, {"name": "Distance", "option": "5 km"}]}],
             [{"id": 22, "attributes": [{"name": "Type", "option": "caminhada"}, {"name": "Distance", "option": "5-km-pt"}]}],
@@ -164,6 +158,7 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
         self.assertEqual(result.updates["WP PRODUCT ID PT"], 200)
         self.assertEqual(result.updates["WP VARIATION ID EN:3"], 11)
         self.assertEqual(result.updates["WP VARIATION ID PT:3"], 22)
+        wp.get_html.assert_not_called()
 
     def test_group_events_and_existing_ids_are_not_overwritten_by_apply_filter(self):
         rows = [
@@ -262,68 +257,6 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
         self.assertEqual(result.updates["WP PRODUCT ID PT"], 200)
         self.assertEqual(result.sources["WP PRODUCT ID PT"], "rest_translations")
         wp.get_html.assert_not_called()
-
-    def test_fallback_finds_unique_product_by_website_acf(self):
-        wp = Mock()
-        wp.search_products.return_value = []
-        wp.iter_products.return_value = [
-            {"id": 100, "type": "variable", "name": "Other", "acf": {"event_ticket_url": "https://other.test"}},
-            {
-                "id": 200,
-                "type": "variable",
-                "name": "Porto Half Marathon",
-                "acf": {"event_ticket_url": "https://race.test", "event_date_start": "20260510"},
-            },
-        ]
-        real_client = WordPressRecoveryClient("https://site.test", "ck", "cs")
-        wp.validate_product.side_effect = real_client.validate_product
-        wp.product_match_score.side_effect = real_client.product_match_score
-
-        product_id, source, reason = RecoveryRunner(wp).find_product_by_fallbacks(
-            {"WEBSITE": "https://race.test/", "EVENT START DATE": "10/05/2026", "RACE NAME": "Porto Half Marathon"},
-            preferred_lang="EN",
-        )
-
-        self.assertEqual(product_id, 200)
-        self.assertEqual(source, "website_acf")
-        self.assertEqual(reason, "")
-
-    def test_fallback_rejects_ambiguous_composite_match(self):
-        wp = Mock()
-        products = [
-            {
-                "id": 200,
-                "type": "variable",
-                "name": "Porto Half Marathon",
-                "acf": {"event_date_start": "20260510", "event_location_text": "Porto"},
-                "categories": [{"name": "Running"}],
-            },
-            {
-                "id": 201,
-                "type": "variable",
-                "name": "Porto Half Marathon",
-                "acf": {"event_date_start": "20260510", "event_location_text": "Porto"},
-                "categories": [{"name": "Running"}],
-            },
-        ]
-        wp.search_products.return_value = products
-        wp.iter_products.return_value = []
-        real_client = WordPressRecoveryClient("https://site.test", "ck", "cs")
-        wp.validate_product.side_effect = real_client.validate_product
-        wp.product_match_score.side_effect = real_client.product_match_score
-
-        product_id, _source, reason = RecoveryRunner(wp).find_product_by_fallbacks(
-            {
-                "EVENT START DATE": "10/05/2026",
-                "LOCATION (CITY)": "Porto",
-                "CATEGORY": "Running",
-                "RACE NAME": "Porto Half Marathon",
-            },
-            preferred_lang="EN",
-        )
-
-        self.assertIsNone(product_id)
-        self.assertEqual(reason, "ambiguous_product_match")
 
     def test_store_api_variations_are_normalized(self):
         client = WordPressRecoveryClient("https://site.test", "ck", "cs")

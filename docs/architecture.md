@@ -49,10 +49,9 @@ Recovery-сценарий запускается вручную командой
 Алгоритм:
 1. Читает все строки Google Sheets и группирует главную строку события с дочерними строками вариаций.
 2. Берет только главные строки со статусами `Published`, `Published (incomplete)`, `Revised (complete)`, `Revised (incomplete)`, где отсутствует хотя бы один product/variation ID.
-3. Восстанавливает EN product ID сначала из `LINK RACEFINDER` (`?p=`, `?post=`, `wp-admin/post.php?post=`), затем валидирует найденный товар через WooCommerce REST API.
-4. Если прямой ID недоступен, ищет товар по `WEBSITE` через ACF `event_ticket_url` с нормализацией URL.
-5. Если ACF-поиск не дал результата, применяет составной fallback по названию, дате старта, городу и категориям. Совпадение только по названию не считается достаточным для записи.
-6. Восстанавливает PT product ID сначала из `translations.pt` в WooCommerce/WPML REST-ответе EN-товара, затем через публичную EN-страницу и `hreflang="pt-pt"` с извлечением ID из PT shortlink или JSON-ссылки страницы. Если эти способы недоступны, использует тот же валидируемый fallback для PT.
+3. Восстанавливает EN product ID только из `LINK RACEFINDER` (`?p=`, `?post=`, `wp-admin/post.php?post=`) и валидирует найденный товар через WooCommerce REST API.
+4. Восстанавливает PT product ID только из `translations.pt` в WooCommerce/WPML REST-ответе EN-товара.
+5. Поиск product ID через публичный HTML (`hreflang`) и косвенные эвристики по `WEBSITE`/названию/дате/городу/категориям отключен для максимальной точности.
 7. Загружает вариации EN/PT через Store API `wc/store/v1/products/{id}`, при недоступности Store API использует WooCommerce REST `wc/v3/products/{id}/variations`.
 8. Сопоставляет вариации с дочерними строками по каноническому ключу.
 9. В режиме `dry-run` только пишет отчет в лог; в режиме `apply` обновляет Google Sheets. Дополнительно можно указать CSV-отчет через `RECOVERY_WP_IDS_REPORT` или `--report`.
@@ -63,7 +62,7 @@ Recovery-сценарий запускается вручную командой
 - уже заполненные ID не перезаписываются;
 - при неоднозначном product или variation match запись не выполняется;
 - при провале валидации товара запись не выполняется;
-- причины пропуска/ручной проверки логируются как `validation_failed`, `product_public_page_not_available`, `pt_translation_not_found`, `no_variation_match`, `ambiguous_variation_match`.
+- причины пропуска/ручной проверки логируются как `validation_failed`, `pt_translation_not_found`, `no_product_match`, `no_variation_match`, `ambiguous_variation_match`.
 
 ## Интеграции
 - Google Sheets API (`gspread`, service account).

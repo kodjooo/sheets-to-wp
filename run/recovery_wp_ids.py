@@ -542,13 +542,6 @@ class RecoveryRunner:
             found["WP PRODUCT ID EN"] = int(float(row["WP PRODUCT ID EN"]))
             sources["WP PRODUCT ID EN"] = "sheet_existing"
         direct_id = extract_product_id_from_url(row.get("LINK RACEFINDER"))
-        if not found.get("WP PRODUCT ID EN") and not direct_id and row.get("LINK RACEFINDER"):
-            try:
-                direct_id = self.wp.extract_product_id_from_html(self.wp.get_html(str(row.get("LINK RACEFINDER"))))
-                if direct_id:
-                    sources["WP PRODUCT ID EN"] = "public_page"
-            except Exception as exc:
-                self.logger.warning("Не удалось извлечь ID из публичной страницы LINK RACEFINDER: %s", exc)
         if not found.get("WP PRODUCT ID EN") and direct_id:
             product = self.wp.get_product(direct_id)
             if self.wp.validate_product(product, row):
@@ -556,13 +549,6 @@ class RecoveryRunner:
                 sources.setdefault("WP PRODUCT ID EN", "link_racefinder")
             else:
                 reasons.append("validation_failed")
-        if not found.get("WP PRODUCT ID EN"):
-            product_id, source, reason = self.find_product_by_fallbacks(row, preferred_lang="EN")
-            if product_id:
-                found["WP PRODUCT ID EN"] = product_id
-                sources["WP PRODUCT ID EN"] = source
-            elif reason:
-                reasons.append(reason)
         if not found.get("WP PRODUCT ID EN") and not reasons:
             reasons.append("no_product_match")
         if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
@@ -577,74 +563,8 @@ class RecoveryRunner:
                 found["WP PRODUCT ID PT"] = pt_id
                 sources["WP PRODUCT ID PT"] = "rest_translations"
         if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
-            product = self.wp.get_product(found["WP PRODUCT ID EN"])
-            permalink = product.get("permalink") if product else None
-            if permalink:
-                try:
-                    en_html = self.wp.get_html(permalink)
-                    pt_url = self.wp.find_hreflang_url(en_html)
-                    if pt_url:
-                        pt_html = self.wp.get_html(pt_url)
-                        pt_id = extract_product_id_from_url(pt_url) or self.wp.extract_product_id_from_html(pt_html)
-                        if pt_id and self.wp.validate_product(self.wp.get_product(pt_id), row):
-                            found["WP PRODUCT ID PT"] = pt_id
-                            sources["WP PRODUCT ID PT"] = "hreflang_pt"
-                        else:
-                            reasons.append("pt_translation_not_found")
-                except Exception as exc:
-                    self.logger.warning("Не удалось получить публичную страницу EN product=%s: %s", found["WP PRODUCT ID EN"], exc)
-                    reasons.append("product_public_page_not_available")
-        if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
-            product_id, source, reason = self.find_product_by_fallbacks(row, preferred_lang="PT", exclude_ids={found["WP PRODUCT ID EN"]})
-            if product_id:
-                found["WP PRODUCT ID PT"] = product_id
-                sources["WP PRODUCT ID PT"] = source
-            elif reason:
-                reasons.append(reason if reason == "ambiguous_product_match" else "pt_translation_not_found")
+            reasons.append("pt_translation_not_found")
         return found, sources, reasons
-
-    def find_product_by_fallbacks(self, row: dict[str, Any], preferred_lang: str, exclude_ids: set[int] | None = None) -> tuple[int | None, str, str]:
-        exclude_ids = exclude_ids or set()
-        search_terms = []
-        if row.get("WEBSITE"):
-            search_terms.append(str(row["WEBSITE"]))
-        if preferred_lang == "PT" and row.get("RACE NAME (PT)"):
-            search_terms.append(str(row["RACE NAME (PT)"]))
-        if row.get("RACE NAME"):
-            search_terms.append(str(row["RACE NAME"]))
-
-        candidates_by_id: dict[int, dict[str, Any]] = {}
-        for term in search_terms:
-            for product in self.wp.search_products(term):
-                if product.get("id") and int(product["id"]) not in exclude_ids:
-                    candidates_by_id[int(product["id"])] = product
-
-        if row.get("WEBSITE"):
-            max_pages = int(os.getenv("RECOVERY_WP_IDS_PRODUCT_SCAN_PAGES", "10") or "10")
-            for product in self.wp.iter_products(max_pages=max_pages):
-                product_id = product.get("id")
-                if product_id and int(product_id) not in exclude_ids:
-                    candidates_by_id[int(product_id)] = product
-
-        scored = []
-        for product_id, product in candidates_by_id.items():
-            if not self.wp.validate_product(product, row):
-                continue
-            score, score_reasons = self.wp.product_match_score(product, row)
-            if score > 0:
-                scored.append((score, product_id, score_reasons))
-
-        if not scored:
-            return None, "", "no_product_match"
-        scored.sort(reverse=True)
-        best_score = scored[0][0]
-        best = [item for item in scored if item[0] == best_score]
-        if len(best) > 1:
-            return None, "", "ambiguous_product_match"
-        if best_score < 4:
-            return None, "", "validation_failed"
-        source = "website_acf" if "website_match" in best[0][2] else "composite_key"
-        return best[0][1], source, ""
 
     def recover_row(self, row_index: int, row: dict[str, Any], child_rows: list[tuple[int, dict[str, Any]]]) -> RecoveryResult:
         result = RecoveryResult(row_index=row_index, race_name=str(row.get("RACE NAME") or row.get("RACE NAME (PT)") or ""))
