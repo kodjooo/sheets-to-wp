@@ -19,6 +19,7 @@ from recovery_wp_ids import (
     build_variation_key,
     extract_product_id_from_url,
     get_acf_value,
+    get_translation_id,
     group_events,
     has_variation_data,
     match_variations,
@@ -102,6 +103,23 @@ class RecoveryVariationMatchingTests(unittest.TestCase):
     def test_missing_distance_can_match(self):
         rows = [(10, {"TYPE": "Kids Race", "DISTANCE": "", "RACE START DATE": "10/05/2026"})]
         variations = [{"id": 91, "attributes": [{"name": "Type", "option": "kids-race-pt"}, {"name": "Race Start Date", "option": "10-05-2026"}]}]
+        matches, failures = match_variations(rows, variations)
+        self.assertEqual(matches, {10: 91})
+        self.assertEqual(failures, {})
+
+    def test_generic_running_attribute_can_match_type(self):
+        rows = [(10, {"ATTRIBUTE": "Running", "VALUE": "Walk", "DISTANCE": "4 km", "RACE START DATE": "01/03/2026", "RACE START TIME": "10:00"})]
+        variations = [
+            {
+                "id": 91,
+                "attributes": [
+                    {"name": "Running", "option": "caminhada-pt"},
+                    {"name": "Distance", "option": "4-km-pt"},
+                    {"name": "Race Start Date", "option": "01-03-2026-pt"},
+                    {"name": "Race Start Time", "option": "1000-pt"},
+                ],
+            }
+        ]
         matches, failures = match_variations(rows, variations)
         self.assertEqual(matches, {10: 91})
         self.assertEqual(failures, {})
@@ -219,6 +237,31 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
             get_acf_value({"meta_data": [{"key": "event_date_start", "value": "20260510"}]}, "event_date_start"),
             "20260510",
         )
+
+    def test_get_translation_id_from_rest_translations(self):
+        self.assertEqual(get_translation_id({"translations": {"en": "32428", "pt": "32431"}}, "pt"), 32431)
+        self.assertIsNone(get_translation_id({"translations": {"pt": ""}}, "pt"))
+        self.assertIsNone(get_translation_id({"translations": {"pt": "abc"}}, "pt"))
+
+    def test_recover_pt_product_from_rest_translations_before_hreflang(self):
+        wp = Mock()
+        wp.get_product.side_effect = lambda product_id: {
+            100: {"id": 100, "type": "variable", "permalink": "https://site.test/race-en", "translations": {"en": "100", "pt": "200"}},
+            200: {"id": 200, "type": "variable", "permalink": "https://site.test/pt/race"},
+        }[product_id]
+        wp.validate_product.return_value = True
+        wp.get_variations.side_effect = [[], []]
+
+        result = RecoveryRunner(wp).recover_row(
+            2,
+            {"LINK RACEFINDER": "https://site.test/?post_type=product&p=100", "RACE NAME": "Race"},
+            [],
+        )
+
+        self.assertEqual(result.updates["WP PRODUCT ID EN"], 100)
+        self.assertEqual(result.updates["WP PRODUCT ID PT"], 200)
+        self.assertEqual(result.sources["WP PRODUCT ID PT"], "rest_translations")
+        wp.get_html.assert_not_called()
 
     def test_fallback_finds_unique_product_by_website_acf(self):
         wp = Mock()

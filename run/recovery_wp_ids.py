@@ -35,6 +35,7 @@ MAIN_STATUSES = {
 }
 
 TYPE_ALIASES = {
+    "walk": "walking",
     "walking": "walking",
     "caminhada": "walking",
     "road running": "road-running",
@@ -203,6 +204,19 @@ def get_acf_value(product: dict[str, Any] | None, canonical_key: str) -> Any:
     return None
 
 
+def get_translation_id(product: dict[str, Any] | None, lang: str) -> int | None:
+    translations = (product or {}).get("translations")
+    if not isinstance(translations, dict):
+        return None
+    value = translations.get(lang)
+    if value in ("", None):
+        return None
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
 def product_categories(product: dict[str, Any] | None) -> set[str]:
     values = set()
     for category in (product or {}).get("categories", []) or []:
@@ -250,13 +264,21 @@ def _generic_attribute_value(attrs: dict[str, str]) -> str:
 
 def build_variation_key(row: dict[str, Any]) -> tuple[tuple[str, str], ...]:
     attrs = _attribute_map(row.get("attributes", [])) if isinstance(row.get("attributes"), list) else {}
+    generic_value = _generic_attribute_value(attrs)
     type_value = row.get("TYPE") or attrs.get("type") or attrs.get("pa-type")
+    if not type_value and normalize_type(generic_value) in set(TYPE_ALIASES.values()):
+        type_value = generic_value
     distance_value = row.get("DISTANCE") or attrs.get("distance") or attrs.get("pa-distance")
     team_value = row.get("TEAM") or attrs.get("team") or attrs.get("pa-team")
     license_value = row.get("LICENSE") or attrs.get("license") or attrs.get("pa-license")
     date_value = row.get("RACE START DATE") or attrs.get("race-start-date")
     time_value = row.get("RACE START TIME") or attrs.get("race-start-time")
-    value = row.get("VALUE") or attrs.get(slugify(row.get("ATTRIBUTE"))) or _generic_attribute_value(attrs)
+    explicit_value = row.get("VALUE") or attrs.get(slugify(row.get("ATTRIBUTE")))
+    if not type_value and normalize_type(explicit_value) in set(TYPE_ALIASES.values()):
+        type_value = explicit_value
+    value = explicit_value or ("" if generic_value == type_value else generic_value)
+    if value == type_value:
+        value = ""
     return tuple(
         sorted(
             {
@@ -548,6 +570,12 @@ class RecoveryRunner:
             if not is_missing(existing_pt):
                 found["WP PRODUCT ID PT"] = int(float(existing_pt))
                 sources["WP PRODUCT ID PT"] = "sheet_existing"
+        if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
+            product = self.wp.get_product(found["WP PRODUCT ID EN"])
+            pt_id = get_translation_id(product, "pt")
+            if pt_id and pt_id != found["WP PRODUCT ID EN"] and self.wp.validate_product(self.wp.get_product(pt_id), row):
+                found["WP PRODUCT ID PT"] = pt_id
+                sources["WP PRODUCT ID PT"] = "rest_translations"
         if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
             product = self.wp.get_product(found["WP PRODUCT ID EN"])
             permalink = product.get("permalink") if product else None
