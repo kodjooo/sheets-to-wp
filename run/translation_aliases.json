@@ -1,0 +1,2590 @@
+{
+  "type_aliases": {
+    "caminhada": "walking",
+    "caminhada-pt-2": "walking",
+    "corrida-de-estrada": "road-running",
+    "kids-race": "kids-race",
+    "meia-maratona": "half-marathon",
+    "prova-aberta": "open-race",
+    "wheelchair-race": "wheelchair-race"
+  },
+  "value_aliases": {
+    "12-voltas": "12-laps",
+    "13-aos-20-anos": "ages-13-to-20",
+    "18-anos": "ages-18",
+    "3-voltas": "3-laps",
+    "5-km": "running",
+    "6-aos-12-anos": "ages-6-to-12",
+    "6-voltas": "6-laps",
+    "acomodacao-adega-tipica": "accommodation-at-adega-tipica",
+    "acomodacao-ansiturismo": "accommodation-at-ansiturismo",
+    "acomodacao-em-dormitorio": "accommodation-in-dormitories",
+    "acomodacao-versao-b": "accommodation-at-versao-b",
+    "aguas-abertas": "open-water",
+    "almoco-acompanhante": "guest-lunch",
+    "almoco-acompanhantes": "guest-lunch",
+    "atlantic-race": "atlantic-race",
+    "baby-race": "baby-race",
+    "backyard": "backyard",
+    "backyard-1-volta": "backyard-1-lap",
+    "backyard-3-voltas": "backyard-3-laps",
+    "backyard-6-voltas": "backyard-6-laps",
+    "backyard-ultra": "backyard-ultra",
+    "big-day": "big-day",
+    "bike": "bike",
+    "bike-kids": "bike-kids",
+    "bikejoring": "bikejoring",
+    "bikejoring-nordico": "bikejoring-nordico",
+    "bilhete-de-espetador": "spectator-ticket",
+    "black-wolf": "black-wolf",
+    "bmx": "bmx",
+    "btt": "btt",
+    "btt-duos": "btt-duos",
+    "btt-elite": "mtb-elite",
+    "btt-jovens": "youth-mtb",
+    "btt-kids": "kids-mtb",
+    "btt-pt-2": "mtb",
+    "btt-u17": "mtb-u17",
+    "btt-u20": "mtb-u20",
+    "btt-u23": "mtb-u23",
+    "btt-veteranos": "mtb-masters",
+    "caminhada-caominhada": "walk-dog-walk",
+    "caminhada-curta": "short-walk",
+    "caminhada-inclusiva": "inclusive-walk",
+    "caminhada-longa": "long-walk",
+    "caminhada-pet-friendly": "pet-friendly-walk",
+    "campeonato-distrital-de-coimbra-ultra-trail": "coimbra-district-championship-ultra-trail",
+    "campeonatos-de-portugal-de-maratona": "portuguese-marathon-championships",
+    "canicross": "canicross",
+    "canicross-infantil": "canicross-infantil",
+    "caominhada": "caominhada",
+    "caominhada-pt-2": "dog-walk",
+    "caorrida": "dog-run",
+    "ciclismo": "cycling",
+    "ciclocrosse": "cyclocross",
+    "competitivo": "competitive",
+    "contra-relogio-granfondo": "time-trial-granfondo",
+    "contra-relogio-mediofondo": "time-trial-mediofondo",
+    "contrarrelogio": "time-trial",
+    "contrarrelogio-granfondo-mediofondo": "time-trial-granfondo-mediofondo",
+    "corrida-10-km": "running-10-km",
+    "corrida-btt": "running-btt",
+    "corrida-da-familia": "family-race",
+    "corrida-de-5-km": "running-5-km",
+    "corrida-de-estrada-caminhada": "road-running-walk",
+    "corrida-de-estrada-jovens": "road-running-youth",
+    "corrida-de-estrada-sub-18": "road-running-u-18",
+    "corrida-de-obstaculos": "obstacles-races",
+    "corrida-de-pista": "track-running",
+    "corrida-de-pista-jovens": "youth-track-running",
+    "corrida-de-pista-kids": "kids-track-running",
+    "corrida-dos-campeoes": "champions-race",
+    "corrida-jubas-jovens": "jubas-run-youth",
+    "corrida-jubas-kids": "jubas-run-kids",
+    "corta-mato-jovens": "cross-country-youth",
+    "corta-mato-kids": "cross-country-kids",
+    "corta-mato-pt-2": "cross-country",
+    "cross-trail": "cross-trail",
+    "crosstrail": "crosstrail",
+    "crosstrail-kids": "crosstrail-kids",
+    "crosstraining-rx": "crosstraining-rx",
+    "crosstraining-scaled": "crosstraining-scaled",
+    "crosstraining-veteranos": "crosstraining-masters",
+    "cycling-youth": "cycling-youth",
+    "deka-fit": "deka-fit",
+    "deka-mile": "deka-mile",
+    "dmut-mini-trail": "dmut-mini-trail",
+    "dmut-trail-curto": "dmut-trail-curto",
+    "dmut-trail-longo": "dmut-trail-longo",
+    "dmut-trail-ultra": "dmut-trail-ultra",
+    "doubles": "double",
+    "doubles-man": "doubles-man",
+    "doubles-woman": "doubles-woman",
+    "downhill": "downhill",
+    "dupla-mista": "doubles-mixed",
+    "duplas": "doubles",
+    "duplas-femininas-open": "womens-open-doubles",
+    "duplas-femininas-pro": "womens-pro-doubles",
+    "duplas-masculinas-open": "mens-open-doubles",
+    "duplas-masculinas-pro": "mens-pro-doubles",
+    "e-bike": "e-bike",
+    "e-bike-1-etapa": "e-bike-1-stage",
+    "e-bike-3-etapas": "e-bike-3-stages",
+    "e-bikes": "e-bikes",
+    "ecomuseu": "ecomuseu",
+    "elite": "elite",
+    "equipas": "relay",
+    "equipas-estafeta-femininas": "womens-relay-teams",
+    "equipas-estafeta-masculinas": "mens-relay-teams",
+    "equipas-estafeta-mistas": "mixed-relay-teams",
+    "escolas": "youth-development",
+    "espectador": "spectator",
+    "estrela-grande-trail-experience": "estrela-grande-trail-experience",
+    "estrela-road-challenge-relay-team": "estrela-road-challenge-relay-team",
+    "estrela-road-challenge-uphill": "estrela-road-challenge-uphill",
+    "estrela-road-challenge-uphill-downhill": "estrela-road-challenge-uphill-downhill",
+    "experiencia-completa": "full-experience",
+    "extreme": "extreme",
+    "extreme-mile": "extreme-mile",
+    "fatbikes": "fatbikes",
+    "full-race": "full-race",
+    "fun": "fun",
+    "granfondo": "granfondo",
+    "gravel": "gravel",
+    "green-wolf": "green-wolf",
+    "gtsa-100km": "gtsa-100km",
+    "half-day": "half-day",
+    "hybrid": "hybrid",
+    "hybrid-race": "hybrid-race",
+    "hyrox-adaptado-sabado": "hyrox-adaptive-saturday",
+    "hyrox-adaptado-sexta": "hyrox-adaptive-friday",
+    "hyrox-duplas-domingo": "hyrox-doubles-sunday",
+    "hyrox-duplas-sexta": "hyrox-doubles-friday",
+    "hyrox-estafetas-domingo": "hyrox-relay-sunday",
+    "hyrox-pro-duplas-sabado": "hyrox-pro-doubles-saturday",
+    "hyrox-pro-sexta": "hyrox-pro-friday",
+    "hyrox-sabado": "hyrox-saturday",
+    "hyrox-sexta": "hyrox-friday",
+    "hyrun-full": "hyrun-full",
+    "hyrun-half": "hyrun-half",
+    "individual": "singles",
+    "individual-feminino-open": "womens-open-singles",
+    "individual-feminino-pro": "womens-pro-singles",
+    "individual-masculino-open": "mens-open-singles",
+    "individual-masculino-pro": "mens-pro-singles",
+    "inscricao": "registration",
+    "inscricao-2-etapas-individual-gravel-open": "2-stage-registration-individual-gravel-open",
+    "inscricao-3-etapas-equipas-individual-open": "3-stage-registration-teams-individual-open",
+    "inscricao-4-etapas-individual-competicao": "4-stage-registration-individual-competition",
+    "inscricao-4-etapas-individual-open": "4-stage-registration-individual-open",
+    "inscricao-para-as-6-provas": "registration-for-all-6-races",
+    "jantar-acompanhantes": "guest-dinner",
+    "jovem": "youth",
+    "jovens": "jovem-2",
+    "kids": "kids",
+    "kids-athletics": "kids-athletics",
+    "kids-caminhada": "kids-walk",
+    "kids-relay": "kids-relay",
+    "kids-run": "kids-run",
+    "kids-trail": "kids-trail",
+    "kids-vertical": "kids-vertical",
+    "last-man-standing": "last-man-standing",
+    "louzan1000": "louzan1000",
+    "man-solo": "man-solo",
+    "marcha": "race-walk",
+    "marcha-jovens": "race-walk-youth",
+    "marcha-kids": "race-walk-kids",
+    "maroico-up-and-down": "maroico-up-and-down",
+    "mediofondo": "mediofondo",
+    "medium-trail": "trail-medio",
+    "mini-campeoes": "mini-champions",
+    "mini-crosstrail": "mini-crosstrail",
+    "mini-maratona": "mini-marathon",
+    "mini-trail": "mini-trail",
+    "mini-trail-pt-2": "mini-trail-2",
+    "minifondo": "minifondo",
+    "minikids-race": "minikids-race",
+    "mixed-doubles": "mixed-doubles",
+    "mountain-biking": "mountain-biking",
+    "mtb-3-etapas": "mtb-3-stages",
+    "mtb-maratona": "mtb-marathon",
+    "mtb-meia-maratona": "mtb-half-marathon",
+    "no-value-pt-2": "no-value",
+    "obstacle-race-elite": "obstacle-race-elite",
+    "obstacle-race-warrior": "obstacle-race-warrior",
+    "obstacles-duplas": "obstacles-duplas",
+    "obstacles-kids": "obstacles-kids",
+    "obstacles-teens": "obstacles-teens",
+    "obstaculos": "obstacles",
+    "obstcles-individual": "obstcles-individual",
+    "ocr-elite": "ocr-elite",
+    "ocr-fun": "ocr-fun",
+    "ocr-league-portugal": "ocr-league-portugal",
+    "open": "open",
+    "open-xcm-acb": "open-xcm-acb",
+    "passeio-btt": "mtb-ride",
+    "passeio-cicloturismo-eco-pista-15-20km": "eco-trail-cycling-tour-15-20km",
+    "passeio-e-bike": "e-bike-ride",
+    "performance-duplas": "performance-doubles",
+    "performance-estafetas": "performance-relay",
+    "performance-singles": "performance-singles",
+    "pista": "track",
+    "prologo": "prologue",
+    "prologo-ptc-2km": "prologo-ptc-2km",
+    "prova-de-obstaculo": "obstacle-race",
+    "prova-de-obstaculo-kids": "kids-obstacle-race",
+    "prova-de-obstaculos": "obstacles-race",
+    "prova-de-resistencia-bombeiro": "firefighter-endurance-test",
+    "ptc-31km": "ptc-31km",
+    "ptc-46km": "ptc-46km",
+    "pump-track": "pump-track",
+    "quarto-familiar-ocupacao-dupla": "family-room-double-occupancy",
+    "quarto-familiar-ocupacao-tripla": "family-room-triple-occupancy",
+    "quarto-ocupacao-dupla": "double-occupancy-room",
+    "quarto-ocupacao-tripla": "triple-occupancy-room",
+    "race": "race",
+    "race-day": "race-day",
+    "raid": "raid",
+    "road-cycling": "road-cycling",
+    "road-cycling-3-etapas": "road-cycling-3-stages",
+    "road-running": "corrida",
+    "road-running-relay": "road-running-relay",
+    "salto-alto": "high-jump",
+    "scooterjoring": "scooterjoring",
+    "scooterjoring-nordico": "scooterjoring-nordico",
+    "simulacao-hyrox": "hyrox-simulation",
+    "singles": "single",
+    "singlespeeds": "singlespeeds",
+    "sky-race": "sky-race",
+    "sky-running": "sky-running",
+    "sky-running-vertical": "sky-running-vertical",
+    "skyrace-12-k": "skyrace-12-k",
+    "skyrace-25-k": "skyrace-25-k",
+    "skyrunning": "skyrunning",
+    "skysprint-500": "skysprint-500",
+    "social-ride": "social-ride",
+    "solidario-hyrox-duplas-domingo": "charity-hyrox-doubles-sunday",
+    "solidario-hyrox-estafetas-domingo": "charity-hyrox-relay-sunday",
+    "solidario-hyrox-pro-duplas-sabado": "charity-hyrox-pro-doubles-saturday",
+    "solidario-hyrox-pro-sexta": "charity-hyrox-pro-friday",
+    "solidario-hyrox-sabado": "charity-hyrox-saturday",
+    "spartan-sprint": "spartan-sprint",
+    "spartan-super": "spartan-super",
+    "sprint": "sprint",
+    "sub-10": "u-10",
+    "sub-12": "u-12",
+    "sub-14": "u-14",
+    "sub-16": "u-16",
+    "sub18": "u-18",
+    "tdm-caminhada": "tdm-caminhada",
+    "tdm-desporto-adaptado": "tdm-adaptive-race",
+    "tdm-kids": "tdm-kids",
+    "tdm-mini-trail": "tdm-mini-trail",
+    "tdm-sprint": "tdm-sprint",
+    "tdm-trail": "tdm-trail",
+    "tdm-trail-sprint": "tdm-trail-sprint",
+    "tdm-ultra-trail": "tdm-ultra-trail",
+    "tdm-voluntario": "tdm-voluntario",
+    "tdm-walk": "tdm-walk",
+    "team-relay-mixed": "team-relay-mixed",
+    "team-x6": "team-x6",
+    "teamx2": "teamx2",
+    "trail-curto": "trail-curto",
+    "trail-curto-pt-2": "short-trail",
+    "trail-jovens": "youth-trail",
+    "trail-longo": "trail-longo",
+    "trail-longo-pt-2": "long-trail",
+    "trail-medio": "medium-trail",
+    "trail-relay-2-or-4-athletes": "trail-relay-2-or-4-athletes",
+    "trail-run": "trail-run",
+    "trail-run-caminhada": "trail-run-walk",
+    "trail-run-jovens": "trail-run-youth",
+    "trail-sprint": "trail-sprint",
+    "trail-ultra": "trail-ultra",
+    "trail-xpererience-13km": "trail-xpererience-13km",
+    "trail-xplore-23km": "trail-xplore-23km",
+    "trail-xtreme-33km": "trail-xtreme-33km",
+    "training-camp": "training-camp",
+    "triciclo-dr4": "triciclo-dr4",
+    "triciclo-dr4-nordico": "triciclo-dr4-nordico",
+    "trofeu-europarque-running": "europarque-running-trophy",
+    "ultra": "ultra",
+    "ultra-ciclismo-btt": "ultra-cycling-mtb",
+    "ultra-ciclismo-gravel": "ultra-cycling-gravel",
+    "ultra-cycling": "ultra-cycling",
+    "ultra-trail": "ultra-trail",
+    "ultra-trail-endurance": "ultra-trail-endurance",
+    "ultraciclismo": "ultracycling",
+    "ultramaratona": "ultramarathon",
+    "up-down": "up-down",
+    "uphill": "uphill",
+    "vertical-race": "vertical-race",
+    "vertical-race-skyrace-12-k": "vertical-race-skyrace-12-k",
+    "vertical-race-skyrace-25-k": "vertical-race-skyrace-25-k",
+    "virtual": "virtual",
+    "virtual-race": "virtual-race",
+    "volta-de-familia": "family-ride",
+    "walk-xtorical": "walk-xtorical",
+    "white-wolf": "white-wolf",
+    "woman-solo": "woman-solo",
+    "xcm": "xcm"
+  },
+  "attribute_name_aliases": {
+    "cycling": "cycling",
+    "distance": "distance",
+    "duathlon": "duathlon",
+    "license": "license",
+    "others": "others",
+    "pa-cycling": "cycling",
+    "pa-distance": "distance",
+    "pa-duathlon": "duathlon",
+    "pa-license": "license",
+    "pa-others": "others",
+    "pa-race-start-date": "race-start-date",
+    "pa-race-start-time": "race-start-time",
+    "pa-running": "running",
+    "pa-ruuning": "ruuning",
+    "pa-swimming": "swimming",
+    "pa-team": "team",
+    "pa-tipe": "tipe",
+    "pa-trail-run": "trail-run",
+    "pa-triathlon": "triathlon",
+    "pa-triatlon": "triatlon",
+    "race-start-date": "race-start-date",
+    "race-start-time": "race-start-time",
+    "running": "running",
+    "ruuning": "ruuning",
+    "swimming": "swimming",
+    "team": "team",
+    "trail-run": "trail-run",
+    "triathlon": "triathlon",
+    "triatlon": "triatlon",
+    "type": "tipe"
+  },
+  "equivalence_groups": [
+    [
+      "0-27-km-natacao-2-km-corrida",
+      "0-27-km-swimming-2-km-running"
+    ],
+    [
+      "0-3-km-natacao-9-2-km-ciclismo-2-km-corrida",
+      "0-3-km-swimming-9-2-km-cycling-2-km-running"
+    ],
+    [
+      "0-75-km-natacao-16-km-ciclismo-5-km-corrida",
+      "0-75-km-swimming-16-km-cycling-5-km-running"
+    ],
+    [
+      "0-75-km-natacao-20-km-ciclismo-5-km-corrida",
+      "0-75-km-swimming-20-km-cycling-5-km-running"
+    ],
+    [
+      "0-75-km-natacao-22-km-ciclismo-5-km-corrida",
+      "0-75-km-swimming-22-km-cycling-5-km-running"
+    ],
+    [
+      "1-000-m-corrida-4-000-m-ciclismo-500-m-corrida",
+      "1-000m-running-4-000m-cycling-500m-running"
+    ],
+    [
+      "1-000-m-corrida-53-km-ciclismo-15-km-corrida",
+      "1-900m-swimming-90km-cycling-21km-running"
+    ],
+    [
+      "1-000-m-corrida-53km-ciclismo-15km-corrida",
+      "1-000m-swimming-53km-cycling-15km-running"
+    ],
+    [
+      "1-000-m-natacao-36-km-ciclismo-7-km-corrida",
+      "1000-m-swim-36-km-bike-7-km-run"
+    ],
+    [
+      "1-000m-natacao-53-000m-ciclismo-15-000m-corrida",
+      "1-000m-swimming-53-000m-cycling-15-000m-running"
+    ],
+    [
+      "1-200-m-natacao-42-5-km-ciclismo-10-km-corrida",
+      "1-200-m-swim-42-5-km-bike-10-km-run"
+    ],
+    [
+      "1-200-m-natacao-43-2-km-ciclismo-10-km-corrida",
+      "1-200-m-swim-43-2-km-bike-10-km-run"
+    ],
+    [
+      "1-200m-natacao-9-600m-corrida",
+      "1-200m-swimming-9-600m-running"
+    ],
+    [
+      "1-5-km-natacao-56-km-ciclismo-9-6-km-corrida",
+      "1-5-km-swimming-56-km-cycling-9-6-km-running"
+    ],
+    [
+      "1-500m-natacao-6-600m-corrida",
+      "1-500m-swimming-6-600m-running"
+    ],
+    [
+      "1-800-m-natacao-85-25-km-ciclismo-20-km-corrida",
+      "1-800-m-swim-85-25-km-bike-20-km-run"
+    ],
+    [
+      "1-800-m-natacao-86-4-km-ciclismo-20-km-corrida",
+      "1-800-m-swim-86-4-km-bike-20-km-run"
+    ],
+    [
+      "1-9-km-natacao-90-km-ciclismo-19-4-km-corrida",
+      "1-9-km-swimming-90-km-cycling-19-4-km-running"
+    ],
+    [
+      "1-9-km-natacao-90-km-ciclismo-21-km-corrida-pt-2",
+      "1-9-km-swimming-90-km-cycling-21-km-running"
+    ],
+    [
+      "1-almoco-acompanhante",
+      "1-guest-lunch"
+    ],
+    [
+      "1-de-maio",
+      "1st-may"
+    ],
+    [
+      "1-lap-6-706-km",
+      "1-volta-6-706-km"
+    ],
+    [
+      "1-mile",
+      "1-milha"
+    ],
+    [
+      "10-km-25-obstacles",
+      "10-km-25-obstaculos"
+    ],
+    [
+      "10-km-corrida-25-obstaculos",
+      "10-km-run-25-obstacles"
+    ],
+    [
+      "100-m-natacao-2-2-km-ciclismo-800-m-corrida",
+      "100-m-swimming-2-2-km-cycling-800-m-running"
+    ],
+    [
+      "100-miles",
+      "100-milhas"
+    ],
+    [
+      "1000m-corrida-3750m-ciclismo-500m-corrida",
+      "1000m-running-3750m-cycling-500m-running"
+    ],
+    [
+      "1000m-corrida-8-estacoes",
+      "1000m-run-8-stations"
+    ],
+    [
+      "100m-natacao-2km-ciclismo-700m-corrida",
+      "100m-swimming-2km-cycling-700m-running"
+    ],
+    [
+      "105-km-2",
+      "105-km-pt-2"
+    ],
+    [
+      "107-km",
+      "107-km-2"
+    ],
+    [
+      "108-km-2",
+      "108-km-pt-2"
+    ],
+    [
+      "111-miles",
+      "111-milhas"
+    ],
+    [
+      "114-km-2",
+      "114-km-pt-2"
+    ],
+    [
+      "117-km-2",
+      "117-km-pt-2"
+    ],
+    [
+      "12",
+      "12-km-pt-3"
+    ],
+    [
+      "12-km-2",
+      "12-km-pt-2"
+    ],
+    [
+      "12-km-corrida-2-km-canoagem",
+      "12-km-running-2-km-canoeing"
+    ],
+    [
+      "12-laps",
+      "12-voltas"
+    ],
+    [
+      "125-km-2",
+      "125-km-pt-2"
+    ],
+    [
+      "13-aos-20-anos",
+      "ages-13-to-20"
+    ],
+    [
+      "13-km-2",
+      "13-km-pt-2"
+    ],
+    [
+      "135-km-2",
+      "135-km-pt-2"
+    ],
+    [
+      "15-km-2",
+      "15-km-pt-2"
+    ],
+    [
+      "15-km-natacao-40-km-ciclismo-10-km-corrida",
+      "15-km-swimming-40-km-cycling-10-km-running"
+    ],
+    [
+      "15-km-running-40-km-cycling-10-km-running",
+      "corrida-15-km-ciclismo-40-km-corrida-10-km"
+    ],
+    [
+      "150-m-natacao-1-000-m-corrida",
+      "150m-swimming-1000m-running"
+    ],
+    [
+      "150-m-natacao-3-8-km-ciclismo-1-1-km-corrida",
+      "150-m-swimming-3-8-km-cycling-1-1-km-running"
+    ],
+    [
+      "150-miles",
+      "150-milhas"
+    ],
+    [
+      "150m-natacao-1-000m-corrida",
+      "150m-swimming-1-000m-running"
+    ],
+    [
+      "150m-natacao-3km-ciclismo-1km-corrida",
+      "150m-swimming-3km-cycling-1km-running"
+    ],
+    [
+      "155-km-2",
+      "155-km-pt-2"
+    ],
+    [
+      "16-km-2",
+      "16-km-pt-2"
+    ],
+    [
+      "166-km-2",
+      "166-km-pt-2"
+    ],
+    [
+      "175-km-2",
+      "175-km-pt-2"
+    ],
+    [
+      "18-anos",
+      "ages-18"
+    ],
+    [
+      "18-km-2",
+      "18-km-pt-2"
+    ],
+    [
+      "19",
+      "19-km-pt-3"
+    ],
+    [
+      "19-km-2",
+      "19-km-pt-2"
+    ],
+    [
+      "2-000-m-corrida-7-900-m-ciclismo-1-000-m-corrida",
+      "2-000m-running-7-900m-cycling-1-000m-running"
+    ],
+    [
+      "2-000-m-natacao-105-km-ciclismo-21-km-corrida",
+      "2-000m-swimming-105km-cycling-21km-running"
+    ],
+    [
+      "2-000m-natacao-105-000m-ciclismo-21-000m-corrida",
+      "2-000m-swimming-105-000m-cycling-21-000m-running"
+    ],
+    [
+      "2-000m-natacao-14-300m-corrida",
+      "2-000m-swimming-14-300m-running"
+    ],
+    [
+      "2-000m-natacao-80km-ciclismo-18km-corrida",
+      "2-000m-swimming-80km-cycling-18km-running"
+    ],
+    [
+      "2-000m-running-7-650m-cycling-1-000m-running",
+      "corrida-2-000m-ciclismo-7-650m-corrida-1-000m"
+    ],
+    [
+      "2-100m-natacao-5-000m-corrida",
+      "2-100m-swimming-5-000m-running"
+    ],
+    [
+      "2-230m-natacao-9-150m-corrida",
+      "2-230m-swimming-9-150m-running"
+    ],
+    [
+      "2-5-km-natacao-16-km-ciclismo-5-km-corrida",
+      "2-5-km-running-16-km-cycling-5-km-running"
+    ],
+    [
+      "2-500m-natacao-20km-ciclismo-5km-corrida",
+      "2-500m-running-20km-cycling-5km-running"
+    ],
+    [
+      "2-700m-natacao-12-400m-corrida",
+      "2-700m-swimming-12-400m-running"
+    ],
+    [
+      "2-750m-natacao-13-650m-corrida",
+      "2-750m-swimming-13-650m-running"
+    ],
+    [
+      "2-almocos-acompanhante",
+      "2-guests-lunch"
+    ],
+    [
+      "2-de-maio",
+      "2nd-may"
+    ],
+    [
+      "2-horas",
+      "2-hours"
+    ],
+    [
+      "2-km-natacao-8-km-ciclismo-1-km-corrida",
+      "2-km-swimming-8-km-cycling-1-km-running"
+    ],
+    [
+      "2-km-natacao-80-km-ciclismo-18-km-corrida",
+      "2-km-swimming-80-km-cycling-18-km-running"
+    ],
+    [
+      "2-stage-registration-individual-gravel-open",
+      "inscricao-2-etapas-individual-gravel-open"
+    ],
+    [
+      "200-m-natacao-7-6-km-ciclismo-1-7-km-corrida",
+      "200-m-swimming-7-6-km-cycling-1-7-km-running"
+    ],
+    [
+      "2000-m-corrida-8000m-ciclismo-1000m-corrida",
+      "2000m-running-8000m-cycling-1000m-running"
+    ],
+    [
+      "2000-m-natacao-72-km-ciclismo-14-km-corrida",
+      "2000-m-swim-72-km-bike-14-km-run"
+    ],
+    [
+      "2000m-corrida-7500m-ciclismo-1000m-corrida",
+      "2000m-running-7500m-cycling-1000m-running"
+    ],
+    [
+      "200m-natacao-2-000m-corrida",
+      "200m-swimming-2-000m-running"
+    ],
+    [
+      "21-km-corrida-30-obstaculos",
+      "21-km-run-30-obstacles"
+    ],
+    [
+      "21-km-obstacles",
+      "21-km-obstaculos"
+    ],
+    [
+      "210897-km",
+      "21097-km-pt-2"
+    ],
+    [
+      "22-km-2",
+      "22-km-pt-2"
+    ],
+    [
+      "22-km-corrida-4-km-canoagem",
+      "22-km-running-4-km-canoeing"
+    ],
+    [
+      "23-km-2",
+      "23-km-pt-2"
+    ],
+    [
+      "25-km-2",
+      "25-km-pt-2"
+    ],
+    [
+      "25km-corrida-20km-ciclismo-5km-corrida",
+      "25km-run-20km-cycling-5km-run"
+    ],
+    [
+      "28-km",
+      "28-km-2"
+    ],
+    [
+      "29-km-2",
+      "29-km-pt-2"
+    ],
+    [
+      "2km-running-81km-cycling-1km-running",
+      "corrida-2km-ciclismo-81km-corrida-1km"
+    ],
+    [
+      "3-200m-natacao-11-900m-corrida",
+      "3-200m-swimming-11-900m-running"
+    ],
+    [
+      "3-200m-natacao-22-200m-corrida",
+      "3-200m-swimming-22-200m-running"
+    ],
+    [
+      "3-250m-natacao-27-150m-corrida",
+      "3-250m-swimming-27-150m-running"
+    ],
+    [
+      "3-360m-natacao-22-150m-corrida",
+      "3-360m-swimming-22-150m-running"
+    ],
+    [
+      "3-600m-natacao-14-600m-corrida",
+      "3-600m-swimming-14-600m-running"
+    ],
+    [
+      "3-600m-natacao-21-100m-corrida",
+      "3-600m-swimming-21-100m-running"
+    ],
+    [
+      "3-800-m-natacao-180-km-ciclismo-42-km-corrida",
+      "3-800m-swimming-180km-cycling-42km-running"
+    ],
+    [
+      "3-almocos-acompanhante",
+      "3-guests-lunch"
+    ],
+    [
+      "3-athletes",
+      "3-atletas"
+    ],
+    [
+      "3-de-maio",
+      "3rd-may"
+    ],
+    [
+      "3-horas",
+      "3-hours"
+    ],
+    [
+      "3-laps",
+      "3-voltas"
+    ],
+    [
+      "3-laps-20-118-km",
+      "3-voltas-20-118-km"
+    ],
+    [
+      "3-stage-registration-teams-individual-open",
+      "inscricao-3-etapas-equipas-individual-open"
+    ],
+    [
+      "3000-m-natacao-108-km-ciclismo-21-km-corrida",
+      "3000-m-swim-108-km-bike-21-km-run"
+    ],
+    [
+      "300m-natacao-10km-ciclismo-2km-corrida",
+      "300m-swimming-10km-cycling-2km-running"
+    ],
+    [
+      "300m-natacao-10km-ciclismo-3km-corrida",
+      "300m-swimming-10km-cycling-3km-running"
+    ],
+    [
+      "300m-natacao-2000m-corrida",
+      "300m-swimming-2000m-running"
+    ],
+    [
+      "300m-running-1000m-ciclismo-200m-corrida",
+      "300m-running-1000m-cycling-200m-running"
+    ],
+    [
+      "33-km-2",
+      "33-km-pt-2"
+    ],
+    [
+      "37-km-2",
+      "37-km-pt-2"
+    ],
+    [
+      "38-km-2",
+      "38-km-pt-2"
+    ],
+    [
+      "38-km-natacao-180-km-ciclismo-42-km-corrida",
+      "38-km-swim-180-km-bike-42-km-run"
+    ],
+    [
+      "4-000-m-natacao-190-km-ciclismo-41-km-corrida",
+      "4-000m-swimming-190km-cycling-41km-running"
+    ],
+    [
+      "4-000m-natacao-190-000m-ciclismo-41-000m-corrida",
+      "4-000m-swimming-190-000m-cycling-41-000m-running"
+    ],
+    [
+      "4-400m-natacao-19-200m-corrida",
+      "4-400m-swimming-19-200m-running"
+    ],
+    [
+      "4-780m-natacao-20-720m-corrida",
+      "4-780m-swimming-20-720m-running"
+    ],
+    [
+      "4-8-km-corrida-18-km-ciclismo-2-4-km-corrida",
+      "4-8-km-running-18-km-cycling-2-4-km-running"
+    ],
+    [
+      "4-km-per-lap",
+      "4-km-por-volta"
+    ],
+    [
+      "4-stage-registration-individual-competition",
+      "inscricao-4-etapas-individual-competicao"
+    ],
+    [
+      "4-stage-registration-individual-open",
+      "inscricao-4-etapas-individual-open"
+    ],
+    [
+      "45-km-2",
+      "45-km-pt-2"
+    ],
+    [
+      "46-km-2",
+      "46-km-pt-2"
+    ],
+    [
+      "5-000m-corrida-18-000m-ciclismo-2-100m-corrida",
+      "running-5-000m-cycling-18-000m-running-2-100m"
+    ],
+    [
+      "5-150m-running-20-250m-cycling-2-500m-running",
+      "corrida-5-150m-ciclismo-20-250m-corrida-2-500m"
+    ],
+    [
+      "5-250m-natacao-37-150m-corrida",
+      "5-250m-swimming-37-150m-running"
+    ],
+    [
+      "5-inscricoes",
+      "5-inscriptions"
+    ],
+    [
+      "5-km",
+      "running"
+    ],
+    [
+      "5-km-20-obstacles",
+      "5-km-20-obstaculos"
+    ],
+    [
+      "5-km-corrida-20-km-bicicleta-2-5-km-corrida",
+      "5-km-run-20-km-bike-2-5-km-run"
+    ],
+    [
+      "5-km-corrida-20-km-ciclismo-25-km-corrida",
+      "5-km-running-20-km-cycling-25-km-running"
+    ],
+    [
+      "5-km-corrida-20-obstaculos",
+      "5-km-run-20-obstacles"
+    ],
+    [
+      "5-km-interpretativa",
+      "5-km-interpretative"
+    ],
+    [
+      "50-km-cada",
+      "50-km-each"
+    ],
+    [
+      "50-m-natacao-1-km-ciclismo-420-m-corrida",
+      "50-m-swimming-1-km-cycling-420-m-running"
+    ],
+    [
+      "5000m-running-20000m-ciclismo-2500m-corrida",
+      "5000m-running-20000m-cycling-2500m-running"
+    ],
+    [
+      "500m-corrida-8-estacoes",
+      "500m-run-8-stations"
+    ],
+    [
+      "50m-natacao-1km-ciclismo-400m-corrida",
+      "50m-swimming-1km-cycling-400m-running"
+    ],
+    [
+      "50m-natacao-300m-corrida",
+      "50m-swimming-300m-running"
+    ],
+    [
+      "51-km-2",
+      "51-km-pt-2"
+    ],
+    [
+      "55-km-2",
+      "55-km-pt-2"
+    ],
+    [
+      "56-km-2",
+      "56-km-pt-2"
+    ],
+    [
+      "57-km-2",
+      "57-km-pt-2"
+    ],
+    [
+      "5km-running-18km-cycling-21km-running",
+      "corrida-5km-ciclismo-18km-corrida-21km"
+    ],
+    [
+      "5km-running-20km-cycling-25km-running",
+      "corrida-5km-ciclismo-20km-corrida-25km"
+    ],
+    [
+      "6-anos",
+      "6-years-old"
+    ],
+    [
+      "6-laps",
+      "6-voltas"
+    ],
+    [
+      "6-laps-40-236-km",
+      "6-voltas-40-236-km"
+    ],
+    [
+      "600-m-natacao-21-5-km-ciclismo-5-km-corrida",
+      "600-m-swim-21-5-km-bike-5-km-run"
+    ],
+    [
+      "600-m-natacao-21-6-km-ciclismo-5-km-corrida",
+      "600-m-swim-21-6-km-bike-5-km-run"
+    ],
+    [
+      "62-km-2",
+      "62-km-pt-2"
+    ],
+    [
+      "65-km-2",
+      "65-km-pt-2"
+    ],
+    [
+      "66-km-2",
+      "66-km-pt-2"
+    ],
+    [
+      "72-km-2",
+      "72-km-pt-2"
+    ],
+    [
+      "75-km-2",
+      "75-km-pt-2"
+    ],
+    [
+      "750-m-natacao-19-4-km-ciclismo-5-km-corrida",
+      "750-m-swimming-19-4-km-cycling-5-km-run"
+    ],
+    [
+      "750-m-natacao-20-km-ciclismo-5-km-corrida",
+      "750-m-swim-20-km-cycling-5-km-run"
+    ],
+    [
+      "750m-de-natacao-20km-de-ciclismo-5km-de-corrida",
+      "750m-swim-20km-cycling-5km-run"
+    ],
+    [
+      "750m-natacao-20km-ciclismo-5km-corrida",
+      "750m-swimming-20km-cycling-5km-running"
+    ],
+    [
+      "750m-natacao-48km-corrida",
+      "750m-swimming-4-8km-running"
+    ],
+    [
+      "75m-natacao-800m-corrida",
+      "75m-swimming-800m-running"
+    ],
+    [
+      "77-km-2",
+      "77-km-pt-2"
+    ],
+    [
+      "8-km-40-obstacles",
+      "8-km-40-obstaculos"
+    ],
+    [
+      "800m-running-2000m-ciclismo-400m-corrida",
+      "800m-running-2000m-cycling-400m-running"
+    ],
+    [
+      "82-km-2",
+      "82-km-pt-2"
+    ],
+    [
+      "85-25-km-bike-20-km-run",
+      "85-25-km-ciclismo-20-km-corrida"
+    ],
+    [
+      "85-km-2",
+      "85-km-pt-2"
+    ],
+    [
+      "87-km",
+      "87-km-2"
+    ],
+    [
+      "93-km-2",
+      "93-km-pt-2"
+    ],
+    [
+      "95-km-2",
+      "95-km-pt-2"
+    ],
+    [
+      "96-km-2",
+      "96-km-pt-2"
+    ],
+    [
+      "aaalgarve-affiliated",
+      "filiados-aaalgarve"
+    ],
+    [
+      "aadp-affiliated",
+      "afiliado-aadp"
+    ],
+    [
+      "aadp-non-affiliated",
+      "nao-afiliado-aadp"
+    ],
+    [
+      "aaram-affiliated",
+      "aaram-afiliado"
+    ],
+    [
+      "aaram-license",
+      "licenca-aaram"
+    ],
+    [
+      "aaram-non-affiliated",
+      "nao-afiliado-aaram"
+    ],
+    [
+      "absolute",
+      "absoluto"
+    ],
+    [
+      "absolute-northern-championship-individual-northern-championship",
+      "campeonato-norte-absoluto-campeonato-norte-individual"
+    ],
+    [
+      "accommodation-at-adega-tipica",
+      "acomodacao-adega-tipica"
+    ],
+    [
+      "accommodation-at-ansiturismo",
+      "acomodacao-ansiturismo"
+    ],
+    [
+      "accommodation-at-versao-b",
+      "acomodacao-versao-b"
+    ],
+    [
+      "accommodation-in-dormitories",
+      "acomodacao-em-dormitorio"
+    ],
+    [
+      "adac-affiliate",
+      "afiliado-adac"
+    ],
+    [
+      "adac-affiliated-federated-condeixa-team",
+      "federado-adac-federado-equipa-de-condeixa"
+    ],
+    [
+      "adac-federated",
+      "federado-adac"
+    ],
+    [
+      "adac-licensed",
+      "socio-adac"
+    ],
+    [
+      "adal-federated",
+      "federado-adal"
+    ],
+    [
+      "adal-non-federated",
+      "nao-federado-adal"
+    ],
+    [
+      "adolescente",
+      "teen"
+    ],
+    [
+      "age-groups-men",
+      "grupos-de-idade-homem"
+    ],
+    [
+      "age-groups-women",
+      "grupos-de-idade-mulher"
+    ],
+    [
+      "aguas-abertas",
+      "open-water"
+    ],
+    [
+      "almoco",
+      "lunch"
+    ],
+    [
+      "aquathlon",
+      "aquatlo"
+    ],
+    [
+      "aquathlon-youth",
+      "aquatlo-jovem"
+    ],
+    [
+      "aquatlo-jovens",
+      "youth-aquathlon"
+    ],
+    [
+      "aquatlo-kids",
+      "kids-aquathlon"
+    ],
+    [
+      "associates",
+      "socios"
+    ],
+    [
+      "atletas-femininas-e-cadetes",
+      "female-and-cadet-athletes"
+    ],
+    [
+      "atletas-masculinos",
+      "male-athletes"
+    ],
+    [
+      "backyard-1-lap",
+      "backyard-1-volta"
+    ],
+    [
+      "backyard-3-laps",
+      "backyard-3-voltas"
+    ],
+    [
+      "backyard-6-laps",
+      "backyard-6-voltas"
+    ],
+    [
+      "bairrada-river-beach-fontes-river-beach-6-5-km",
+      "praia-fluvial-da-bairrada-praia-fluvial-de-fontes-65km"
+    ],
+    [
+      "barroso-estafeta",
+      "barroso-relay"
+    ],
+    [
+      "belem-parish-card",
+      "cartao-da-freguesia-de-belem"
+    ],
+    [
+      "best-50",
+      "melhores-50"
+    ],
+    [
+      "bib-customization",
+      "dorsal-personalizado"
+    ],
+    [
+      "bib-t-shirt-customization",
+      "dorsal-t-shirt-personalizados"
+    ],
+    [
+      "bilhete-de-espetador",
+      "spectator-ticket"
+    ],
+    [
+      "btt-elite",
+      "mtb-elite"
+    ],
+    [
+      "btt-jovens",
+      "youth-mtb"
+    ],
+    [
+      "btt-kids",
+      "kids-mtb"
+    ],
+    [
+      "btt-partner",
+      "btt-socio"
+    ],
+    [
+      "btt-pt-2",
+      "mtb"
+    ],
+    [
+      "btt-u17",
+      "mtb-u17"
+    ],
+    [
+      "btt-u20",
+      "mtb-u20"
+    ],
+    [
+      "btt-u23",
+      "mtb-u23"
+    ],
+    [
+      "btt-veteranos",
+      "mtb-masters"
+    ],
+    [
+      "cada",
+      "each"
+    ],
+    [
+      "calma-licensed",
+      "socio-calma"
+    ],
+    [
+      "caminhada-12km",
+      "walk-12km"
+    ],
+    [
+      "caminhada-2",
+      "caminhada-pt-2"
+    ],
+    [
+      "caminhada-caominhada",
+      "walk-dog-walk"
+    ],
+    [
+      "caminhada-curta",
+      "short-walk"
+    ],
+    [
+      "caminhada-inclusiva",
+      "inclusive-walk"
+    ],
+    [
+      "caminhada-longa",
+      "long-walk"
+    ],
+    [
+      "caminhada-pet-friendly",
+      "pet-friendly-walk"
+    ],
+    [
+      "caminho-do-xisto-8km",
+      "xistos-walk-8km"
+    ],
+    [
+      "campeonato-distrital-de-coimbra-ultra-trail",
+      "coimbra-district-championship-ultra-trail"
+    ],
+    [
+      "campeonato-jovem-triatlo",
+      "youth-triathlon-championship"
+    ],
+    [
+      "campeonato-regional-absoluto",
+      "regional-championship-absolute"
+    ],
+    [
+      "campeonato-regional-absoluto-de-aquatlo",
+      "regional-championship-aquathlon-absolute"
+    ],
+    [
+      "campeonatos-de-portugal-de-maratona",
+      "portuguese-marathon-championships"
+    ],
+    [
+      "caominhada-pt-2",
+      "dog-walk"
+    ],
+    [
+      "caorrida",
+      "dog-run"
+    ],
+    [
+      "casal",
+      "couple"
+    ],
+    [
+      "champions-race",
+      "corrida-dos-campeoes"
+    ],
+    [
+      "charity-hyrox-doubles-sunday",
+      "solidario-hyrox-duplas-domingo"
+    ],
+    [
+      "charity-hyrox-pro-doubles-saturday",
+      "solidario-hyrox-pro-duplas-sabado"
+    ],
+    [
+      "charity-hyrox-pro-friday",
+      "solidario-hyrox-pro-sexta"
+    ],
+    [
+      "charity-hyrox-relay-sunday",
+      "solidario-hyrox-estafetas-domingo"
+    ],
+    [
+      "charity-hyrox-saturday",
+      "solidario-hyrox-sabado"
+    ],
+    [
+      "ciclismo",
+      "cycling"
+    ],
+    [
+      "ciclismo-65-km-almoco",
+      "cycling-65-km-lunch"
+    ],
+    [
+      "ciclismo-btt-canoagem-e-corrida-em-trilha",
+      "mountain-biking-canoeing-and-trail-running"
+    ],
+    [
+      "ciclismo-corrida",
+      "cycling-running"
+    ],
+    [
+      "ciclismo-de-estrada",
+      "road-cycling"
+    ],
+    [
+      "ciclocrosse",
+      "cyclocross"
+    ],
+    [
+      "club-btt-terra-de-loule-member",
+      "socio-clube-btt-terra-de-loule"
+    ],
+    [
+      "colaborador",
+      "employee"
+    ],
+    [
+      "collar-customization",
+      "personalizacao-gola"
+    ],
+    [
+      "com-acomodacao",
+      "with-accommodation"
+    ],
+    [
+      "com-acompanhante",
+      "with-companion"
+    ],
+    [
+      "com-jantar",
+      "with-dinner"
+    ],
+    [
+      "com-jersey",
+      "with-jersey"
+    ],
+    [
+      "com-kayak",
+      "with-kayak"
+    ],
+    [
+      "com-medalha",
+      "with-medal"
+    ],
+    [
+      "com-pequeno-almoco",
+      "with-breakfast"
+    ],
+    [
+      "com-t-shirt-almoco",
+      "with-t-shirt-lunch"
+    ],
+    [
+      "com-transfer",
+      "with-transfer"
+    ],
+    [
+      "community-ua-doubles",
+      "comunidade-ua-duplas"
+    ],
+    [
+      "competicao",
+      "competition"
+    ],
+    [
+      "competitive",
+      "competitivo"
+    ],
+    [
+      "comunidade-universitaria-ist-nova-sbe",
+      "university-community-ist-nova-sbe"
+    ],
+    [
+      "contra-relogio-granfondo",
+      "time-trial-granfondo"
+    ],
+    [
+      "contra-relogio-mediofondo",
+      "time-trial-mediofondo"
+    ],
+    [
+      "contrarrelogio",
+      "time-trial"
+    ],
+    [
+      "contrarrelogio-granfondo-mediofondo",
+      "time-trial-granfondo-mediofondo"
+    ],
+    [
+      "corrida-10-km",
+      "running-10-km"
+    ],
+    [
+      "corrida-btt",
+      "running-btt"
+    ],
+    [
+      "corrida-da-familia",
+      "family-race"
+    ],
+    [
+      "corrida-de-5-km",
+      "running-5-km"
+    ],
+    [
+      "corrida-de-estrada-caminhada",
+      "road-running-walk"
+    ],
+    [
+      "corrida-de-estrada-jovens",
+      "road-running-youth"
+    ],
+    [
+      "corrida-de-estrada-sub-18",
+      "road-running-u-18"
+    ],
+    [
+      "corrida-de-obstaculos",
+      "obstacles-races"
+    ],
+    [
+      "corrida-de-pista",
+      "track-running"
+    ],
+    [
+      "corrida-de-pista-jovens",
+      "youth-track-running"
+    ],
+    [
+      "corrida-de-pista-kids",
+      "kids-track-running"
+    ],
+    [
+      "corrida-desafio-vertical",
+      "running-race-vertical-challenge"
+    ],
+    [
+      "corrida-jubas-jovens",
+      "jubas-run-youth"
+    ],
+    [
+      "corrida-jubas-kids",
+      "jubas-run-kids"
+    ],
+    [
+      "corta-mato-jovens",
+      "cross-country-youth"
+    ],
+    [
+      "corta-mato-kids",
+      "cross-country-kids"
+    ],
+    [
+      "corta-mato-pt-2",
+      "cross-country"
+    ],
+    [
+      "cpt-licensed",
+      "licenciado-cpt"
+    ],
+    [
+      "cross-triathlon",
+      "triatlo-cross"
+    ],
+    [
+      "crosstraining-masters",
+      "crosstraining-veteranos"
+    ],
+    [
+      "curto",
+      "short"
+    ],
+    [
+      "customization-pack",
+      "pack-customizado"
+    ],
+    [
+      "desafio-vertical",
+      "vertical-challenge"
+    ],
+    [
+      "desporto-adaptado",
+      "parasports"
+    ],
+    [
+      "distancia-standart",
+      "standart-distance"
+    ],
+    [
+      "dornes-river-beach-isna-velha-vila-de-rei-9-5-km",
+      "praia-fluvial-de-dornes-isna-velha-vila-de-rei-95km"
+    ],
+    [
+      "dorsal-and-collar-customization",
+      "personalizacao-dorsal-e-gola"
+    ],
+    [
+      "dorsal-and-t-shirt-customization",
+      "personalizacao-dorsal-e-t-shirt"
+    ],
+    [
+      "dorsal-customization",
+      "personalizacao-dorsal"
+    ],
+    [
+      "double-occupancy-room",
+      "quarto-ocupacao-dupla"
+    ],
+    [
+      "doubles-relay",
+      "dupla-de-estafetas"
+    ],
+    [
+      "duathlon",
+      "duatlo"
+    ],
+    [
+      "duathlon-sprint",
+      "duatlo-sprint"
+    ],
+    [
+      "dupla",
+      "pair"
+    ],
+    [
+      "dupla-homens",
+      "mens-doubles"
+    ],
+    [
+      "dupla-mulheres",
+      "womens-doubles"
+    ],
+    [
+      "duplas-femininas-open",
+      "womens-open-doubles"
+    ],
+    [
+      "duplas-femininas-pro",
+      "womens-pro-doubles"
+    ],
+    [
+      "duplas-homens-pro",
+      "men-pro-doubles"
+    ],
+    [
+      "duplas-masculinas-open",
+      "mens-open-doubles"
+    ],
+    [
+      "duplas-masculinas-pro",
+      "mens-pro-doubles"
+    ],
+    [
+      "duplas-mulheres-pro",
+      "women-pro-doubles"
+    ],
+    [
+      "e-bike-1-etapa",
+      "e-bike-1-stage"
+    ],
+    [
+      "e-bike-3-etapas",
+      "e-bike-3-stages"
+    ],
+    [
+      "e-bike-ride",
+      "passeio-e-bike"
+    ],
+    [
+      "eco-trail-cycling-tour-15-20km",
+      "passeio-cicloturismo-eco-pista-15-20km"
+    ],
+    [
+      "equipa-3-atletas",
+      "relay-3-athletes-2"
+    ],
+    [
+      "equipa-5-atletas",
+      "team-5-athletes"
+    ],
+    [
+      "equipa-de-2",
+      "team-of-2"
+    ],
+    [
+      "equipas-estafeta-femininas",
+      "womens-relay-teams"
+    ],
+    [
+      "equipas-estafeta-masculinas",
+      "mens-relay-teams"
+    ],
+    [
+      "equipas-estafeta-mistas",
+      "mixed-relay-teams"
+    ],
+    [
+      "equipas-mistas-de-4",
+      "mixed-teams-of-4"
+    ],
+    [
+      "escolas",
+      "youth-development"
+    ],
+    [
+      "espectador",
+      "spectator"
+    ],
+    [
+      "estafeta-2-atletas",
+      "relay-2-athletes"
+    ],
+    [
+      "estafeta-3-atletas",
+      "relay-3-athletes"
+    ],
+    [
+      "estafeta-de-2",
+      "relay-of-2"
+    ],
+    [
+      "estafeta-de-3",
+      "relay-of-3"
+    ],
+    [
+      "estafeta-de-5-atletas",
+      "relay-of-5"
+    ],
+    [
+      "estafeta-de-6",
+      "relay-of-6"
+    ],
+    [
+      "estafeta-feminina",
+      "women-relay"
+    ],
+    [
+      "estafeta-masculina",
+      "men-relay"
+    ],
+    [
+      "estafeta-mista",
+      "mix-relay"
+    ],
+    [
+      "estafeta-triplas",
+      "triples-relay"
+    ],
+    [
+      "estafetas-4-atletas",
+      "relay-4-athletes"
+    ],
+    [
+      "estafetas-inscricao-no-circuito-completo-da-grande-descida",
+      "relay-teams-full-circuit-registration-grande-descida"
+    ],
+    [
+      "estafetas-nao-licenciados",
+      "relay-non-licensed"
+    ],
+    [
+      "estudante",
+      "student"
+    ],
+    [
+      "europarque-running-trophy",
+      "trofeu-europarque-running"
+    ],
+    [
+      "experiencia-completa",
+      "full-experience"
+    ],
+    [
+      "family-ride",
+      "volta-de-familia"
+    ],
+    [
+      "family-room-double-occupancy",
+      "quarto-familiar-ocupacao-dupla"
+    ],
+    [
+      "family-room-triple-occupancy",
+      "quarto-familiar-ocupacao-tripla"
+    ],
+    [
+      "federado-fcmp",
+      "federated-fcmp"
+    ],
+    [
+      "female",
+      "feminino"
+    ],
+    [
+      "firefighter-endurance-test",
+      "prova-de-resistencia-bombeiro"
+    ],
+    [
+      "fontes-river-beach-aldeia-do-mato-11-0-km",
+      "praia-fluvial-de-fontes-aldeia-do-mato-110km"
+    ],
+    [
+      "foz-de-alge-figueiro-dos-vinhos-dornes-river-beach-8-5-km",
+      "foz-de-alge-figueiro-dos-vinhos-praia-fluvial-de-dornes-85km"
+    ],
+    [
+      "fpc-cpt-member",
+      "socio-fpc-cpt"
+    ],
+    [
+      "full-circuit-registration-grande-descida",
+      "inscricao-no-circuito-completo-da-grande-descida"
+    ],
+    [
+      "gcad-member",
+      "membro-gcad"
+    ],
+    [
+      "guest-dinner",
+      "jantar-acompanhantes"
+    ],
+    [
+      "high-jump",
+      "salto-alto"
+    ],
+    [
+      "homens-pro",
+      "men-pro"
+    ],
+    [
+      "hyrox-adaptado-sabado",
+      "hyrox-adaptive-saturday"
+    ],
+    [
+      "hyrox-adaptado-sexta",
+      "hyrox-adaptive-friday"
+    ],
+    [
+      "hyrox-doubles-friday",
+      "hyrox-duplas-sexta"
+    ],
+    [
+      "hyrox-doubles-sunday",
+      "hyrox-duplas-domingo"
+    ],
+    [
+      "hyrox-estafetas-domingo",
+      "hyrox-relay-sunday"
+    ],
+    [
+      "hyrox-friday",
+      "hyrox-sexta"
+    ],
+    [
+      "hyrox-pro-doubles-saturday",
+      "hyrox-pro-duplas-sabado"
+    ],
+    [
+      "hyrox-pro-friday",
+      "hyrox-pro-sexta"
+    ],
+    [
+      "hyrox-sabado",
+      "hyrox-saturday"
+    ],
+    [
+      "hyrox-simulation",
+      "simulacao-hyrox"
+    ],
+    [
+      "individual-feminino-open",
+      "womens-open-singles"
+    ],
+    [
+      "individual-feminino-pro",
+      "womens-pro-singles"
+    ],
+    [
+      "individual-homem",
+      "solo-men"
+    ],
+    [
+      "individual-masculino-open",
+      "mens-open-singles"
+    ],
+    [
+      "individual-masculino-pro",
+      "mens-pro-singles"
+    ],
+    [
+      "individual-mulher",
+      "solo-women"
+    ],
+    [
+      "individual-registration",
+      "inscricao-individual"
+    ],
+    [
+      "iniciante",
+      "starter"
+    ],
+    [
+      "inscricao",
+      "registration"
+    ],
+    [
+      "inscricao-equipa",
+      "team-registration"
+    ],
+    [
+      "inscricao-para-as-6-provas",
+      "registration-for-all-6-races"
+    ],
+    [
+      "internacional",
+      "international"
+    ],
+    [
+      "interpretativa",
+      "interpretative"
+    ],
+    [
+      "isna-velha-vila-de-rei-praia-fluvial-da-zaboeira-45km",
+      "isna-velha-vila-de-rei-zaboeira-river-beach-4-5-km"
+    ],
+    [
+      "jovens-nao-licenciadoss",
+      "youth-non-licensed"
+    ],
+    [
+      "kayak-and-canoeist",
+      "kayak-e-canoista"
+    ],
+    [
+      "kids-caminhada",
+      "kids-walk"
+    ],
+    [
+      "kids-nao-licenciados",
+      "kids-non-licensed"
+    ],
+    [
+      "kids-obstacle-race",
+      "prova-de-obstaculo-kids"
+    ],
+    [
+      "kit-do-atleta",
+      "with-pack"
+    ],
+    [
+      "lago",
+      "lake"
+    ],
+    [
+      "licenca-uci",
+      "uci-license"
+    ],
+    [
+      "licenciado-por-1-dia",
+      "licensed-for-1-day"
+    ],
+    [
+      "licenciados-por-1-dia",
+      "one-day-license"
+    ],
+    [
+      "long",
+      "longo"
+    ],
+    [
+      "long-distance",
+      "longa-distancia"
+    ],
+    [
+      "long-route",
+      "rota-longa"
+    ],
+    [
+      "long-trail",
+      "trail-longo-pt-2"
+    ],
+    [
+      "male",
+      "masculino"
+    ],
+    [
+      "marcha",
+      "race-walk"
+    ],
+    [
+      "marcha-jovens",
+      "race-walk-youth"
+    ],
+    [
+      "marcha-kids",
+      "race-walk-kids"
+    ],
+    [
+      "media-distancia",
+      "middle-distance"
+    ],
+    [
+      "medium-trail",
+      "trail-medio"
+    ],
+    [
+      "member",
+      "socio"
+    ],
+    [
+      "member-adac",
+      "membro-adac"
+    ],
+    [
+      "member-benfica-pet",
+      "socio-benfica-pet"
+    ],
+    [
+      "men-masters",
+      "veteranos-homens"
+    ],
+    [
+      "militares",
+      "military-personnel"
+    ],
+    [
+      "mini-campeoes",
+      "mini-champions"
+    ],
+    [
+      "mini-marathon",
+      "mini-maratona"
+    ],
+    [
+      "mini-trail-2",
+      "mini-trail-pt-2"
+    ],
+    [
+      "mochila-oficial",
+      "official-bag"
+    ],
+    [
+      "mochila-oficial-sweatshirt",
+      "official-bag-sweatshirt"
+    ],
+    [
+      "mtb-3-etapas",
+      "mtb-3-stages"
+    ],
+    [
+      "mtb-half-marathon",
+      "mtb-meia-maratona"
+    ],
+    [
+      "mtb-marathon",
+      "mtb-maratona"
+    ],
+    [
+      "mtb-ride",
+      "passeio-btt"
+    ],
+    [
+      "mulheres",
+      "women"
+    ],
+    [
+      "mulheres-pro",
+      "women-pro"
+    ],
+    [
+      "nacional",
+      "national"
+    ],
+    [
+      "nao-federado-2",
+      "nao-federado-pt-2"
+    ],
+    [
+      "nao-federado-fcmp",
+      "non-federated-fcmp"
+    ],
+    [
+      "nao-residente",
+      "non-resident"
+    ],
+    [
+      "nao-socio-benfica-pet",
+      "no-member-benfica-pet"
+    ],
+    [
+      "nao-socios",
+      "non-associates"
+    ],
+    [
+      "natacao-1-500m-ciclismo-40km-corrida-10km",
+      "swimming-1-500m-cycling-40km-running-10km"
+    ],
+    [
+      "natacao-1-900m-ciclismo-90km-corrida-211km",
+      "swimming-1-900m-cycling-90km-running-211km"
+    ],
+    [
+      "natacao-corrida",
+      "swimming-running"
+    ],
+    [
+      "no-value",
+      "no-value-pt-2"
+    ],
+    [
+      "obstacle-race",
+      "prova-de-obstaculo"
+    ],
+    [
+      "obstacles",
+      "obstaculos"
+    ],
+    [
+      "obstacles-race",
+      "prova-de-obstaculos"
+    ],
+    [
+      "olimpico",
+      "olympic"
+    ],
+    [
+      "only-canoeist",
+      "so-canoista"
+    ],
+    [
+      "open-race",
+      "prova-aberta"
+    ],
+    [
+      "other-license",
+      "outra-licenca"
+    ],
+    [
+      "pack-de-verao",
+      "summer-pack"
+    ],
+    [
+      "paraciclista",
+      "paracyclist"
+    ],
+    [
+      "paratriathlon",
+      "paratriatlo"
+    ],
+    [
+      "performance-doubles",
+      "performance-duplas"
+    ],
+    [
+      "performance-estafetas",
+      "performance-relay"
+    ],
+    [
+      "piscina",
+      "pool"
+    ],
+    [
+      "pista",
+      "track"
+    ],
+    [
+      "praia-fluvial-da-zaboeira-praia-fluvial-da-bairrada-70km",
+      "zaboeira-river-beach-bairrada-river-beach-7-0-km"
+    ],
+    [
+      "prologo",
+      "prologue"
+    ],
+    [
+      "quarto-ocupacao-tripla",
+      "triple-occupancy-room"
+    ],
+    [
+      "resident",
+      "residente"
+    ],
+    [
+      "road-cycling-3-etapas",
+      "road-cycling-3-stages"
+    ],
+    [
+      "rota-curta",
+      "short-route"
+    ],
+    [
+      "sem-almoco",
+      "without-lunch"
+    ],
+    [
+      "sem-medalha",
+      "without-medal"
+    ],
+    [
+      "short-trail",
+      "trail-curto-pt-2"
+    ],
+    [
+      "sprint-estafeta-de-3-nao-licenciados",
+      "sprint-relay-of-3-non-licensed"
+    ],
+    [
+      "sprint-nao-licenciados",
+      "sprint-non-licensed"
+    ],
+    [
+      "sub-10",
+      "u-10"
+    ],
+    [
+      "sub-12",
+      "u-12"
+    ],
+    [
+      "sub-14",
+      "u-14"
+    ],
+    [
+      "sub-16",
+      "u-16"
+    ],
+    [
+      "sub-20",
+      "u-20"
+    ],
+    [
+      "sub-6",
+      "u-6"
+    ],
+    [
+      "sub-8",
+      "u-8"
+    ],
+    [
+      "super-sprint-jovens",
+      "youth-super-sprint"
+    ],
+    [
+      "t-shirt-bag",
+      "t-shirt-saco"
+    ],
+    [
+      "tdm-adaptive-race",
+      "tdm-desporto-adaptado"
+    ],
+    [
+      "trail-jovens",
+      "youth-trail"
+    ],
+    [
+      "trail-run-12-km-almoco",
+      "trail-run-12-km-lunch"
+    ],
+    [
+      "trail-run-24-km-almoco",
+      "trail-run-24-km-lunch"
+    ],
+    [
+      "trail-run-caminhada",
+      "trail-run-walk"
+    ],
+    [
+      "trail-run-jovens",
+      "trail-run-youth"
+    ],
+    [
+      "triathlon",
+      "triatlo"
+    ],
+    [
+      "tripla",
+      "triple"
+    ],
+    [
+      "ultra-ciclismo-btt",
+      "ultra-cycling-mtb"
+    ],
+    [
+      "ultra-ciclismo-gravel",
+      "ultra-cycling-gravel"
+    ],
+    [
+      "ultraciclismo",
+      "ultracycling"
+    ],
+    [
+      "ultramarathon",
+      "ultramaratona"
+    ],
+    [
+      "veteranos-mulheres",
+      "women-masters"
+    ],
+    [
+      "1-5-km-natacao-40-km-ciclismo-10-km-corrida",
+      "1-5-km-swim-40-km-cycling-10-km-running",
+      "1-5-km-swimming-40-km-cycling-10-km-running"
+    ],
+    [
+      "1-9-km-natacao-90-km-ciclismo-21-km-corrida",
+      "1-9-km-swim-90-km-bike-21-km-run",
+      "1-9-km-swim-90-km-cycling-21-km-running"
+    ],
+    [
+      "4-800m-corrida-19-900m-ciclismo-2-700m-corrida",
+      "4-800m-running-19-900m-cycling-running-2-700m",
+      "running-4-800m-cycling-19-900m-running-2-700m"
+    ],
+    [
+      "5-km-per-lap",
+      "5-km-por-volta",
+      "5-km-por-volta-2"
+    ],
+    [
+      "52-km",
+      "52-km-2",
+      "52-km-pt-2"
+    ],
+    [
+      "6-aos-12-anos",
+      "6-to-12-years-old",
+      "ages-6-to-12"
+    ],
+    [
+      "750-m-natacao-18-km-ciclismo-4-8-km-corrida",
+      "750-m-swimming-18-km-cycling-4-8-km-running",
+      "750-m-swimming-cycling-18-km-4-8-km-running"
+    ],
+    [
+      "acompanhante",
+      "acompanhante-2",
+      "guests"
+    ],
+    [
+      "caminhada",
+      "walk",
+      "walking"
+    ],
+    [
+      "caminhada-8-km-almoco",
+      "caminhada-8-km-almoco-2",
+      "walking-8-km-lunch"
+    ],
+    [
+      "campeonato-regional-jovem",
+      "regional-championship-youth",
+      "youth-regional-championship"
+    ],
+    [
+      "com-almoco",
+      "with-luch",
+      "with-lunch"
+    ],
+    [
+      "com-almoco-t-shirt",
+      "with-lunch-and-t-shirt",
+      "with-lunch-t-shirt"
+    ],
+    [
+      "com-t-shirt",
+      "com-t-shirt-2",
+      "with-t-shirt"
+    ],
+    [
+      "corporate-relay",
+      "estafeta-corporativa",
+      "estafeta-empresarial"
+    ],
+    [
+      "corrida-caminhada",
+      "road-running-walking",
+      "run-walk"
+    ],
+    [
+      "doubles-mix",
+      "duplas-mistas",
+      "mix-doubles"
+    ],
+    [
+      "doubles-mixed",
+      "dupla-mista",
+      "mixed-doubles"
+    ],
+    [
+      "equipa-de-4-atletas",
+      "equipa-de-4-atletas-2",
+      "relay-4-athletes-2"
+    ],
+    [
+      "estafeta-de-4",
+      "estafeta-de-4-2",
+      "relay-of-4"
+    ],
+    [
+      "half-marathon",
+      "meia-maratona",
+      "meia-maratona-2"
+    ],
+    [
+      "homens",
+      "men",
+      "mens"
+    ],
+    [
+      "licenca-uvp-fpc",
+      "uvp-fpc-license",
+      "uvp-fpc-license-2"
+    ],
+    [
+      "long-distance-triathlon",
+      "triatlo-de-longa-distancia",
+      "triatlo-longa-distancia"
+    ],
+    [
+      "marathon",
+      "maratona",
+      "maratona-2"
+    ],
+    [
+      "maratona-noturna",
+      "maratona-noturna-2",
+      "night-marathon"
+    ],
+    [
+      "member-aaram",
+      "membro-aaram",
+      "membro-aaram-2"
+    ],
+    [
+      "middle-distance-triathlon",
+      "triatlo-de-distancia-media",
+      "triatlo-de-media-distancia"
+    ],
+    [
+      "personalizacao-t-shirt-tecnica",
+      "t-shirt-customization",
+      "t-shirt-personalizada"
+    ],
+    [
+      "quadruplas",
+      "quadruples",
+      "quadruplets"
+    ],
+    [
+      "sem-t-shirt",
+      "with-no-t-shirt",
+      "without-t-shirt"
+    ],
+    [
+      "sub-18",
+      "sub18",
+      "u-18"
+    ],
+    [
+      "trail-run-10-km-almoco",
+      "trail-run-10-km-almoco-2",
+      "trail-run-10-km-lunch"
+    ],
+    [
+      "trail-run-15-km-almoco",
+      "trail-run-15-km-almoco-2",
+      "trail-run-15-km-lunch"
+    ],
+    [
+      "trios",
+      "triplas",
+      "triples"
+    ],
+    [
+      "ultra-marathon",
+      "ultra-maratona",
+      "ultra-maratona-2"
+    ],
+    [
+      "women-triples",
+      "women-triples-2",
+      "women-tripless"
+    ],
+    [
+      "almoco-acompanhante",
+      "almoco-acompanhantes",
+      "guest-lunch",
+      "guests-lunch"
+    ],
+    [
+      "campeonato-norte-jovem",
+      "northern-championship",
+      "northern-youth-championship",
+      "youth-north-championship"
+    ],
+    [
+      "corrida",
+      "corrida-de-estrada",
+      "corrida-de-estrada-2",
+      "road-running"
+    ],
+    [
+      "doubles-man",
+      "doubles-men",
+      "duplas-homens",
+      "men-doubles"
+    ],
+    [
+      "doubles-woman",
+      "doubles-women",
+      "duplas-mulheres",
+      "women-doubles"
+    ],
+    [
+      "homens-solo",
+      "man-solo",
+      "men-solo",
+      "solo-homens"
+    ],
+    [
+      "individual",
+      "single",
+      "singles",
+      "solteiro"
+    ],
+    [
+      "jovem",
+      "jovem-2",
+      "jovens",
+      "youth"
+    ],
+    [
+      "mulheres-solo",
+      "solo-mulheres",
+      "woman-solo",
+      "women-solo"
+    ],
+    [
+      "nao-membro",
+      "nao-membro-2",
+      "nao-socio",
+      "no-member"
+    ],
+    [
+      "federado",
+      "federado-2",
+      "federated",
+      "licenciado",
+      "licensed"
+    ],
+    [
+      "nao-federado",
+      "nao-licenciado",
+      "non-federated",
+      "non-licensed",
+      "non-licensed-2"
+    ],
+    [
+      "equipa",
+      "equipas",
+      "estafetas",
+      "relay",
+      "relay-race",
+      "team",
+      "teams"
+    ],
+    [
+      "double",
+      "doubles",
+      "duos",
+      "duplas",
+      "duplas-pt-2",
+      "duplas-pt-3",
+      "pairs",
+      "relay-2-athletes-2"
+    ]
+  ],
+  "coverage": {
+    "pa-cycling": {
+      "attr_id": 4,
+      "terms_loaded": 169
+    },
+    "pa-distance": {
+      "attr_id": 3,
+      "terms_loaded": 1248
+    },
+    "pa-duathlon": {
+      "attr_id": 9,
+      "terms_loaded": 73
+    },
+    "pa-license": {
+      "attr_id": 14,
+      "terms_loaded": 146
+    },
+    "pa-others": {
+      "attr_id": 18,
+      "terms_loaded": 4
+    },
+    "pa-race-start-date": {
+      "attr_id": 13,
+      "terms_loaded": 474
+    },
+    "pa-race-start-time": {
+      "attr_id": 5,
+      "terms_loaded": 355
+    },
+    "pa-running": {
+      "attr_id": 1,
+      "terms_loaded": 535
+    },
+    "pa-ruuning": {
+      "attr_id": 16,
+      "terms_loaded": 5
+    },
+    "pa-swimming": {
+      "attr_id": 8,
+      "terms_loaded": 19
+    },
+    "pa-team": {
+      "attr_id": 10,
+      "terms_loaded": 169
+    },
+    "pa-tipe": {
+      "attr_id": 7,
+      "terms_loaded": 393
+    },
+    "pa-trail-run": {
+      "attr_id": 17,
+      "terms_loaded": 2
+    },
+    "pa-triathlon": {
+      "attr_id": 15,
+      "terms_loaded": 52
+    },
+    "pa-triatlon": {
+      "attr_id": 6,
+      "terms_loaded": 50
+    }
+  }
+}

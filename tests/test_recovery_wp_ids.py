@@ -28,6 +28,8 @@ from recovery_wp_ids import (
     normalize_distance,
     normalize_time,
     normalize_type,
+    normalize_team,
+    normalize_license,
     normalize_url,
     write_report,
 )
@@ -54,6 +56,10 @@ class RecoveryNormalizationTests(unittest.TestCase):
         self.assertEqual(normalize_distance("21097-km-pt"), "21.097 km")
         self.assertEqual(normalize_type("caminhada"), "walking")
         self.assertEqual(normalize_type("corrida-de-estrada"), "road-running")
+        self.assertEqual(normalize_type("prova-aberta"), "open-race")
+        self.assertEqual(normalize_team("duplas-pt"), "duos")
+        self.assertEqual(normalize_license("nao-federado-pt"), "non-federated")
+        self.assertEqual(normalize_license("licensed"), "federated")
 
     def test_build_variation_key_from_sheet_row(self):
         key = build_variation_key(
@@ -124,6 +130,13 @@ class RecoveryVariationMatchingTests(unittest.TestCase):
         self.assertEqual(matches, {10: 91})
         self.assertEqual(failures, {})
 
+    def test_pt_value_alias_jovem_matches_youth(self):
+        rows = [(10, {"ATTRIBUTE": "Cycling", "VALUE": "Youth", "RACE START DATE": "25/10/2025"})]
+        variations = [{"id": 91, "attributes": [{"name": "Cycling", "option": "jovem"}, {"name": "Race Start Date", "option": "25-10-2025-pt"}]}]
+        matches, failures = match_variations(rows, variations)
+        self.assertEqual(matches, {10: 91})
+        self.assertEqual(failures, {})
+
     def test_ambiguous_variation_is_not_matched(self):
         rows = [(10, {"TYPE": "Walking", "DISTANCE": "5 km"})]
         variations = [
@@ -142,6 +155,13 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
             100: {"id": 100, "type": "variable", "permalink": "https://site.test/race-en", "translations": {"en": "100", "pt": "200"}},
             200: {"id": 200, "type": "variable", "permalink": "https://site.test/pt/race"},
         }[product_id]
+        wp.get_product_with_status.side_effect = lambda product_id: (
+            {
+                100: {"id": 100, "type": "variable", "permalink": "https://site.test/race-en", "translations": {"en": "100", "pt": "200"}},
+                200: {"id": 200, "type": "variable", "permalink": "https://site.test/pt/race"},
+            }[product_id],
+            "ok",
+        )
         wp.validate_product.return_value = True
         wp.get_variations.side_effect = [
             [{"id": 11, "attributes": [{"name": "Type", "option": "Walking"}, {"name": "Distance", "option": "5 km"}]}],
@@ -244,6 +264,13 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
             100: {"id": 100, "type": "variable", "permalink": "https://site.test/race-en", "translations": {"en": "100", "pt": "200"}},
             200: {"id": 200, "type": "variable", "permalink": "https://site.test/pt/race"},
         }[product_id]
+        wp.get_product_with_status.side_effect = lambda product_id: (
+            {
+                100: {"id": 100, "type": "variable", "permalink": "https://site.test/race-en", "translations": {"en": "100", "pt": "200"}},
+                200: {"id": 200, "type": "variable", "permalink": "https://site.test/pt/race"},
+            }[product_id],
+            "ok",
+        )
         wp.validate_product.return_value = True
         wp.get_variations.side_effect = [[], []]
 
@@ -294,6 +321,7 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
     def test_recovery_continues_when_direct_product_request_fails(self):
         wp = Mock()
         wp.get_product.return_value = None
+        wp.get_product_with_status.return_value = (None, "not_found")
         wp.validate_product.return_value = False
         wp.search_products.return_value = []
         wp.iter_products.return_value = []
@@ -305,7 +333,7 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
         )
 
         self.assertEqual(result.updates, {})
-        self.assertIn("validation_failed", result.reasons)
+        self.assertIn("en_product_not_found", result.reasons)
 
     def test_write_report_creates_csv(self):
         import tempfile

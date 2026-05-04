@@ -63,8 +63,22 @@ VALUE_ALIASES = {
     "jovem": "youth",
 }
 
+TEAM_ALIASES = {
+    "duplas": "duos",
+    "duplas-pt": "duos",
+    "doubles": "duos",
+}
 
-def load_translation_aliases(path: str = "/app/run/translation_aliases.json") -> tuple[dict[str, str], dict[str, str]]:
+LICENSE_ALIASES = {
+    "licensed": "federated",
+    "non-licensed": "non-federated",
+    "federado": "federated",
+    "nao-federado": "non-federated",
+    "nao-federado-pt": "non-federated",
+}
+
+
+def load_translation_aliases(path: str = "/app/run/translation_aliases.json") -> tuple[dict[str, str], dict[str, str], dict[str, str], dict[str, str]]:
     def _norm(text: str | None) -> str:
         if not text:
             return ""
@@ -79,18 +93,28 @@ def load_translation_aliases(path: str = "/app/run/translation_aliases.json") ->
         with open(path, encoding="utf-8") as fh:
             payload = json.load(fh) or {}
     except Exception:
-        return {}, {}
+        return {}, {}, {}, {}
     type_aliases = {_norm(k).replace("-", " "): _norm(v) for k, v in (payload.get("type_aliases") or {}).items()}
     value_aliases = {_norm(k).replace("-", " "): _norm(v) for k, v in (payload.get("value_aliases") or {}).items()}
-    return type_aliases, value_aliases
+    attr_aliases = {_norm(k): _norm(v) for k, v in (payload.get("attribute_name_aliases") or {}).items()}
+    term_group_map: dict[str, str] = {}
+    for idx, group in enumerate(payload.get("equivalence_groups") or []):
+        group_id = f"g{idx}"
+        for item in group:
+            term_group_map[_norm(item)] = group_id
+    return type_aliases, value_aliases, attr_aliases, term_group_map
 
 
-DYNAMIC_TYPE_ALIASES, DYNAMIC_VALUE_ALIASES = load_translation_aliases()
+DYNAMIC_TYPE_ALIASES, DYNAMIC_VALUE_ALIASES, DYNAMIC_ATTRIBUTE_ALIASES, DYNAMIC_TERM_GROUPS = load_translation_aliases()
 
 ACF_FIELD_ALIASES = {
     "event_ticket_url": ("event_ticket_url",),
     "event_date_start": ("event_date_start", "event_start_date"),
     "event_location_text": ("event_location_text", "location_city"),
+}
+
+STATIC_ATTRIBUTE_NAME_ALIASES = {
+    "licenciado": "license",
 }
 
 
@@ -155,6 +179,30 @@ def normalize_type(value: str | None) -> str:
     if base in DYNAMIC_TYPE_ALIASES:
         return DYNAMIC_TYPE_ALIASES[base]
     return TYPE_ALIASES.get(base, TYPE_ALIASES.get(slugify(value), slugify(value)))
+
+
+def normalize_team(value: str | None) -> str:
+    raw = slugify(value)
+    if raw in DYNAMIC_TERM_GROUPS:
+        return f"group:{DYNAMIC_TERM_GROUPS[raw]}"
+    raw_key = raw.replace("-", " ")
+    mapped = DYNAMIC_VALUE_ALIASES.get(raw_key, TEAM_ALIASES.get(raw, raw))
+    mapped_slug = slugify(mapped)
+    if mapped_slug in DYNAMIC_TERM_GROUPS:
+        return f"group:{DYNAMIC_TERM_GROUPS[mapped_slug]}"
+    return mapped
+
+
+def normalize_license(value: str | None) -> str:
+    raw = slugify(value)
+    if raw in DYNAMIC_TERM_GROUPS:
+        return f"group:{DYNAMIC_TERM_GROUPS[raw]}"
+    raw_key = raw.replace("-", " ")
+    mapped = DYNAMIC_VALUE_ALIASES.get(raw_key, LICENSE_ALIASES.get(raw, raw))
+    mapped_slug = slugify(mapped)
+    if mapped_slug in DYNAMIC_TERM_GROUPS:
+        return f"group:{DYNAMIC_TERM_GROUPS[mapped_slug]}"
+    return mapped
 
 
 def normalize_distance(value: str | None) -> str:
@@ -269,9 +317,28 @@ def title_similarity(left: str | None, right: str | None) -> float:
 
 
 def _attribute_map(attributes: list[dict[str, Any]]) -> dict[str, str]:
+    canonical_aliases = {
+        "tipe": "type",
+    }
+    protected_names = {
+        "type",
+        "pa-type",
+        "distance",
+        "pa-distance",
+        "team",
+        "pa-team",
+        "license",
+        "pa-license",
+        "race-start-date",
+        "race-start-time",
+    }
     result = {}
     for attr in attributes or []:
         name = slugify(attr.get("name"))
+        mapped_name = DYNAMIC_ATTRIBUTE_ALIASES.get(name, STATIC_ATTRIBUTE_NAME_ALIASES.get(name, name))
+        if name in protected_names:
+            mapped_name = name
+        name = canonical_aliases.get(mapped_name, mapped_name)
         option = attr.get("option") or attr.get("value")
         if name:
             result[name] = str(option or "")
@@ -315,14 +382,21 @@ def build_variation_key(row: dict[str, Any]) -> tuple[tuple[str, str], ...]:
     if value == type_value:
         value = ""
     value_key = slugify(value).replace("-", " ")
-    normalized_value = DYNAMIC_VALUE_ALIASES.get(value_key, VALUE_ALIASES.get(value_key, slugify(value)))
+    value_slug = slugify(value)
+    if value_slug in DYNAMIC_TERM_GROUPS:
+        normalized_value = f"group:{DYNAMIC_TERM_GROUPS[value_slug]}"
+    else:
+        normalized_value = DYNAMIC_VALUE_ALIASES.get(value_key, VALUE_ALIASES.get(value_key, value_slug))
+        normalized_value_slug = slugify(normalized_value)
+        if normalized_value_slug in DYNAMIC_TERM_GROUPS:
+            normalized_value = f"group:{DYNAMIC_TERM_GROUPS[normalized_value_slug]}"
     return tuple(
         sorted(
             {
                 "type": normalize_type(type_value),
                 "distance": normalize_distance(distance_value),
-                "team": slugify(team_value),
-                "license": slugify(license_value),
+                "team": normalize_team(team_value),
+                "license": normalize_license(license_value),
                 "date": normalize_date(date_value),
                 "time": normalize_time(time_value),
                 "value": normalized_value,
@@ -363,6 +437,7 @@ class RecoveryResult:
     variation_counts: dict[str, int] = field(default_factory=dict)
     matched_variations: dict[str, int] = field(default_factory=dict)
     ambiguous: bool = False
+    status: str = "not_found"
 
 
 class WordPressRecoveryClient:
@@ -402,18 +477,22 @@ class WordPressRecoveryClient:
                 return html.unescape(href_match.group(1))
         return None
 
-    def get_product(self, product_id: int) -> dict[str, Any] | None:
+    def get_product_with_status(self, product_id: int) -> tuple[dict[str, Any] | None, str]:
         import requests
 
         try:
             response = requests.get(f"{self.wp_url}/wp-json/wc/v3/products/{product_id}", auth=self.auth, timeout=self.timeout)
         except Exception as exc:
             logging.warning("Не удалось получить product=%s через WooCommerce REST: %s", product_id, exc)
-            return None
+            return None, "network_error"
         if response.status_code == 404:
-            return None
+            return None, "not_found"
         response.raise_for_status()
-        return response.json()
+        return response.json(), "ok"
+
+    def get_product(self, product_id: int) -> dict[str, Any] | None:
+        product, _ = self.get_product_with_status(product_id)
+        return product
 
     def get_variations(self, product_id: int) -> list[dict[str, Any]]:
         import requests
@@ -579,13 +658,26 @@ class RecoveryRunner:
             found["WP PRODUCT ID EN"] = int(float(row["WP PRODUCT ID EN"]))
             sources["WP PRODUCT ID EN"] = "sheet_existing"
         direct_id = extract_product_id_from_url(row.get("LINK RACEFINDER"))
+        if not found.get("WP PRODUCT ID EN") and not direct_id and row.get("LINK RACEFINDER"):
+            try:
+                direct_id = self.wp.extract_product_id_from_html(self.wp.get_html(str(row.get("LINK RACEFINDER"))))
+                if direct_id:
+                    sources["WP PRODUCT ID EN"] = "public_page"
+            except Exception as exc:
+                self.logger.warning("Не удалось извлечь ID из публичной страницы LINK RACEFINDER: %s", exc)
         if not found.get("WP PRODUCT ID EN") and direct_id:
-            product = self.wp.get_product(direct_id)
+            product, product_status = self.wp.get_product_with_status(direct_id)
             if self.wp.validate_product(product, row):
                 found["WP PRODUCT ID EN"] = direct_id
                 sources.setdefault("WP PRODUCT ID EN", "link_racefinder")
             else:
-                reasons.append("validation_failed")
+                if product is None:
+                    if product_status == "not_found":
+                        reasons.append("en_product_not_found")
+                    else:
+                        reasons.append("network_en_product_unavailable")
+                else:
+                    reasons.append("validation_failed")
         if not found.get("WP PRODUCT ID EN") and not reasons:
             reasons.append("no_product_match")
         if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
@@ -594,7 +686,12 @@ class RecoveryRunner:
                 found["WP PRODUCT ID PT"] = int(float(existing_pt))
                 sources["WP PRODUCT ID PT"] = "sheet_existing"
         if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
-            product = self.wp.get_product(found["WP PRODUCT ID EN"])
+            product, product_status = self.wp.get_product_with_status(found["WP PRODUCT ID EN"])
+            if product is None:
+                if product_status == "not_found":
+                    reasons.append("en_product_not_found")
+                else:
+                    reasons.append("network_en_product_unavailable")
             pt_id = get_translation_id(product, "pt")
             if pt_id and pt_id != found["WP PRODUCT ID EN"] and self.wp.validate_product(self.wp.get_product(pt_id), row):
                 found["WP PRODUCT ID PT"] = pt_id
@@ -628,6 +725,7 @@ class RecoveryRunner:
             for reason in failures.values():
                 result.reasons.append(f"{lang.lower()}_{reason}")
         result.ambiguous = any("ambiguous" in reason for reason in result.reasons)
+        result.status = classify_result_status(result)
         return result
 
 
@@ -664,6 +762,37 @@ def parse_args(argv: list[str] | None = None):
     return parser.parse_args(argv)
 
 
+def classify_result_status(result: RecoveryResult) -> str:
+    if not result.reasons:
+        return "resolved"
+    if any(str(reason).startswith("network_") for reason in result.reasons):
+        return "retry_later"
+    if result.updates:
+        return "partial"
+    return "not_found"
+
+
+def is_network_error(exc: Exception) -> bool:
+    text = str(exc).lower()
+    network_markers = (
+        "name resolution",
+        "failed to resolve",
+        "temporary failure in name resolution",
+        "max retries exceeded",
+        "connection error",
+        "connecttimeout",
+        "readtimeout",
+        "timed out",
+        "ssl",
+        "remote disconnected",
+        "502",
+        "503",
+        "504",
+        "429",
+    )
+    return any(marker in text for marker in network_markers)
+
+
 def write_report(path: str, rows: list[RecoveryResult], mode: str) -> None:
     if not path:
         return
@@ -680,6 +809,7 @@ def write_report(path: str, rows: list[RecoveryResult], mode: str) -> None:
                 "matched_variations",
                 "reasons",
                 "ambiguous",
+                "status",
             ],
         )
         writer.writeheader()
@@ -695,6 +825,7 @@ def write_report(path: str, rows: list[RecoveryResult], mode: str) -> None:
                     "matched_variations": result.matched_variations,
                     "reasons": result.reasons,
                     "ambiguous": result.ambiguous,
+                    "status": result.status,
                 }
             )
 
@@ -709,6 +840,11 @@ def main(argv: list[str] | None = None) -> int:
     client = WordPressRecoveryClient(config["wp_url"], config["consumer_key"], config["consumer_secret"], float(config.get("wcapi_timeout_sec", 20)))
     runner = RecoveryRunner(client)
     processed = product_updates = variation_updates = manual = 0
+    status_column = None
+    if isinstance(headers, dict):
+        status_column = headers.get("Статус при сопоставлении")
+    if args.mode == "apply" and status_column is None:
+        logging.warning("Колонка 'Статус при сопоставлении' не найдена, статус не будет записан в таблицу.")
     report_rows: list[RecoveryResult] = []
     for row_index, row, children in group_events(rows):
         if not needs_recovery(row, children):
@@ -732,13 +868,16 @@ def main(argv: list[str] | None = None) -> int:
             result.reasons,
             args.mode,
         )
-        if args.mode == "apply" and not result.ambiguous:
-            for key, value in result.updates.items():
-                if ":" in key:
-                    column, child_index = key.split(":", 1)
-                    update_cell(int(child_index), column, value, headers)
-                else:
-                    update_cell(row_index, key, value, headers)
+        if args.mode == "apply":
+            if status_column is not None:
+                update_cell(row_index, "Статус при сопоставлении", result.status, headers)
+            if not result.ambiguous:
+                for key, value in result.updates.items():
+                    if ":" in key:
+                        column, child_index = key.split(":", 1)
+                        update_cell(int(child_index), column, value, headers)
+                    else:
+                        update_cell(row_index, key, value, headers)
     logging.info("Recovery summary processed=%s product_ids=%s variation_ids=%s manual_review=%s", processed, product_updates, variation_updates, manual)
     write_report(args.report, report_rows, args.mode)
     return 0
