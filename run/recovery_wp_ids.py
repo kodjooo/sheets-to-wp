@@ -4,6 +4,7 @@ import argparse
 import csv
 import html
 import logging
+import time
 import os
 import json
 import re
@@ -28,6 +29,9 @@ VARIATION_DATA_COLUMNS = (
     "RACE START TIME",
     "PRICE",
 )
+MATCH_STATUS_COLUMN = "Match Status"
+OVERWRITE_STATUS_COLUMN = "Variation ID Rewrite Status"
+FILL_STATUS_COLUMN = "Variation ID Fill Status"
 MAIN_STATUSES = {
     "published",
     "published (incomplete)",
@@ -175,10 +179,18 @@ def slugify(value: str | None) -> str:
 
 
 def normalize_type(value: str | None) -> str:
-    base = slugify(value).replace("-", " ")
+    raw = slugify(value)
+    if raw in DYNAMIC_TERM_GROUPS:
+        return f"group:{DYNAMIC_TERM_GROUPS[raw]}"
+    base = raw.replace("-", " ")
     if base in DYNAMIC_TYPE_ALIASES:
-        return DYNAMIC_TYPE_ALIASES[base]
-    return TYPE_ALIASES.get(base, TYPE_ALIASES.get(slugify(value), slugify(value)))
+        mapped = DYNAMIC_TYPE_ALIASES[base]
+    else:
+        mapped = TYPE_ALIASES.get(base, TYPE_ALIASES.get(raw, raw))
+    mapped_slug = slugify(mapped)
+    if mapped_slug in DYNAMIC_TERM_GROUPS:
+        return f"group:{DYNAMIC_TERM_GROUPS[mapped_slug]}"
+    return mapped
 
 
 def normalize_team(value: str | None) -> str:
@@ -190,7 +202,7 @@ def normalize_team(value: str | None) -> str:
     mapped_slug = slugify(mapped)
     if mapped_slug in DYNAMIC_TERM_GROUPS:
         return f"group:{DYNAMIC_TERM_GROUPS[mapped_slug]}"
-    return mapped
+    return slugify(mapped)
 
 
 def normalize_license(value: str | None) -> str:
@@ -202,29 +214,30 @@ def normalize_license(value: str | None) -> str:
     mapped_slug = slugify(mapped)
     if mapped_slug in DYNAMIC_TERM_GROUPS:
         return f"group:{DYNAMIC_TERM_GROUPS[mapped_slug]}"
-    return mapped
+    # Fallback for WPML duplicate slugs and slight textual variants.
+    base_slug = re.sub(r"-pt(?:-\d+)?$", "", mapped_slug)
+    base_slug = re.sub(r"-\d+$", "", base_slug)
+    if base_slug in DYNAMIC_TERM_GROUPS:
+        return f"group:{DYNAMIC_TERM_GROUPS[base_slug]}"
+    return base_slug
 
 
 def normalize_distance(value: str | None) -> str:
     if not value:
         return ""
-    text = slugify(value).replace("-pt", "").replace(",", ".")
-    decimal_slug_match = re.search(r"(\d+)-(\d+)-?km", text)
-    if decimal_slug_match:
-        return f"{decimal_slug_match.group(1)}.{decimal_slug_match.group(2)} km"
-    text = text.replace("-", " ")
-    match = re.search(r"(\d+(?:\.\d+)?)", text)
-    if not match:
-        return slugify(value)
-    number = match.group(1)
-    if number == "21097":
-        number = "21.097"
-    try:
-        dec = Decimal(number)
-        number = str(dec.normalize()).replace("E+1", "0")
-    except InvalidOperation:
-        pass
-    return f"{number} km"
+    # Keep complete semantic value and canonicalize separators to WP slug style.
+    text = slugify(value).replace("-pt", "")
+    text = re.sub(r"\s*\+\s*", "-", text)
+    text = re.sub(r"-{2,}", "-", text)
+    text = text.strip("-")
+    if text in DYNAMIC_TERM_GROUPS:
+        return f"group:{DYNAMIC_TERM_GROUPS[text]}"
+    # Fallback for WPML duplicate slugs: 85-km-2, 85-km-pt-2, etc.
+    base = re.sub(r"-pt(?:-\d+)?$", "", text)
+    base = re.sub(r"-\d+$", "", base)
+    if base in DYNAMIC_TERM_GROUPS:
+        return f"group:{DYNAMIC_TERM_GROUPS[base]}"
+    return base
 
 
 def normalize_date(value: str | None) -> str:
@@ -263,6 +276,23 @@ def normalize_text(value: str | None) -> str:
     text = html.unescape(str(value)).strip().lower()
     text = re.sub(r"[^a-z0-9\s-]+", " ", text)
     return re.sub(r"\s+", " ", text).strip()
+
+
+def safe_int_id(value: Any) -> int | None:
+    try:
+        if value is None:
+            return None
+        text = str(value).strip()
+        if not text:
+            return None
+        if re.fullmatch(r"\d+", text):
+            return int(text)
+        num = float(text)
+        if int(num) == num and num >= 0:
+            return int(num)
+    except (TypeError, ValueError):
+        return None
+    return None
 
 
 def _acf_fields(product: dict[str, Any] | None) -> dict[str, Any]:
@@ -405,10 +435,21 @@ def build_variation_key(row: dict[str, Any]) -> tuple[tuple[str, str], ...]:
     )
 
 
-def match_variations(sheet_rows: list[tuple[int, dict[str, Any]]], variations: list[dict[str, Any]]) -> tuple[dict[int, int], dict[int, str]]:
+def _strip_key_fields(key: tuple[tuple[str, str], ...], fields: set[str]) -> tuple[tuple[str, str], ...]:
+    return tuple((k, v) for k, v in key if k not in fields)
+
+
+def match_variations(sheet_rows: list[tuple[int, dict[str, Any]]], variations: list[dict[str, Any]], tie_breaker=None) -> tuple[dict[int, int], dict[int, str]]:
+    if not variations:
+        return {}, {row_index: "no_variations_in_product" for row_index, _ in sheet_rows}
     wp_by_key = defaultdict(list)
     for variation in variations:
         wp_by_key[build_variation_key(variation)].append(variation.get("id"))
+    wp_by_key_no_distance = defaultdict(list)
+    wp_by_key_no_license = defaultdict(list)
+    for key, ids in wp_by_key.items():
+        wp_by_key_no_distance[_strip_key_fields(key, {"distance"})].extend(ids)
+        wp_by_key_no_license[_strip_key_fields(key, {"license"})].extend(ids)
     sheet_keys = {row_index: build_variation_key(row) for row_index, row in sheet_rows}
     key_counts = Counter(sheet_keys.values())
     matches: dict[int, int] = {}
@@ -421,9 +462,46 @@ def match_variations(sheet_rows: list[tuple[int, dict[str, Any]]], variations: l
         if len(ids) == 1:
             matches[row_index] = int(ids[0])
         elif len(ids) > 1:
-            failures[row_index] = "ambiguous_variation_match"
+            chosen = tie_breaker(row_index, [int(i) for i in ids]) if tie_breaker else None
+            if chosen:
+                matches[row_index] = int(chosen)
+                failures[row_index] = "matched_by_translation_link"
+            else:
+                failures[row_index] = "ambiguous_variation_match"
         else:
-            failures[row_index] = "no_variation_match"
+            relaxed_distance_ids = [int(i) for i in wp_by_key_no_distance.get(_strip_key_fields(key, {"distance"}), []) if i]
+            if len(relaxed_distance_ids) == 1:
+                matches[row_index] = relaxed_distance_ids[0]
+                failures[row_index] = "matched_relaxed_distance"
+                continue
+            if len(relaxed_distance_ids) > 1 and tie_breaker:
+                chosen = tie_breaker(row_index, relaxed_distance_ids)
+                if chosen:
+                    matches[row_index] = int(chosen)
+                    failures[row_index] = "matched_relaxed_distance"
+                    continue
+            relaxed_license_ids = [int(i) for i in wp_by_key_no_license.get(_strip_key_fields(key, {"license"}), []) if i]
+            if len(relaxed_license_ids) == 1:
+                matches[row_index] = relaxed_license_ids[0]
+                failures[row_index] = "matched_relaxed_license"
+                continue
+            if len(relaxed_license_ids) > 1 and tie_breaker:
+                chosen = tie_breaker(row_index, relaxed_license_ids)
+                if chosen:
+                    matches[row_index] = int(chosen)
+                    failures[row_index] = "matched_relaxed_license"
+                    continue
+            # Diagnostic reason: identify which key parts differ from closest candidates.
+            parts = {k: v for k, v in key}
+            wp_parts = [{k: v for k, v in wk} for wk in wp_by_key.keys()]
+            mismatches = []
+            for field in ("value", "type", "distance", "date", "time", "team", "license"):
+                if not any(parts.get(field, "") == item.get(field, "") for item in wp_parts):
+                    mismatches.append(field)
+            if mismatches:
+                failures[row_index] = "no_variation_match_" + "_".join(mismatches[:3])
+            else:
+                failures[row_index] = "no_variation_match"
     return matches, failures
 
 
@@ -438,6 +516,8 @@ class RecoveryResult:
     matched_variations: dict[str, int] = field(default_factory=dict)
     ambiguous: bool = False
     status: str = "not_found"
+    overwrite_status: str = ""
+    fill_status: str = ""
 
 
 class WordPressRecoveryClient:
@@ -446,10 +526,40 @@ class WordPressRecoveryClient:
         self.auth = (consumer_key, consumer_secret)
         self.timeout = timeout
 
-    def get_html(self, url: str) -> str:
+    def _request_get(self, url: str, *, auth=None, params=None, headers=None):
         import requests
 
-        response = requests.get(url, timeout=self.timeout, headers={"User-Agent": "racefinder-recovery/1.0"})
+        max_attempts = int(os.getenv("RECOVERY_HTTP_MAX_ATTEMPTS", "4"))
+        base_delay = float(os.getenv("RECOVERY_HTTP_BASE_DELAY_SEC", "1.0"))
+        for attempt in range(1, max_attempts + 1):
+            try:
+                response = requests.get(url, auth=auth, params=params, timeout=self.timeout, headers=headers)
+                if response.status_code in (429, 500, 502, 503, 504):
+                    raise requests.HTTPError(f"retryable_http_{response.status_code}", response=response)
+                return response
+            except Exception as exc:
+                message = str(exc).lower()
+                status_code = getattr(getattr(exc, "response", None), "status_code", None)
+                retryable = (
+                    is_network_error(exc)
+                    or status_code in (429, 500, 502, 503, 504)
+                    or any(marker in message for marker in ("retryable_http_429", "retryable_http_500", "retryable_http_502", "retryable_http_503", "retryable_http_504"))
+                )
+                if (not retryable) or attempt >= max_attempts:
+                    raise
+                sleep_for = base_delay * (2 ** (attempt - 1))
+                logging.warning(
+                    "Retryable request error (attempt %s/%s) url=%s error=%s; sleeping %.1fs",
+                    attempt,
+                    max_attempts,
+                    url,
+                    exc,
+                    sleep_for,
+                )
+                time.sleep(sleep_for)
+
+    def get_html(self, url: str) -> str:
+        response = self._request_get(url, headers={"User-Agent": "racefinder-recovery/1.0"})
         response.raise_for_status()
         return response.text
 
@@ -478,10 +588,8 @@ class WordPressRecoveryClient:
         return None
 
     def get_product_with_status(self, product_id: int) -> tuple[dict[str, Any] | None, str]:
-        import requests
-
         try:
-            response = requests.get(f"{self.wp_url}/wp-json/wc/v3/products/{product_id}", auth=self.auth, timeout=self.timeout)
+            response = self._request_get(f"{self.wp_url}/wp-json/wc/v3/products/{product_id}", auth=self.auth)
         except Exception as exc:
             logging.warning("Не удалось получить product=%s через WooCommerce REST: %s", product_id, exc)
             return None, "network_error"
@@ -495,8 +603,6 @@ class WordPressRecoveryClient:
         return product
 
     def get_variations(self, product_id: int) -> list[dict[str, Any]]:
-        import requests
-
         try:
             store_variations = self.get_store_api_variations(product_id)
         except Exception as exc:
@@ -509,11 +615,10 @@ class WordPressRecoveryClient:
         page = 1
         while True:
             try:
-                response = requests.get(
+                response = self._request_get(
                     f"{self.wp_url}/wp-json/wc/v3/products/{product_id}/variations",
                     auth=self.auth,
                     params={"per_page": 100, "page": page},
-                    timeout=self.timeout,
                 )
                 response.raise_for_status()
             except Exception as exc:
@@ -525,12 +630,25 @@ class WordPressRecoveryClient:
                 return result
             page += 1
 
-    def get_store_api_variations(self, product_id: int) -> list[dict[str, Any]]:
-        import requests
+    def get_variation(self, product_id: int, variation_id: int) -> dict[str, Any] | None:
+        try:
+            response = self._request_get(
+                f"{self.wp_url}/wp-json/wc/v3/products/{product_id}/variations/{variation_id}",
+                auth=self.auth,
+            )
+        except Exception:
+            return None
+        if response.status_code == 404:
+            return None
+        try:
+            response.raise_for_status()
+        except Exception:
+            return None
+        return response.json() or None
 
-        response = requests.get(
+    def get_store_api_variations(self, product_id: int) -> list[dict[str, Any]]:
+        response = self._request_get(
             f"{self.wp_url}/wp-json/wc/store/v1/products/{product_id}",
-            timeout=self.timeout,
             headers={"User-Agent": "racefinder-recovery/1.0"},
         )
         if response.status_code >= 400:
@@ -554,16 +672,13 @@ class WordPressRecoveryClient:
         return result
 
     def search_products(self, search: str) -> list[dict[str, Any]]:
-        import requests
-
         if not search:
             return []
         try:
-            response = requests.get(
+            response = self._request_get(
                 f"{self.wp_url}/wp-json/wc/v3/products",
                 auth=self.auth,
                 params={"search": search, "per_page": 20},
-                timeout=self.timeout,
             )
             response.raise_for_status()
         except Exception as exc:
@@ -572,19 +687,16 @@ class WordPressRecoveryClient:
         return response.json() or []
 
     def iter_products(self, search: str | None = None, max_pages: int = 10) -> list[dict[str, Any]]:
-        import requests
-
         result = []
         for page in range(1, max_pages + 1):
             params = {"per_page": 100, "page": page, "status": "publish"}
             if search:
                 params["search"] = search
             try:
-                response = requests.get(
+                response = self._request_get(
                     f"{self.wp_url}/wp-json/wc/v3/products",
                     auth=self.auth,
                     params=params,
-                    timeout=self.timeout,
                 )
                 response.raise_for_status()
             except Exception as exc:
@@ -654,60 +766,99 @@ class RecoveryRunner:
         found: dict[str, int] = {}
         sources: dict[str, str] = {}
         reasons: list[str] = []
+        if not is_missing(row.get("WP PRODUCT ID PT")):
+            candidate_pt = int(float(row["WP PRODUCT ID PT"]))
+            p, status = self.wp.get_product_with_status(candidate_pt)
+            if p and str(p.get("lang", "")).lower() in {"pt", "pt-pt", "portuguese"}:
+                found["WP PRODUCT ID PT"] = candidate_pt
+                sources["WP PRODUCT ID PT"] = "sheet_existing"
+            elif status != "ok":
+                reasons.append("network_pt_product_unavailable")
         if not is_missing(row.get("WP PRODUCT ID EN")):
-            found["WP PRODUCT ID EN"] = int(float(row["WP PRODUCT ID EN"]))
-            sources["WP PRODUCT ID EN"] = "sheet_existing"
+            candidate_en = int(float(row["WP PRODUCT ID EN"]))
+            p, status = self.wp.get_product_with_status(candidate_en)
+            if p and str(p.get("lang", "")).lower() in {"en", "en-us", "english"}:
+                found["WP PRODUCT ID EN"] = candidate_en
+                sources["WP PRODUCT ID EN"] = "sheet_existing"
+            elif status != "ok":
+                reasons.append("network_en_product_unavailable")
+
         direct_id = extract_product_id_from_url(row.get("LINK RACEFINDER"))
-        if not found.get("WP PRODUCT ID EN") and not direct_id and row.get("LINK RACEFINDER"):
+        if not found.get("WP PRODUCT ID PT") and not direct_id and row.get("LINK RACEFINDER"):
             try:
                 direct_id = self.wp.extract_product_id_from_html(self.wp.get_html(str(row.get("LINK RACEFINDER"))))
                 if direct_id:
-                    sources["WP PRODUCT ID EN"] = "public_page"
+                    sources["WP PRODUCT ID PT"] = "public_page"
             except Exception as exc:
                 self.logger.warning("Не удалось извлечь ID из публичной страницы LINK RACEFINDER: %s", exc)
-        if not found.get("WP PRODUCT ID EN") and direct_id:
+        if not found.get("WP PRODUCT ID PT") and direct_id:
             product, product_status = self.wp.get_product_with_status(direct_id)
+            product_lang = str((product or {}).get("lang", "")).lower()
             if self.wp.validate_product(product, row):
-                found["WP PRODUCT ID EN"] = direct_id
-                sources.setdefault("WP PRODUCT ID EN", "link_racefinder")
+                # `direct_id` from LINK RACEFINDER can be either PT or EN depending on site primary language.
+                if product_lang in {"en", "en-us", "english"}:
+                    found["WP PRODUCT ID EN"] = direct_id
+                    sources.setdefault("WP PRODUCT ID EN", "link_racefinder")
+                    pt_id = safe_int_id((product or {}).get("translations", {}).get("pt"))
+                    if pt_id:
+                        pt_product, _ = self.wp.get_product_with_status(pt_id)
+                        if self.wp.validate_product(pt_product, row):
+                            found["WP PRODUCT ID PT"] = pt_id
+                            sources.setdefault("WP PRODUCT ID PT", "rest_translations")
+                else:
+                    found["WP PRODUCT ID PT"] = direct_id
+                    sources.setdefault("WP PRODUCT ID PT", "link_racefinder")
             else:
                 if product is None:
                     if product_status == "not_found":
-                        reasons.append("en_product_not_found")
+                        reasons.append("pt_product_not_found")
                     else:
-                        reasons.append("network_en_product_unavailable")
+                        reasons.append("network_pt_product_unavailable")
                 else:
                     reasons.append("validation_failed")
-        if not found.get("WP PRODUCT ID EN") and not reasons:
+        if not found.get("WP PRODUCT ID PT") and not reasons:
             reasons.append("no_product_match")
-        if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
-            existing_pt = row.get("WP PRODUCT ID PT")
-            if not is_missing(existing_pt):
-                found["WP PRODUCT ID PT"] = int(float(existing_pt))
-                sources["WP PRODUCT ID PT"] = "sheet_existing"
-        if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
-            product, product_status = self.wp.get_product_with_status(found["WP PRODUCT ID EN"])
+        if found.get("WP PRODUCT ID PT") and not found.get("WP PRODUCT ID EN"):
+            existing_en = row.get("WP PRODUCT ID EN")
+            if not is_missing(existing_en):
+                candidate_en = int(float(existing_en))
+                p_en, status_en = self.wp.get_product_with_status(candidate_en)
+                if p_en and str(p_en.get("lang", "")).lower() in {"en", "en-us", "english"}:
+                    found["WP PRODUCT ID EN"] = candidate_en
+                    sources["WP PRODUCT ID EN"] = "sheet_existing"
+                elif status_en != "ok":
+                    reasons.append("network_en_product_unavailable")
+        if found.get("WP PRODUCT ID PT") and not found.get("WP PRODUCT ID EN"):
+            product, product_status = self.wp.get_product_with_status(found["WP PRODUCT ID PT"])
             if product is None:
                 if product_status == "not_found":
-                    reasons.append("en_product_not_found")
+                    reasons.append("pt_product_not_found")
                 else:
-                    reasons.append("network_en_product_unavailable")
-            pt_id = get_translation_id(product, "pt")
-            if pt_id and pt_id != found["WP PRODUCT ID EN"] and self.wp.validate_product(self.wp.get_product(pt_id), row):
-                found["WP PRODUCT ID PT"] = pt_id
-                sources["WP PRODUCT ID PT"] = "rest_translations"
-        if found.get("WP PRODUCT ID EN") and not found.get("WP PRODUCT ID PT"):
-            reasons.append("pt_translation_not_found")
+                    reasons.append("network_pt_product_unavailable")
+            en_id = get_translation_id(product, "en")
+            if en_id and en_id != found["WP PRODUCT ID PT"] and self.wp.validate_product(self.wp.get_product(en_id), row):
+                found["WP PRODUCT ID EN"] = en_id
+                sources["WP PRODUCT ID EN"] = "rest_translations"
+        if found.get("WP PRODUCT ID PT") and not found.get("WP PRODUCT ID EN"):
+            reasons.append("en_translation_not_found")
         return found, sources, reasons
 
-    def recover_row(self, row_index: int, row: dict[str, Any], child_rows: list[tuple[int, dict[str, Any]]]) -> RecoveryResult:
+    def recover_row(
+        self,
+        row_index: int,
+        row: dict[str, Any],
+        child_rows: list[tuple[int, dict[str, Any]]],
+        reconcile_existing_ids: bool = False,
+        rewrite_existing_only: bool = False,
+    ) -> RecoveryResult:
         result = RecoveryResult(row_index=row_index, race_name=str(row.get("RACE NAME") or row.get("RACE NAME (PT)") or ""))
         product_ids, sources, reasons = self.recover_product_ids(row)
         result.sources.update(sources)
         result.reasons.extend(reasons)
-        for column, value in product_ids.items():
-            if is_missing(row.get(column)):
-                result.updates[column] = value
+        if not rewrite_existing_only:
+            for column, value in product_ids.items():
+                if is_missing(row.get(column)):
+                    result.updates[column] = value
         for lang, product_column, variation_column in (
             ("EN", "WP PRODUCT ID EN", "WP VARIATION ID EN"),
             ("PT", "WP PRODUCT ID PT", "WP VARIATION ID PT"),
@@ -717,15 +868,56 @@ class RecoveryRunner:
                 continue
             variations = self.wp.get_variations(product_id)
             result.variation_counts[lang] = len(variations)
-            missing_children = [(idx, item) for idx, item in child_rows if is_missing(item.get(variation_column))]
-            matches, failures = match_variations(missing_children, variations)
+            variation_rows_all = [(row_index, row)] + child_rows
+            if reconcile_existing_ids:
+                target_children = [(idx, item) for idx, item in variation_rows_all if has_variation_data(item)]
+            else:
+                target_children = [
+                    (idx, item)
+                    for idx, item in variation_rows_all
+                    if has_variation_data(item) and is_missing(item.get(variation_column))
+                ]
+            def _translation_tie_breaker(child_index: int, candidate_ids: list[int]) -> int | None:
+                if lang != "PT":
+                    return None
+                en_value = next((item.get("WP VARIATION ID EN") for idx, item in variation_rows_all if idx == child_index), None)
+                en_id = safe_int_id(en_value)
+                if not en_id:
+                    return None
+                for candidate_id in candidate_ids:
+                    data = self.wp.get_variation(product_id, int(candidate_id)) or {}
+                    translations = data.get("translations") or {}
+                    translated_en = safe_int_id(translations.get("en") or translations.get("EN"))
+                    if translated_en and translated_en == en_id:
+                        return int(candidate_id)
+                return None
+
+            matches, failures = match_variations(target_children, variations, tie_breaker=_translation_tie_breaker)
             result.matched_variations[lang] = len(matches)
             for child_index, variation_id in matches.items():
-                result.updates[f"{variation_column}:{child_index}"] = variation_id
-            for reason in failures.values():
-                result.reasons.append(f"{lang.lower()}_{reason}")
+                current_value = next((item.get(variation_column) for idx, item in variation_rows_all if idx == child_index), "")
+                if reconcile_existing_ids:
+                    if is_missing(current_value):
+                        if not rewrite_existing_only:
+                            result.updates[f"{variation_column}:{child_index}"] = variation_id
+                    else:
+                        try:
+                            existing_id = int(float(current_value))
+                        except (TypeError, ValueError):
+                            existing_id = None
+                        if existing_id != int(variation_id):
+                            result.updates[f"{variation_column}:{child_index}"] = variation_id
+                else:
+                    result.updates[f"{variation_column}:{child_index}"] = variation_id
+            for child_idx, reason in failures.items():
+                # matched_* are informational fallback markers, not failures for status columns
+                if str(reason).startswith("matched_"):
+                    continue
+                result.reasons.append(f"{lang.lower()}_{reason}:child={child_idx}")
         result.ambiguous = any("ambiguous" in reason for reason in result.reasons)
         result.status = classify_result_status(result)
+        result.overwrite_status = classify_overwrite_status(result, child_rows, reconcile_existing_ids)
+        result.fill_status = classify_fill_status(result, child_rows)
         return result
 
 
@@ -759,7 +951,62 @@ def parse_args(argv: list[str] | None = None):
     parser.add_argument("--mode", choices=("dry-run", "apply"), default=os.getenv("RECOVERY_WP_IDS_MODE", "dry-run"))
     parser.add_argument("--limit", type=int, default=int(os.getenv("RECOVERY_WP_IDS_LIMIT", "0") or "0"))
     parser.add_argument("--report", default=os.getenv("RECOVERY_WP_IDS_REPORT", ""))
+    parser.add_argument("--reconcile-existing-ids", action="store_true", default=os.getenv("RECOVERY_RECONCILE_EXISTING_IDS", "0") == "1")
+    parser.add_argument("--rewrite-existing-only", action="store_true", default=os.getenv("RECOVERY_REWRITE_EXISTING_ONLY", "0") == "1")
+    scope_group = parser.add_mutually_exclusive_group()
+    scope_group.add_argument("--scope-has-product-ids", action="store_true", help="Process only events with both product IDs present.")
+    scope_group.add_argument("--scope-missing-product-ids", action="store_true", help="Process only events with at least one missing product ID.")
     return parser.parse_args(argv)
+
+
+def event_matches_scope(row: dict[str, Any], args) -> bool:
+    has_en = not is_missing(row.get("WP PRODUCT ID EN"))
+    has_pt = not is_missing(row.get("WP PRODUCT ID PT"))
+    has_both = has_en and has_pt
+    if args.scope_has_product_ids:
+        return has_both
+    if args.scope_missing_product_ids:
+        return not has_both
+    return True
+
+
+def classify_overwrite_status(result: RecoveryResult, child_rows: list[tuple[int, dict[str, Any]]], reconcile_existing_ids: bool) -> str:
+    if not reconcile_existing_ids:
+        return "not_checked"
+    existing_map = {idx: row for idx, row in child_rows}
+    rewrite_updates = 0
+    for key in result.updates:
+        if not key.startswith("WP VARIATION ID "):
+            continue
+        _, child_idx = key.split(":", 1)
+        row = existing_map.get(int(child_idx), {})
+        col = key.split(":", 1)[0]
+        if not is_missing(row.get(col)):
+            rewrite_updates += 1
+    has_var_errors = any("variation_match" in str(reason) for reason in result.reasons)
+    if rewrite_updates > 0:
+        return "rewritten_successfully" if not has_var_errors else "rewritten_partially"
+    if has_var_errors:
+        return "matching_error"
+    return "rewrite_not_required"
+
+
+def classify_fill_status(result: RecoveryResult, child_rows: list[tuple[int, dict[str, Any]]]) -> str:
+    existing_map = {idx: row for idx, row in child_rows}
+    fill_updates = 0
+    for key in result.updates:
+        if not key.startswith("WP VARIATION ID "):
+            continue
+        _, child_idx = key.split(":", 1)
+        row = existing_map.get(int(child_idx), {})
+        col = key.split(":", 1)[0]
+        if is_missing(row.get(col)):
+            fill_updates += 1
+    if fill_updates > 0:
+        return "filled_successfully"
+    if any("variation_match" in str(reason) for reason in result.reasons):
+        return "not_filled_matching_error"
+    return "fill_not_required"
 
 
 def classify_result_status(result: RecoveryResult) -> str:
@@ -810,6 +1057,8 @@ def write_report(path: str, rows: list[RecoveryResult], mode: str) -> None:
                 "reasons",
                 "ambiguous",
                 "status",
+                "overwrite_status",
+                "fill_status",
             ],
         )
         writer.writeheader()
@@ -826,6 +1075,8 @@ def write_report(path: str, rows: list[RecoveryResult], mode: str) -> None:
                     "reasons": result.reasons,
                     "ambiguous": result.ambiguous,
                     "status": result.status,
+                    "overwrite_status": result.overwrite_status,
+                    "fill_status": result.fill_status,
                 }
             )
 
@@ -841,19 +1092,41 @@ def main(argv: list[str] | None = None) -> int:
     runner = RecoveryRunner(client)
     processed = product_updates = variation_updates = manual = 0
     status_column = None
-    if isinstance(headers, dict):
-        status_column = headers.get("Статус при сопоставлении")
+    overwrite_status_column = None
+    fill_status_column = None
+    header_names = set(headers.keys()) if isinstance(headers, dict) else set(headers or [])
+    if MATCH_STATUS_COLUMN in header_names:
+        status_column = MATCH_STATUS_COLUMN
+    elif "Статус при сопоставлении" in header_names:
+        status_column = "Статус при сопоставлении"
+    if OVERWRITE_STATUS_COLUMN in header_names:
+        overwrite_status_column = OVERWRITE_STATUS_COLUMN
+    elif "Статус перезаписи ID вариаций" in header_names:
+        overwrite_status_column = "Статус перезаписи ID вариаций"
+    if FILL_STATUS_COLUMN in header_names:
+        fill_status_column = FILL_STATUS_COLUMN
+    elif "Статус заполнения ID вариаций" in header_names:
+        fill_status_column = "Статус заполнения ID вариаций"
     if args.mode == "apply" and status_column is None:
-        logging.warning("Колонка 'Статус при сопоставлении' не найдена, статус не будет записан в таблицу.")
+        logging.warning("Status column not found, match status will not be written.")
     report_rows: list[RecoveryResult] = []
     for row_index, row, children in group_events(rows):
-        if not needs_recovery(row, children):
+        if not event_matches_scope(row, args):
+            continue
+        should_force_reconcile = args.reconcile_existing_ids and args.rewrite_existing_only and args.scope_has_product_ids
+        if not should_force_reconcile and not needs_recovery(row, children):
             continue
         if args.limit and processed >= args.limit:
             break
         processed += 1
         variation_rows = [(row_index, row)] + [(idx, child) for idx, child in children if has_variation_data(child)]
-        result = runner.recover_row(row_index, row, variation_rows)
+        result = runner.recover_row(
+            row_index,
+            row,
+            variation_rows,
+            reconcile_existing_ids=args.reconcile_existing_ids,
+            rewrite_existing_only=args.rewrite_existing_only,
+        )
         report_rows.append(result)
         product_updates += len([key for key in result.updates if ":" not in key])
         variation_updates += len([key for key in result.updates if ":" in key])
@@ -870,13 +1143,32 @@ def main(argv: list[str] | None = None) -> int:
         )
         if args.mode == "apply":
             if status_column is not None:
-                update_cell(row_index, "Статус при сопоставлении", result.status, headers)
+                update_cell(row_index, status_column, result.status, headers)
+            if overwrite_status_column is not None:
+                update_cell(row_index, overwrite_status_column, result.overwrite_status, headers)
+            if fill_status_column is not None:
+                update_cell(row_index, fill_status_column, result.fill_status, headers)
             if not result.ambiguous:
                 for key, value in result.updates.items():
+                    if args.rewrite_existing_only and not key.startswith("WP VARIATION ID "):
+                        continue
                     if ":" in key:
                         column, child_index = key.split(":", 1)
-                        update_cell(int(child_index), column, value, headers)
+                        if column.startswith("WP VARIATION ID "):
+                            normalized_id = safe_int_id(value)
+                            if normalized_id is None:
+                                logging.warning("Skip invalid variation ID write row=%s column=%s value=%s", child_index, column, value)
+                                continue
+                            if args.rewrite_existing_only:
+                                existing_row = next((item for idx, item in variation_rows if idx == int(child_index)), {})
+                                if is_missing(existing_row.get(column)):
+                                    continue
+                            update_cell(int(child_index), column, normalized_id, headers)
+                        else:
+                            update_cell(int(child_index), column, value, headers)
                     else:
+                        if args.rewrite_existing_only:
+                            continue
                         update_cell(row_index, key, value, headers)
     logging.info("Recovery summary processed=%s product_ids=%s variation_ids=%s manual_review=%s", processed, product_updates, variation_updates, manual)
     write_report(args.report, report_rows, args.mode)

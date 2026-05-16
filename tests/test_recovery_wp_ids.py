@@ -32,6 +32,7 @@ from recovery_wp_ids import (
     normalize_license,
     normalize_url,
     write_report,
+    classify_overwrite_status,
 )
 
 
@@ -51,9 +52,9 @@ class RecoveryNormalizationTests(unittest.TestCase):
         self.assertEqual(normalize_date("10/05/2026"), "2026-05-10")
         self.assertEqual(normalize_date("10-05-2026-pt"), "2026-05-10")
         self.assertEqual(normalize_time("1000-pt"), "10:00")
-        self.assertEqual(normalize_distance("5-km-pt"), "5 km")
-        self.assertEqual(normalize_distance("7-36-km"), "7.36 km")
-        self.assertEqual(normalize_distance("21097-km-pt"), "21.097 km")
+        self.assertEqual(normalize_distance("5-km-pt"), "5-km")
+        self.assertEqual(normalize_distance("7-36-km"), "7-36-km")
+        self.assertEqual(normalize_distance("21097-km-pt"), "21097-km")
         self.assertEqual(normalize_type("caminhada"), "walking")
         self.assertEqual(normalize_type("corrida-de-estrada"), "road-running")
         self.assertEqual(normalize_type("prova-aberta"), "open-race")
@@ -73,7 +74,7 @@ class RecoveryNormalizationTests(unittest.TestCase):
             }
         )
         self.assertIn(("type", "walking"), key)
-        self.assertIn(("distance", "5 km"), key)
+        self.assertIn(("distance", "5-km"), key)
         self.assertIn(("date", "2026-05-10"), key)
         self.assertIn(("time", "10:00"), key)
 
@@ -334,6 +335,28 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
 
         self.assertEqual(result.updates, {})
         self.assertIn("en_product_not_found", result.reasons)
+
+    def test_reconcile_overwrites_existing_variation_ids_when_mismatch(self):
+        wp = Mock()
+        wp.get_product.side_effect = lambda product_id: {100: {"id": 100, "type": "variable"}, 200: {"id": 200, "type": "variable"}}[product_id]
+        wp.get_variations.side_effect = [
+            [{"id": 11, "attributes": [{"name": "Type", "option": "Walking"}, {"name": "Distance", "option": "5 km"}]}],
+            [{"id": 22, "attributes": [{"name": "Type", "option": "caminhada"}, {"name": "Distance", "option": "5-km-pt"}]}],
+        ]
+        result = RecoveryRunner(wp).recover_row(
+            2,
+            {"WP PRODUCT ID EN": "100", "WP PRODUCT ID PT": "200"},
+            [(3, {"TYPE": "Walking", "DISTANCE": "5 km", "WP VARIATION ID EN": "99", "WP VARIATION ID PT": "88"})],
+            reconcile_existing_ids=True,
+        )
+        self.assertEqual(result.updates["WP VARIATION ID EN:3"], 11)
+        self.assertEqual(result.updates["WP VARIATION ID PT:3"], 22)
+        self.assertEqual(result.overwrite_status, "перезаписано успешно")
+
+    def test_overwrite_status_not_checked_without_reconcile(self):
+        from recovery_wp_ids import RecoveryResult
+        result = RecoveryResult(row_index=1, race_name="X")
+        self.assertEqual(classify_overwrite_status(result, [], False), "not_checked")
 
     def test_write_report_creates_csv(self):
         import tempfile
