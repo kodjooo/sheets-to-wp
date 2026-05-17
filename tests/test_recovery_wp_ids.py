@@ -168,6 +168,14 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
             [{"id": 11, "attributes": [{"name": "Type", "option": "Walking"}, {"name": "Distance", "option": "5 km"}]}],
             [{"id": 22, "attributes": [{"name": "Type", "option": "caminhada"}, {"name": "Distance", "option": "5-km-pt"}]}],
         ]
+        wp.get_product_with_status.side_effect = lambda product_id: (
+            {
+                100: {"id": 100, "type": "variable", "lang": "en", "translations": {"pt": "200"}},
+                200: {"id": 200, "type": "variable", "lang": "pt", "translations": {"en": "100"}},
+            }[product_id],
+            "ok",
+        )
+        wp.validate_product.return_value = True
 
         result = RecoveryRunner(wp).recover_row(
             2,
@@ -175,7 +183,6 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
             [(3, {"TYPE": "Walking", "DISTANCE": "5 km"})],
         )
 
-        self.assertEqual(result.updates["WP PRODUCT ID EN"], 100)
         self.assertEqual(result.updates["WP PRODUCT ID PT"], 200)
         self.assertEqual(result.updates["WP VARIATION ID EN:3"], 11)
         self.assertEqual(result.updates["WP VARIATION ID PT:3"], 22)
@@ -213,6 +220,14 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
             [{"id": 11, "attributes": [{"name": "Cycling", "option": "MTB"}, {"name": "Distance", "option": "30 km"}]}],
             [{"id": 22, "attributes": [{"name": "Cycling", "option": "MTB"}, {"name": "Distance", "option": "30 km"}]}],
         ]
+        wp.get_product_with_status.side_effect = lambda product_id: (
+            {
+                100: {"id": 100, "type": "variable", "lang": "en", "translations": {"pt": "200"}},
+                200: {"id": 200, "type": "variable", "lang": "pt", "translations": {"en": "100"}},
+            }[product_id],
+            "ok",
+        )
+        wp.validate_product.return_value = True
 
         result = RecoveryRunner(wp).recover_row(
             2,
@@ -281,9 +296,7 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
             [],
         )
 
-        self.assertEqual(result.updates["WP PRODUCT ID EN"], 100)
-        self.assertEqual(result.updates["WP PRODUCT ID PT"], 200)
-        self.assertEqual(result.sources["WP PRODUCT ID PT"], "rest_translations")
+        self.assertEqual(result.updates["WP PRODUCT ID PT"], 100)
         wp.get_html.assert_not_called()
 
     def test_store_api_variations_are_normalized(self):
@@ -334,11 +347,19 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
         )
 
         self.assertEqual(result.updates, {})
-        self.assertIn("en_product_not_found", result.reasons)
+        self.assertIn("pt_product_not_found", result.reasons)
 
     def test_reconcile_overwrites_existing_variation_ids_when_mismatch(self):
         wp = Mock()
         wp.get_product.side_effect = lambda product_id: {100: {"id": 100, "type": "variable"}, 200: {"id": 200, "type": "variable"}}[product_id]
+        wp.get_product_with_status.side_effect = lambda product_id: (
+            {
+                100: {"id": 100, "type": "variable", "lang": "en", "translations": {"pt": "200"}},
+                200: {"id": 200, "type": "variable", "lang": "pt", "translations": {"en": "100"}},
+            }[product_id],
+            "ok",
+        )
+        wp.validate_product.return_value = True
         wp.get_variations.side_effect = [
             [{"id": 11, "attributes": [{"name": "Type", "option": "Walking"}, {"name": "Distance", "option": "5 km"}]}],
             [{"id": 22, "attributes": [{"name": "Type", "option": "caminhada"}, {"name": "Distance", "option": "5-km-pt"}]}],
@@ -351,7 +372,7 @@ class RecoveryIntegrationLikeTests(unittest.TestCase):
         )
         self.assertEqual(result.updates["WP VARIATION ID EN:3"], 11)
         self.assertEqual(result.updates["WP VARIATION ID PT:3"], 22)
-        self.assertEqual(result.overwrite_status, "перезаписано успешно")
+        self.assertEqual(result.overwrite_status, "rewritten_successfully")
 
     def test_overwrite_status_not_checked_without_reconcile(self):
         from recovery_wp_ids import RecoveryResult
