@@ -961,6 +961,11 @@ def parse_args(argv: list[str] | None = None):
     parser.add_argument("--rewrite-existing-only", action="store_true", default=os.getenv("RECOVERY_REWRITE_EXISTING_ONLY", "0") == "1")
     parser.add_argument("--start-row", type=int, default=0, help="Process rows with index >= start-row.")
     parser.add_argument("--end-row", type=int, default=0, help="Process rows with index <= end-row.")
+    parser.add_argument(
+        "--match-status-filter",
+        default="",
+        help="Comma-separated Match Status values to include (e.g. partial,not_found).",
+    )
     scope_group = parser.add_mutually_exclusive_group()
     scope_group.add_argument("--scope-has-product-ids", action="store_true", help="Process only events with both product IDs present.")
     scope_group.add_argument("--scope-missing-product-ids", action="store_true", help="Process only events with at least one missing product ID.")
@@ -983,6 +988,17 @@ def should_skip_not_found_row(row: dict[str, Any], status_column: str | None, ar
     if not args.skip_not_found or not status_column:
         return False
     return str(row.get(status_column, "")).strip().lower() == "not_found"
+
+
+def status_matches_filter(row: dict[str, Any], status_column: str | None, args) -> bool:
+    raw_filter = (args.match_status_filter or "").strip()
+    if not raw_filter:
+        return True
+    if not status_column:
+        return False
+    allowed = {x.strip().lower() for x in raw_filter.split(",") if x.strip()}
+    current = str(row.get(status_column, "")).strip().lower()
+    return current in allowed
 
 
 def classify_overwrite_status(result: RecoveryResult, child_rows: list[tuple[int, dict[str, Any]]], reconcile_existing_ids: bool) -> str:
@@ -1131,6 +1147,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.end_row and row_index > args.end_row:
             continue
         if not event_matches_scope(row, args):
+            continue
+        if not status_matches_filter(row, status_column, args):
             continue
         if should_skip_not_found_row(row, status_column, args):
             continue
