@@ -959,6 +959,8 @@ def parse_args(argv: list[str] | None = None):
     parser.add_argument("--report", default=os.getenv("RECOVERY_WP_IDS_REPORT", ""))
     parser.add_argument("--reconcile-existing-ids", action="store_true", default=os.getenv("RECOVERY_RECONCILE_EXISTING_IDS", "0") == "1")
     parser.add_argument("--rewrite-existing-only", action="store_true", default=os.getenv("RECOVERY_REWRITE_EXISTING_ONLY", "0") == "1")
+    parser.add_argument("--start-row", type=int, default=0, help="Process rows with index >= start-row.")
+    parser.add_argument("--end-row", type=int, default=0, help="Process rows with index <= end-row.")
     scope_group = parser.add_mutually_exclusive_group()
     scope_group.add_argument("--scope-has-product-ids", action="store_true", help="Process only events with both product IDs present.")
     scope_group.add_argument("--scope-missing-product-ids", action="store_true", help="Process only events with at least one missing product ID.")
@@ -1124,6 +1126,10 @@ def main(argv: list[str] | None = None) -> int:
         logging.warning("Status column not found, match status will not be written.")
     report_rows: list[RecoveryResult] = []
     for row_index, row, children in group_events(rows):
+        if args.start_row and row_index < args.start_row:
+            continue
+        if args.end_row and row_index > args.end_row:
+            continue
         if not event_matches_scope(row, args):
             continue
         if should_skip_not_found_row(row, status_column, args):
