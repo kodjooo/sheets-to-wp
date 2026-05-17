@@ -772,6 +772,8 @@ class RecoveryRunner:
             if p and str(p.get("lang", "")).lower() in {"pt", "pt-pt", "portuguese"}:
                 found["WP PRODUCT ID PT"] = candidate_pt
                 sources["WP PRODUCT ID PT"] = "sheet_existing"
+            elif status == "not_found":
+                reasons.append("pt_product_not_found")
             elif status != "ok":
                 reasons.append("network_pt_product_unavailable")
         if not is_missing(row.get("WP PRODUCT ID EN")):
@@ -780,6 +782,8 @@ class RecoveryRunner:
             if p and str(p.get("lang", "")).lower() in {"en", "en-us", "english"}:
                 found["WP PRODUCT ID EN"] = candidate_en
                 sources["WP PRODUCT ID EN"] = "sheet_existing"
+            elif status == "not_found":
+                reasons.append("en_product_not_found")
             elif status != "ok":
                 reasons.append("network_en_product_unavailable")
 
@@ -826,6 +830,8 @@ class RecoveryRunner:
                 if p_en and str(p_en.get("lang", "")).lower() in {"en", "en-us", "english"}:
                     found["WP PRODUCT ID EN"] = candidate_en
                     sources["WP PRODUCT ID EN"] = "sheet_existing"
+                elif status_en == "not_found":
+                    reasons.append("en_product_not_found")
                 elif status_en != "ok":
                     reasons.append("network_en_product_unavailable")
         if found.get("WP PRODUCT ID PT") and not found.get("WP PRODUCT ID EN"):
