@@ -139,6 +139,24 @@ def _write_variation_ids_to_sheet(row_to_variation_id: dict, column_name: str, h
     for target_row_index, variation_id in row_to_variation_id.items():
         batch_update_cells(target_row_index, {column_name: str(variation_id)}, headers)
 
+
+def _validate_required_localized_fields(row: dict) -> list[str]:
+    required = [
+        "RACE NAME",
+        "RACE NAME (PT)",
+        "SUMMARY",
+        "SUMMARY (PT)",
+        "ORG INFO",
+        "ORG INFO (PT)",
+        "BENEFITS",
+        "BENEFITS (PT)",
+    ]
+    missing = []
+    for field in required:
+        if not str(row.get(field, "")).strip():
+            missing.append(field)
+    return missing
+
 def get_next_run_time():
     """Вычисляет время следующего запуска по расписанию"""
     moscow_tz = pytz.timezone(TIMEZONE)
@@ -436,6 +454,13 @@ def run_automation():
                         break
 
                 # --- 4. Публикация в WooCommerce ---
+                missing_required_fields = _validate_required_localized_fields(last_main_row)
+                if missing_required_fields:
+                    status_message = f"Error: missing localized fields ({', '.join(missing_required_fields)})"
+                    logging.error("❌ %s", status_message)
+                    batch_update_cells(row_index, {"STATUS": status_message}, headers)
+                    continue
+
                 lat, lon = get_coordinates_with_city_fallback(
                     last_main_row.get("LOCATION", ""),
                     last_main_row.get("LOCATION (CITY)", "")
