@@ -962,6 +962,7 @@ def parse_args(argv: list[str] | None = None):
     scope_group = parser.add_mutually_exclusive_group()
     scope_group.add_argument("--scope-has-product-ids", action="store_true", help="Process only events with both product IDs present.")
     scope_group.add_argument("--scope-missing-product-ids", action="store_true", help="Process only events with at least one missing product ID.")
+    parser.add_argument("--skip-not-found", action="store_true", help="Skip rows already marked as not_found in match status column.")
     return parser.parse_args(argv)
 
 
@@ -974,6 +975,12 @@ def event_matches_scope(row: dict[str, Any], args) -> bool:
     if args.scope_missing_product_ids:
         return not has_both
     return True
+
+
+def should_skip_not_found_row(row: dict[str, Any], status_column: str | None, args) -> bool:
+    if not args.skip_not_found or not status_column:
+        return False
+    return str(row.get(status_column, "")).strip().lower() == "not_found"
 
 
 def classify_overwrite_status(result: RecoveryResult, child_rows: list[tuple[int, dict[str, Any]]], reconcile_existing_ids: bool) -> str:
@@ -1118,6 +1125,8 @@ def main(argv: list[str] | None = None) -> int:
     report_rows: list[RecoveryResult] = []
     for row_index, row, children in group_events(rows):
         if not event_matches_scope(row, args):
+            continue
+        if should_skip_not_found_row(row, status_column, args):
             continue
         should_force_reconcile = args.reconcile_existing_ids and args.rewrite_existing_only and args.scope_has_product_ids
         if not should_force_reconcile and not needs_recovery(row, children):
