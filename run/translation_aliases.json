@@ -39,6 +39,7 @@
     "black-wolf": "black-wolf",
     "bmx": "bmx",
     "btt": "btt",
+    "btt-downhill": "mtb-downhill",
     "btt-duos": "btt-duos",
     "btt-elite": "mtb-elite",
     "btt-jovens": "youth-mtb",
@@ -49,10 +50,22 @@
     "btt-u23": "mtb-u23",
     "btt-veteranos": "mtb-masters",
     "caminhada-caominhada": "walk-dog-walk",
+    "caminhada-com-o-pastor": "walk-with-pastor",
+    "caminhada-conexao-com-a-natureza": "walk-conexao-com-a-natureza",
+    "caminhada-corredor-de-mouros": "walk-corredor-de-mouros",
     "caminhada-curta": "short-walk",
+    "caminhada-entre-a-vila-e-o-zezere": "walk-entre-a-vila-e-o-zezere",
+    "caminhada-fotografica": "photographic-walk",
     "caminhada-inclusiva": "inclusive-walk",
     "caminhada-longa": "long-walk",
+    "caminhada-noturna-faias-de-sao-lourenco": "night-walk-faias-de-sao-lourenco",
+    "caminhada-noturna-vale-do-zezere": "night-walk-vale-do-zezere",
+    "caminhada-passseio-sonoro": "walk-passseio-sonoro",
     "caminhada-pet-friendly": "pet-friendly-walk",
+    "caminhada-pr2": "walk-pr2",
+    "caminhada-soutos-do-zezere": "walk-soutos-do-zezere",
+    "caminhada-vale-do-cume": "walk-vale-do-cume",
+    "caminhada-vale-glaciario": "walk-vale-glaciario",
     "campeonato-distrital-de-coimbra-ultra-trail": "coimbra-district-championship-ultra-trail",
     "campeonatos-de-portugal-de-maratona": "portuguese-marathon-championships",
     "canicross": "canicross",
@@ -62,6 +75,7 @@
     "caorrida": "dog-run",
     "ciclismo": "cycling",
     "ciclocrosse": "cyclocross",
+    "competitive-league-fpocr": "competitive-league-fpocr-en",
     "competitivo": "competitive",
     "contra-relogio-granfondo": "time-trial-granfondo",
     "contra-relogio-mediofondo": "time-trial-mediofondo",
@@ -81,6 +95,7 @@
     "corrida-dos-campeoes": "champions-race",
     "corrida-jubas-jovens": "jubas-run-youth",
     "corrida-jubas-kids": "jubas-run-kids",
+    "corta-mato": "corta-mato",
     "corta-mato-jovens": "cross-country-youth",
     "corta-mato-kids": "cross-country-kids",
     "corta-mato-pt-2": "cross-country",
@@ -93,6 +108,7 @@
     "cycling-youth": "cycling-youth",
     "deka-fit": "deka-fit",
     "deka-mile": "deka-mile",
+    "dhu": "dhu",
     "dmut-mini-trail": "dmut-mini-trail",
     "dmut-trail-curto": "dmut-trail-curto",
     "dmut-trail-longo": "dmut-trail-longo",
@@ -105,14 +121,21 @@
     "duplas": "doubles",
     "duplas-femininas-open": "womens-open-doubles",
     "duplas-femininas-pro": "womens-pro-doubles",
+    "duplas-fireman": "doubles-fireman",
     "duplas-masculinas-open": "mens-open-doubles",
     "duplas-masculinas-pro": "mens-pro-doubles",
     "e-bike": "e-bike",
     "e-bike-1-etapa": "e-bike-1-stage",
     "e-bike-3-etapas": "e-bike-3-stages",
+    "e-bike-experience-covao-da-ponte": "e-bike-experience-covao-da-ponte",
+    "e-bike-experience-covao-da-ponte-pt-2": "e-bike-experience-covao-da-ponte-2",
+    "e-bike-experience-poco-do-inferno": "e-bike-experience-poco-do-inferno",
+    "e-bike-night-ride": "e-bike-night-ride",
+    "e-bike-summit": "e-bike-summit",
     "e-bikes": "e-bikes",
     "ecomuseu": "ecomuseu",
     "elite": "elite",
+    "elite-league-fpocr": "elite-league-fpocr-en",
     "equipas": "relay",
     "equipas-estafeta-femininas": "womens-relay-teams",
     "equipas-estafeta-masculinas": "mens-relay-teams",
@@ -123,16 +146,20 @@
     "estrela-road-challenge-relay-team": "estrela-road-challenge-relay-team",
     "estrela-road-challenge-uphill": "estrela-road-challenge-uphill",
     "estrela-road-challenge-uphill-downhill": "estrela-road-challenge-uphill-downhill",
+    "expedicao-na-montanha": "mountain-expedition",
     "experiencia-completa": "full-experience",
     "extreme": "extreme",
     "extreme-mile": "extreme-mile",
     "fatbikes": "fatbikes",
+    "friendly": "friendly",
+    "full": "full",
     "full-race": "full-race",
     "fun": "fun",
     "granfondo": "granfondo",
     "gravel": "gravel",
     "green-wolf": "green-wolf",
     "gtsa-100km": "gtsa-100km",
+    "half": "half",
     "half-day": "half-day",
     "hybrid": "hybrid",
     "hybrid-race": "hybrid-race",
@@ -158,6 +185,7 @@
     "inscricao-4-etapas-individual-competicao": "4-stage-registration-individual-competition",
     "inscricao-4-etapas-individual-open": "4-stage-registration-individual-open",
     "inscricao-para-as-6-provas": "registration-for-all-6-races",
+    "internacional-elite": "internacional-elite-en",
     "jantar-acompanhantes": "guest-dinner",
     "jovem": "youth",
     "jovens": "jovem-2",
@@ -181,7 +209,9 @@
     "mini-crosstrail": "mini-crosstrail",
     "mini-maratona": "mini-marathon",
     "mini-trail": "mini-trail",
+    "mini-trail-caminhada": "mini-trail-walk",
     "mini-trail-pt-2": "mini-trail-2",
+    "mini-trail-santa-justa": "mini-trail-santa-justa",
     "minifondo": "minifondo",
     "minikids-race": "minikids-race",
     "mixed-doubles": "mixed-doubles",
@@ -229,6 +259,7 @@
     "road-cycling-3-etapas": "road-cycling-3-stages",
     "road-running": "corrida",
     "road-running-relay": "road-running-relay",
+    "run-club": "run-club",
     "salto-alto": "high-jump",
     "scooterjoring": "scooterjoring",
     "scooterjoring-nordico": "scooterjoring-nordico",
@@ -271,14 +302,17 @@
     "teamx2": "teamx2",
     "trail-curto": "trail-curto",
     "trail-curto-pt-2": "short-trail",
+    "trail-estafeta-duplas": "trail-relay-of-2",
+    "trail-estafeta-quadras": "trail-relay-of-4",
     "trail-jovens": "youth-trail",
+    "trail-jovens-gaivotas": "youth-trail-gaivotas",
     "trail-longo": "trail-longo",
     "trail-longo-pt-2": "long-trail",
     "trail-medio": "medium-trail",
     "trail-relay-2-or-4-athletes": "trail-relay-2-or-4-athletes",
     "trail-run": "trail-run",
-    "trail-run-caminhada": "trail-run-walk",
-    "trail-run-jovens": "trail-run-youth",
+    "trail-running-experience": "trail-running-experience",
+    "trail-santa-justa": "trail-santa-justa",
     "trail-sprint": "trail-sprint",
     "trail-ultra": "trail-ultra",
     "trail-xpererience-13km": "trail-xpererience-13km",
@@ -297,6 +331,7 @@
     "ultraciclismo": "ultracycling",
     "ultramaratona": "ultramarathon",
     "up-down": "up-down",
+    "up-hill": "up-hill",
     "uphill": "uphill",
     "vertical-race": "vertical-race",
     "vertical-race-skyrace-12-k": "vertical-race-skyrace-12-k",
@@ -305,15 +340,17 @@
     "virtual-race": "virtual-race",
     "volta-de-familia": "family-ride",
     "walk-xtorical": "walk-xtorical",
+    "warriors": "warriors-en",
     "white-wolf": "white-wolf",
     "woman-solo": "woman-solo",
     "xcm": "xcm"
   },
   "attribute_name_aliases": {
+    "corrida-em-trilho": "trail-run",
     "cycling": "cycling",
     "distance": "distance",
     "duathlon": "duathlon",
-    "license": "license",
+    "licenciado": "license",
     "others": "others",
     "pa-cycling": "cycling",
     "pa-distance": "distance",
@@ -336,7 +373,6 @@
     "ruuning": "ruuning",
     "swimming": "swimming",
     "team": "team",
-    "trail-run": "trail-run",
     "triathlon": "triathlon",
     "triatlon": "triatlon",
     "type": "tipe"
@@ -423,8 +459,20 @@
       "1-guest-lunch"
     ],
     [
+      "1-day",
+      "1-dia"
+    ],
+    [
       "1-de-maio",
       "1st-may"
+    ],
+    [
+      "1-etapa",
+      "1-stage"
+    ],
+    [
+      "1-hora",
+      "1-hour"
     ],
     [
       "1-lap-6-706-km",
@@ -579,8 +627,16 @@
       "19-km-pt-3"
     ],
     [
+      "19-09-2026-2",
+      "19-09-2026-pt-2"
+    ],
+    [
       "19-km-2",
       "19-km-pt-2"
+    ],
+    [
+      "199-km-2",
+      "199-km-pt-2"
     ],
     [
       "2-000-m-corrida-7-900-m-ciclismo-1-000-m-corrida",
@@ -635,8 +691,16 @@
       "2-guests-lunch"
     ],
     [
+      "2-days",
+      "2-dias"
+    ],
+    [
       "2-de-maio",
       "2nd-may"
+    ],
+    [
+      "2-etapas",
+      "2-stages"
     ],
     [
       "2-horas",
@@ -891,6 +955,10 @@
       "5-km-interpretative"
     ],
     [
+      "5-km-laps",
+      "voltas-de-5-km"
+    ],
+    [
       "50-km-cada",
       "50-km-each"
     ],
@@ -1131,6 +1199,10 @@
       "open-water"
     ],
     [
+      "aguas-abertas-estafetas",
+      "open-water-relay"
+    ],
+    [
       "almoco",
       "lunch"
     ],
@@ -1203,6 +1275,10 @@
       "spectator-ticket"
     ],
     [
+      "btt-downhill",
+      "mtb-downhill"
+    ],
+    [
       "btt-elite",
       "mtb-elite"
     ],
@@ -1259,8 +1335,28 @@
       "walk-dog-walk"
     ],
     [
+      "caminhada-com-o-pastor",
+      "walk-with-pastor"
+    ],
+    [
+      "caminhada-conexao-com-a-natureza",
+      "walk-conexao-com-a-natureza"
+    ],
+    [
+      "caminhada-corredor-de-mouros",
+      "walk-corredor-de-mouros"
+    ],
+    [
       "caminhada-curta",
       "short-walk"
+    ],
+    [
+      "caminhada-entre-a-vila-e-o-zezere",
+      "walk-entre-a-vila-e-o-zezere"
+    ],
+    [
+      "caminhada-fotografica",
+      "photographic-walk"
     ],
     [
       "caminhada-inclusiva",
@@ -1271,8 +1367,36 @@
       "long-walk"
     ],
     [
+      "caminhada-noturna-faias-de-sao-lourenco",
+      "night-walk-faias-de-sao-lourenco"
+    ],
+    [
+      "caminhada-noturna-vale-do-zezere",
+      "night-walk-vale-do-zezere"
+    ],
+    [
+      "caminhada-passseio-sonoro",
+      "walk-passseio-sonoro"
+    ],
+    [
       "caminhada-pet-friendly",
       "pet-friendly-walk"
+    ],
+    [
+      "caminhada-pr2",
+      "walk-pr2"
+    ],
+    [
+      "caminhada-soutos-do-zezere",
+      "walk-soutos-do-zezere"
+    ],
+    [
+      "caminhada-vale-do-cume",
+      "walk-vale-do-cume"
+    ],
+    [
+      "caminhada-vale-glaciario",
+      "walk-vale-glaciario"
     ],
     [
       "caminho-do-xisto-8km",
@@ -1419,6 +1543,10 @@
       "competitivo"
     ],
     [
+      "competitive-league-fpocr",
+      "competitive-league-fpocr-en"
+    ],
+    [
       "comunidade-universitaria-ist-nova-sbe",
       "university-community-ist-nova-sbe"
     ],
@@ -1559,6 +1687,10 @@
       "quarto-ocupacao-dupla"
     ],
     [
+      "doubles-fireman",
+      "duplas-fireman"
+    ],
+    [
       "doubles-relay",
       "dupla-de-estafetas"
     ],
@@ -1615,12 +1747,20 @@
       "e-bike-3-stages"
     ],
     [
+      "e-bike-experience-covao-da-ponte-2",
+      "e-bike-experience-covao-da-ponte-pt-2"
+    ],
+    [
       "e-bike-ride",
       "passeio-e-bike"
     ],
     [
       "eco-trail-cycling-tour-15-20km",
       "passeio-cicloturismo-eco-pista-15-20km"
+    ],
+    [
+      "elite-league-fpocr",
+      "elite-league-fpocr-en"
     ],
     [
       "equipa-3-atletas",
@@ -1633,6 +1773,10 @@
     [
       "equipa-de-2",
       "team-of-2"
+    ],
+    [
+      "equipa-de-4",
+      "team-of-4"
     ],
     [
       "equipas-estafeta-femininas",
@@ -1715,8 +1859,16 @@
       "student"
     ],
     [
+      "etapas",
+      "stages"
+    ],
+    [
       "europarque-running-trophy",
       "trofeu-europarque-running"
+    ],
+    [
+      "expedicao-na-montanha",
+      "mountain-expedition"
     ],
     [
       "experiencia-completa",
@@ -1733,6 +1885,10 @@
     [
       "family-room-triple-occupancy",
       "quarto-familiar-ocupacao-tripla"
+    ],
+    [
+      "federado-aadp",
+      "federated-aadp"
     ],
     [
       "federado-fcmp",
@@ -1867,6 +2023,10 @@
       "international"
     ],
     [
+      "internacional-elite",
+      "internacional-elite-en"
+    ],
+    [
       "interpretativa",
       "interpretative"
     ],
@@ -1985,6 +2145,10 @@
     [
       "mini-trail-2",
       "mini-trail-pt-2"
+    ],
+    [
+      "mini-trail-caminhada",
+      "mini-trail-walk"
     ],
     [
       "mochila-oficial",
@@ -2199,8 +2363,20 @@
       "tdm-desporto-adaptado"
     ],
     [
+      "trail-estafeta-duplas",
+      "trail-relay-of-2"
+    ],
+    [
+      "trail-estafeta-quadras",
+      "trail-relay-of-4"
+    ],
+    [
       "trail-jovens",
       "youth-trail"
+    ],
+    [
+      "trail-jovens-gaivotas",
+      "youth-trail-gaivotas"
     ],
     [
       "trail-run-12-km-almoco",
@@ -2209,14 +2385,6 @@
     [
       "trail-run-24-km-almoco",
       "trail-run-24-km-lunch"
-    ],
-    [
-      "trail-run-caminhada",
-      "trail-run-walk"
-    ],
-    [
-      "trail-run-jovens",
-      "trail-run-youth"
     ],
     [
       "triathlon",
@@ -2245,6 +2413,10 @@
     [
       "veteranos-mulheres",
       "women-masters"
+    ],
+    [
+      "warriors",
+      "warriors-en"
     ],
     [
       "1-5-km-natacao-40-km-ciclismo-10-km-corrida",
@@ -2295,6 +2467,11 @@
       "caminhada-8-km-almoco",
       "caminhada-8-km-almoco-2",
       "walking-8-km-lunch"
+    ],
+    [
+      "caminhada-poco-do-inferno",
+      "walk-poco-do-inferno",
+      "walk-poco-do-inferno-2"
     ],
     [
       "campeonato-regional-jovem",
@@ -2417,6 +2594,16 @@
       "trail-run-15-km-lunch"
     ],
     [
+      "trail-run-caminhada",
+      "trail-run-walk",
+      "trail-run-walk-2"
+    ],
+    [
+      "trail-run-jovens",
+      "trail-run-youth",
+      "youth-trail-run"
+    ],
+    [
       "trios",
       "triplas",
       "triples"
@@ -2528,11 +2715,11 @@
   "coverage": {
     "pa-cycling": {
       "attr_id": 4,
-      "terms_loaded": 169
+      "terms_loaded": 191
     },
     "pa-distance": {
       "attr_id": 3,
-      "terms_loaded": 1248
+      "terms_loaded": 1292
     },
     "pa-duathlon": {
       "attr_id": 9,
@@ -2540,7 +2727,7 @@
     },
     "pa-license": {
       "attr_id": 14,
-      "terms_loaded": 146
+      "terms_loaded": 148
     },
     "pa-others": {
       "attr_id": 18,
@@ -2548,15 +2735,15 @@
     },
     "pa-race-start-date": {
       "attr_id": 13,
-      "terms_loaded": 474
+      "terms_loaded": 510
     },
     "pa-race-start-time": {
       "attr_id": 5,
-      "terms_loaded": 355
+      "terms_loaded": 363
     },
     "pa-running": {
       "attr_id": 1,
-      "terms_loaded": 535
+      "terms_loaded": 605
     },
     "pa-ruuning": {
       "attr_id": 16,
@@ -2564,15 +2751,15 @@
     },
     "pa-swimming": {
       "attr_id": 8,
-      "terms_loaded": 19
+      "terms_loaded": 21
     },
     "pa-team": {
       "attr_id": 10,
-      "terms_loaded": 169
+      "terms_loaded": 178
     },
     "pa-tipe": {
       "attr_id": 7,
-      "terms_loaded": 393
+      "terms_loaded": 400
     },
     "pa-trail-run": {
       "attr_id": 17,
