@@ -168,6 +168,7 @@ def sync_variations_by_ids(product_id, variation_entries):
         ).append(variation_id)
 
     row_to_variation_id = {}
+    desired_key_by_row = {}
     kept_ids = set()
 
     for entry in variation_entries:
@@ -175,6 +176,8 @@ def sync_variations_by_ids(product_id, variation_entries):
         payload = _build_payload(entry, attr_name_to_id)
         desired_norm = _normalize_payload(payload)
         desired_key = (desired_norm["regular_price"], tuple(desired_norm["attributes"]))
+        if row_index is not None:
+            desired_key_by_row[row_index] = desired_key
         existing_id = _as_int(entry.get("existing_variation_id"))
 
         # Сначала пытаемся использовать ID из таблицы, но только если он реально соответствует текущей записи.
@@ -226,6 +229,62 @@ def sync_variations_by_ids(product_id, variation_entries):
         response.raise_for_status()
         logging.info("🗑️ Вариация удалена: product=%s variation=%s", product_id, variation_id)
 
+    # Финальная дедупликация по фактическому состоянию в WooCommerce:
+    # если по одному ключу вариации (цена+атрибуты) осталось несколько ID,
+    # оставляем один, остальные удаляем.
+    final_variations = _load_all_variations(product_id)
+    by_key = {}
+    for variation in final_variations:
+        variation_id = _as_int(variation.get("id"))
+        if not variation_id:
+            continue
+        norm = _normalize_existing_variation(variation)
+        key = (norm["regular_price"], tuple(norm["attributes"]))
+        by_key.setdefault(key, []).append(variation_id)
+
+    for key, ids in by_key.items():
+        if len(ids) <= 1:
+            continue
+        keep_id = max(ids)
+        for duplicate_id in ids:
+            if duplicate_id == keep_id:
+                continue
+            endpoint = f"products/{product_id}/variations/{duplicate_id}"
+            response = _wcapi_request_with_retry("DELETE", endpoint, {"force": True})
+            response.raise_for_status()
+            logging.info(
+                "🧹 Дубликат вариации удалён: product=%s keep=%s removed=%s key=%s",
+                product_id,
+                keep_id,
+                duplicate_id,
+                key,
+            )
+
+    # Пересобираем сопоставление row -> variation_id только по живым вариациям после дедупа.
+    alive_variations = _load_all_variations(product_id)
+    alive_by_key = {}
+    for variation in alive_variations:
+        variation_id = _as_int(variation.get("id"))
+        if not variation_id:
+            continue
+        norm = _normalize_existing_variation(variation)
+        key = (norm["regular_price"], tuple(norm["attributes"]))
+        alive_by_key.setdefault(key, []).append(variation_id)
+
+    reconciled = {}
+    for row_index, desired_key in desired_key_by_row.items():
+        ids = sorted(alive_by_key.get(desired_key, []))
+        if not ids:
+            logging.warning(
+                "⚠️ Не найдена вариация после финальной синхронизации: product=%s row=%s key=%s",
+                product_id,
+                row_index,
+                desired_key,
+            )
+            continue
+        reconciled[row_index] = ids[-1]
+
+    row_to_variation_id = reconciled
     return row_to_variation_id
 
 def create_variations(product_id, variation_data_list):
