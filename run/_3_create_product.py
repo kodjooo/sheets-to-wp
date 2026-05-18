@@ -128,6 +128,21 @@ def get_category_id_by_name(name, parent_id=None, lang=None):
     print(f"🆕 Создана категория '{name}' с ID {created_cat.get('id')}")
     return created_cat.get("id")
 
+
+def get_category_translation_id(category_id, target_lang):
+    response = requests.get(
+        f"{WC_API_URL}/wp-json/wc/v3/products/categories/{category_id}",
+        auth=(WC_CONSUMER_KEY, WC_CONSUMER_SECRET),
+        params={"lang": "all"},
+    )
+    response.raise_for_status()
+    data = response.json() or {}
+    translations = data.get("translations") or {}
+    translated_id = translations.get(target_lang)
+    if translated_id:
+        return int(translated_id)
+    return None
+
 def get_jwt_token():
     admin_username = config["wp_admin_user"]
     admin_password = config["wp_admin_pass"]
@@ -197,7 +212,11 @@ def create_product(data):
         "lang": "pt",
     }
 
-    # Получаем категории из таблицы
+    # Получаем категории из таблицы (или заранее рассчитанный override EN->PT)
+    if isinstance(data.get("CATEGORY_IDS_PT"), list) and data.get("CATEGORY_IDS_PT"):
+        product_data["categories"] = data["CATEGORY_IDS_PT"]
+        print("👉 Категории перед отправкой (override):", product_data.get("categories"))
+
     categories_raw = []
 
     main_category = data.get("CATEGORY")
@@ -224,31 +243,31 @@ def create_product(data):
     else:
         print("📚 Доп. категории отсутствуют или в неправильном формате")
 
-    categories_normalized = normalize_category_pairs(categories_raw)
-    if categories_normalized:
-        print(f"📦 Нормализованные категории: {categories_normalized}")
+    if "categories" not in product_data:
+        categories_normalized = normalize_category_pairs(categories_raw)
+        if categories_normalized:
+            print(f"📦 Нормализованные категории: {categories_normalized}")
 
-    category_ids = []
-    category_ids_seen = set()
-    for parent_name, child_name in categories_normalized:
-        try:
-            parent_id = get_category_id_by_name(parent_name, lang="pt")
-            if parent_id:
-                if parent_id not in category_ids_seen:
-                    category_ids.append({"id": parent_id})
-                    category_ids_seen.add(parent_id)
-                if child_name:
-                    child_id = get_category_id_by_name(child_name, parent_id=parent_id, lang="pt")
-                    if child_id:
-                        if child_id not in category_ids_seen:
-                            category_ids.append({"id": child_id})
-                            category_ids_seen.add(child_id)
-        except Exception as e:
-            print(f"⚠️ Ошибка при добавлении категории ({parent_name} → {child_name}): {e}")
+        category_ids = []
+        category_ids_seen = set()
+        for parent_name, child_name in categories_normalized:
+            try:
+                parent_id = get_category_id_by_name(parent_name, lang="pt")
+                if parent_id:
+                    if parent_id not in category_ids_seen:
+                        category_ids.append({"id": parent_id})
+                        category_ids_seen.add(parent_id)
+                    if child_name:
+                        child_id = get_category_id_by_name(child_name, parent_id=parent_id, lang="pt")
+                        if child_id:
+                            if child_id not in category_ids_seen:
+                                category_ids.append({"id": child_id})
+                                category_ids_seen.add(child_id)
+            except Exception as e:
+                print(f"⚠️ Ошибка при добавлении категории ({parent_name} → {child_name}): {e}")
 
-    product_data["categories"] = category_ids
-
-    print("👉 Категории перед отправкой:", product_data.get("categories"))
+        product_data["categories"] = category_ids
+        print("👉 Категории перед отправкой:", product_data.get("categories"))
 
     # # Загрузка изображения, если указан image_url
     # image_id = data.get("IMAGE ID")
@@ -341,6 +360,8 @@ def create_product(data):
 
 
 def _collect_category_ids(data):
+    if isinstance(data.get("CATEGORY_IDS_PT"), list) and data.get("CATEGORY_IDS_PT"):
+        return data["CATEGORY_IDS_PT"]
     categories_raw = []
     main_category = data.get("CATEGORY")
     main_subcategory = data.get("SUBCATEGORY")

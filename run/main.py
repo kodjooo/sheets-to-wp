@@ -80,11 +80,15 @@ from _2_content_generation import (
     translate_title_to_en
 )
 
-from _3_create_product import create_or_update_product as create_product_pt_primary
+from _3_create_product import (
+    create_or_update_product as create_product_pt_primary,
+    get_category_id_by_name,
+    get_category_translation_id,
+)
 from _4_create_translation import create_or_update_product_pt as create_product_pt
 from _5_taxonomy_and_attributes import assign_attributes_to_product
 from _6_create_variations import sync_variations_by_ids
-from utils import normalize_attribute_payload, parse_subcategory_values, get_missing_pt_fields
+from utils import normalize_attribute_payload, normalize_category_pairs, parse_subcategory_values, get_missing_pt_fields
 from website_snapshot import (
     compute_website_hash,
     has_website_changed,
@@ -138,6 +142,39 @@ def _write_variation_ids_to_sheet(row_to_variation_id: dict, column_name: str, h
         return
     for target_row_index, variation_id in row_to_variation_id.items():
         batch_update_cells(target_row_index, {column_name: str(variation_id)}, headers)
+
+
+def _build_pt_category_ids_from_en(row: dict) -> list[dict]:
+    categories_raw = []
+    main_category = row.get("CATEGORY")
+    main_subcategory = row.get("SUBCATEGORY")
+    if main_category:
+        categories_raw.append((main_category, main_subcategory))
+    extra_cats = row.get("extra_categories")
+    if isinstance(extra_cats, (list, set, tuple)):
+        for item in extra_cats:
+            if isinstance(item, (list, tuple)) and len(item) == 2 and item[0]:
+                categories_raw.append((item[0], item[1]))
+
+    category_ids = []
+    seen = set()
+    for parent_name, child_name in normalize_category_pairs(categories_raw):
+        en_parent_id = get_category_id_by_name(parent_name, lang="en")
+        if not en_parent_id:
+            continue
+        pt_parent_id = get_category_translation_id(en_parent_id, "pt")
+        if pt_parent_id and pt_parent_id not in seen:
+            category_ids.append({"id": pt_parent_id})
+            seen.add(pt_parent_id)
+        if child_name:
+            en_child_id = get_category_id_by_name(child_name, parent_id=en_parent_id, lang="en")
+            if not en_child_id:
+                continue
+            pt_child_id = get_category_translation_id(en_child_id, "pt")
+            if pt_child_id and pt_child_id not in seen:
+                category_ids.append({"id": pt_child_id})
+                seen.add(pt_child_id)
+    return category_ids
 
 
 def get_next_run_time():
@@ -437,6 +474,8 @@ def run_automation():
                         break
 
                 # --- 4. Публикация в WooCommerce ---
+                # EN category names from sheet are treated as source of truth; PT categories are resolved via WPML translations.
+                last_main_row["CATEGORY_IDS_PT"] = _build_pt_category_ids_from_en(last_main_row)
                 lat, lon = get_coordinates_with_city_fallback(
                     last_main_row.get("LOCATION", ""),
                     last_main_row.get("LOCATION (CITY)", "")
