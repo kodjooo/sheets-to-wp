@@ -544,6 +544,11 @@ def run_automation():
                 en_row_to_variation_id = sync_variations_by_ids(en_product_id, variation_entries_en, lang="en")
                 _write_variation_ids_to_sheet(en_row_to_variation_id, "WP VARIATION ID EN", headers)
 
+                # WPML may re-sync translated variations after EN update/linking.
+                # Run final PT reconciliation pass and persist definitive PT variation IDs.
+                pt_row_to_variation_id = sync_variations_by_ids(pt_product_id, variation_entries_pt, lang="pt")
+                _write_variation_ids_to_sheet(pt_row_to_variation_id, "WP VARIATION ID PT", headers)
+
                 snapshot_hash = ""
                 if is_incomplete:
                     snapshot_hash, _ = compute_website_hash(row.get("WEBSITE", ""))
