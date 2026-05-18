@@ -1,7 +1,9 @@
 import json
 from collections import defaultdict
 import logging
+import os
 from pathlib import Path
+import re
 import time
 
 import requests
@@ -111,6 +113,7 @@ def main() -> int:
     type_aliases: dict[str, str] = {}
     attribute_name_aliases: dict[str, str] = {}
     value_candidates: dict[str, set[str]] = defaultdict(set)
+    distance_candidates: dict[str, set[str]] = defaultdict(set)
     dsu = DSU()
 
     coverage: dict[str, dict[str, int | str]] = {}
@@ -137,7 +140,45 @@ def main() -> int:
         coverage[attr_slug] = {"attr_id": int(attr_id), "terms_loaded": len(terms)}
         by_id = {int(term["id"]): term for term in terms if term.get("id")}
 
+        if attr_slug in {"pa-distance", "distance"}:
+            by_canonical_name: dict[str, set[str]] = defaultdict(set)
+            for term in terms:
+                term_name = str(term.get("name") or "")
+                term_slug = slugify(term.get("slug") or term_name)
+                if not term_slug:
+                    continue
+                canonical_name = slugify(term_name or term_slug).replace("-pt", "")
+                canonical_name = re.sub(r"(?<=\d)-(?=\d)", "", canonical_name.replace(".", "-"))
+                canonical_name = canonical_name.strip("-")
+                by_canonical_name[canonical_name].add(term_slug)
+            for slugs in by_canonical_name.values():
+                if len(slugs) < 2:
+                    continue
+                slugs_list = sorted(slugs)
+                head = slugs_list[0]
+                for other in slugs_list[1:]:
+                    dsu.union(head, other)
+
         for term in terms:
+            term_name = str(term.get("name") or "")
+            term_slug = slugify(term.get("slug") or term_name)
+            if attr_slug in {"pa-distance", "distance"} and term_name and term_slug:
+                # Direct textual aliases for distance terms from API term names.
+                # Example: "85 km" -> "85-km-2", while "8,5 km" -> "85-km".
+                distance_candidates[slugify(term_name).replace("-", " ")].add(term_slug)
+            # Distance-specific many-to-many normalization for duplicate/variant slugs:
+            # e.g. 85-km-2 <-> 85-km, 85-km-pt-2 <-> 85-km-pt, 5-85-km <-> 585-km.
+            if attr_slug in {"pa-distance", "distance"} and term_slug:
+                base_slug = term_slug
+                base_slug = base_slug.removesuffix("-pt")
+                base_slug = base_slug.removesuffix("-en")
+                base_slug = base_slug.rstrip("-")
+                base_slug = base_slug.rsplit("-", 1)[0] if re.search(r"-\d+$", base_slug) else base_slug
+                compact_slug = re.sub(r"(?<=\d)-(?=\d)", "", base_slug.replace(".", "-"))
+                for candidate in {base_slug, compact_slug}:
+                    if candidate and candidate != term_slug:
+                        dsu.union(term_slug, candidate)
+
             if str(term.get("lang", "")).lower() != "pt":
                 continue
             translations = term.get("translations") or {}
@@ -169,24 +210,62 @@ def main() -> int:
                 continue
 
             # Generic value aliases for known selector-like attributes.
-            if attr_slug in {"pa-running", "running", "pa-cycling", "cycling", "pa-type", "type"}:
+            if attr_slug in {
+                "pa-running",
+                "running",
+                "pa-cycling",
+                "cycling",
+                "pa-type",
+                "type",
+                "pa-distance",
+                "distance",
+            }:
                 value_candidates[pt_slug].add(en_slug)
 
-    value_aliases = {pt: sorted(values)[0] for pt, values in sorted(value_candidates.items()) if len(values) == 1}
     groups_by_root: dict[str, set[str]] = defaultdict(set)
     for term in list(dsu.parent.keys()):
         groups_by_root[dsu.find(term)].add(term)
     equivalence_groups = [sorted(group) for group in groups_by_root.values() if len(group) > 1]
+    term_to_group: dict[str, str] = {}
+    for i, group in enumerate(equivalence_groups, start=1):
+        gid = f"g{i}"
+        for term in group:
+            term_to_group[term] = gid
+
+    value_aliases: dict[str, str] = {}
+    for key, values in sorted(value_candidates.items()):
+        ordered = sorted(values)
+        if len(ordered) == 1:
+            value_aliases[key] = ordered[0]
+            continue
+        # For many-to-many terms (especially distance), keep alias if all candidates
+        # are within one equivalence group (e.g. en+pt variants of the same term).
+        groups = {term_to_group.get(v) for v in ordered}
+        groups.discard(None)
+        if len(groups) == 1 and groups:
+            value_aliases[key] = ordered[0]
+    distance_aliases: dict[str, str] = {}
+    for key, values in sorted(distance_candidates.items()):
+        ordered = sorted(values)
+        if len(ordered) == 1:
+            distance_aliases[key] = ordered[0]
+            continue
+        groups = {term_to_group.get(v) for v in ordered}
+        groups.discard(None)
+        if len(groups) == 1 and groups:
+            distance_aliases[key] = ordered[0]
+
     payload = {
         "type_aliases": dict(sorted(type_aliases.items())),
         "value_aliases": value_aliases,
+        "distance_aliases": distance_aliases,
         "attribute_name_aliases": dict(sorted(attribute_name_aliases.items())),
         "equivalence_groups": sorted(equivalence_groups, key=lambda g: (len(g), g)),
         "coverage": coverage,
     }
     logging.info("Built aliases: type=%s value=%s", len(payload["type_aliases"]), len(payload["value_aliases"]))
 
-    output_path = Path(cfg.get("translation_aliases_output_path", "/tmp/translation_aliases.json"))
+    output_path = Path(os.getenv("TRANSLATION_ALIASES_OUTPUT_PATH") or cfg.get("translation_aliases_output_path", "/tmp/translation_aliases.json"))
     with open(output_path, "w", encoding="utf-8") as fh:
         json.dump(payload, fh, ensure_ascii=True, indent=2, sort_keys=True)
     print(json.dumps(payload, ensure_ascii=False, indent=2))

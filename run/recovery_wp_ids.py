@@ -82,7 +82,8 @@ LICENSE_ALIASES = {
 }
 
 
-def load_translation_aliases(path: str = "/app/run/translation_aliases.json") -> tuple[dict[str, str], dict[str, str], dict[str, str], dict[str, str]]:
+def load_translation_aliases(path: str = "/app/run/translation_aliases.json") -> tuple[dict[str, str], dict[str, str], dict[str, str], dict[str, str], dict[str, str]]:
+    path = os.getenv("TRANSLATION_ALIASES_PATH", path)
     def _norm(text: str | None) -> str:
         if not text:
             return ""
@@ -100,16 +101,17 @@ def load_translation_aliases(path: str = "/app/run/translation_aliases.json") ->
         return {}, {}, {}, {}
     type_aliases = {_norm(k).replace("-", " "): _norm(v) for k, v in (payload.get("type_aliases") or {}).items()}
     value_aliases = {_norm(k).replace("-", " "): _norm(v) for k, v in (payload.get("value_aliases") or {}).items()}
+    distance_aliases = {_norm(k).replace("-", " "): _norm(v) for k, v in (payload.get("distance_aliases") or {}).items()}
     attr_aliases = {_norm(k): _norm(v) for k, v in (payload.get("attribute_name_aliases") or {}).items()}
     term_group_map: dict[str, str] = {}
     for idx, group in enumerate(payload.get("equivalence_groups") or []):
         group_id = f"g{idx}"
         for item in group:
             term_group_map[_norm(item)] = group_id
-    return type_aliases, value_aliases, attr_aliases, term_group_map
+    return type_aliases, value_aliases, distance_aliases, attr_aliases, term_group_map
 
 
-DYNAMIC_TYPE_ALIASES, DYNAMIC_VALUE_ALIASES, DYNAMIC_ATTRIBUTE_ALIASES, DYNAMIC_TERM_GROUPS = load_translation_aliases()
+DYNAMIC_TYPE_ALIASES, DYNAMIC_VALUE_ALIASES, DYNAMIC_DISTANCE_ALIASES, DYNAMIC_ATTRIBUTE_ALIASES, DYNAMIC_TERM_GROUPS = load_translation_aliases()
 
 ACF_FIELD_ALIASES = {
     "event_ticket_url": ("event_ticket_url",),
@@ -225,19 +227,20 @@ def normalize_license(value: str | None) -> str:
 def normalize_distance(value: str | None) -> str:
     if not value:
         return ""
-    # Keep complete semantic value and canonicalize separators to WP slug style.
-    text = slugify(value).replace("-pt", "")
-    text = re.sub(r"\s*\+\s*", "-", text)
-    text = re.sub(r"-{2,}", "-", text)
-    text = text.strip("-")
-    if text in DYNAMIC_TERM_GROUPS:
-        return f"group:{DYNAMIC_TERM_GROUPS[text]}"
-    # Fallback for WPML duplicate slugs: 85-km-2, 85-km-pt-2, etc.
-    base = re.sub(r"-pt(?:-\d+)?$", "", text)
-    base = re.sub(r"-\d+$", "", base)
-    if base in DYNAMIC_TERM_GROUPS:
-        return f"group:{DYNAMIC_TERM_GROUPS[base]}"
-    return base
+    raw = slugify(value)
+    if raw in DYNAMIC_TERM_GROUPS:
+        return f"group:{DYNAMIC_TERM_GROUPS[raw]}"
+    raw_key = raw.replace("-", " ")
+    mapped = DYNAMIC_DISTANCE_ALIASES.get(raw_key, DYNAMIC_VALUE_ALIASES.get(raw_key, raw))
+    mapped_slug = slugify(mapped)
+    if mapped_slug in DYNAMIC_TERM_GROUPS:
+        return f"group:{DYNAMIC_TERM_GROUPS[mapped_slug]}"
+    # Same fallback family as other attributes for WPML duplicate slugs.
+    base_slug = re.sub(r"-pt(?:-\d+)?$", "", mapped_slug)
+    base_slug = re.sub(r"-\d+$", "", base_slug)
+    if base_slug in DYNAMIC_TERM_GROUPS:
+        return f"group:{DYNAMIC_TERM_GROUPS[base_slug]}"
+    return base_slug
 
 
 def normalize_date(value: str | None) -> str:
@@ -921,7 +924,8 @@ class RecoveryRunner:
                     continue
                 result.reasons.append(f"{lang.lower()}_{reason}:child={child_idx}")
         result.ambiguous = any("ambiguous" in reason for reason in result.reasons)
-        result.status = classify_result_status(result)
+        previous_status = str(row.get(MATCH_STATUS_COLUMN) or row.get("Статус при сопоставлении") or "")
+        result.status = classify_result_status(result, previous_status=previous_status)
         result.overwrite_status = classify_overwrite_status(result, child_rows, reconcile_existing_ids)
         result.fill_status = classify_fill_status(result, child_rows)
         return result
@@ -1040,12 +1044,17 @@ def classify_fill_status(result: RecoveryResult, child_rows: list[tuple[int, dic
     return "fill_not_required"
 
 
-def classify_result_status(result: RecoveryResult) -> str:
+def classify_result_status(result: RecoveryResult, previous_status: str = "") -> str:
+    prev = (previous_status or "").strip().lower()
     if not result.reasons:
         return "resolved"
     if any(str(reason).startswith("network_") for reason in result.reasons):
         return "retry_later"
     if result.updates:
+        return "partial"
+    # Keep partial sticky on re-runs when no new updates appeared, but matching
+    # errors are still present for the same event.
+    if prev == "partial":
         return "partial"
     return "not_found"
 
