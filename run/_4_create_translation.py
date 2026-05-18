@@ -86,13 +86,13 @@ def create_product_translation_en(row, pt_product_id, attributes=None, last_vari
         category_ids_seen = set()
         for parent_name, child_name in categories_normalized:
             try:
-                parent_id = get_category_id_by_name(parent_name)
+                parent_id = get_category_id_by_name(parent_name, lang="en")
                 if parent_id:
                     if parent_id not in category_ids_seen:
                         category_ids.append({"id": parent_id})
                         category_ids_seen.add(parent_id)
                     if child_name:
-                        child_id = get_category_id_by_name(child_name, parent_id=parent_id)
+                        child_id = get_category_id_by_name(child_name, parent_id=parent_id, lang="en")
                         if child_id:
                             if child_id not in category_ids_seen:
                                 category_ids.append({"id": child_id})
@@ -205,7 +205,7 @@ def create_product_translation_en(row, pt_product_id, attributes=None, last_vari
         # Присваиваем атрибуты и создаём вариации
         if attributes:
             logging.debug("🧩 Присваиваемые атрибуты: %s", json.dumps(attributes, ensure_ascii=False))
-            assign_attributes_to_product(en_id, attributes)
+            assign_attributes_to_product(en_id, attributes, lang="en")
         if last_variations:
             logging.info(f"🔁 Создаём вариации для EN-перевода ID={en_id}")
             logging.debug("🧬 last_variations для create_variations: %s", json.dumps(last_variations, ensure_ascii=False))
@@ -260,12 +260,12 @@ def create_or_update_product_pt(
     category_ids_seen = set()
     for parent_name, child_name in categories_normalized:
         try:
-            parent_id = get_category_id_by_name(parent_name)
+            parent_id = get_category_id_by_name(parent_name, lang="en")
             if parent_id and parent_id not in category_ids_seen:
                 category_ids.append({"id": parent_id})
                 category_ids_seen.add(parent_id)
             if parent_id and child_name:
-                child_id = get_category_id_by_name(child_name, parent_id=parent_id)
+                child_id = get_category_id_by_name(child_name, parent_id=parent_id, lang="en")
                 if child_id and child_id not in category_ids_seen:
                     category_ids.append({"id": child_id})
                     category_ids_seen.add(child_id)
@@ -301,7 +301,7 @@ def create_or_update_product_pt(
         send_acf_data_translation(base_url, en_id, {"fields": acf_fields}, token)
 
     if attributes:
-        assign_attributes_to_product(en_id, attributes)
+        assign_attributes_to_product(en_id, attributes, lang="en")
     if last_variations:
         create_variations(en_id, last_variations)
 

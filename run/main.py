@@ -488,7 +488,7 @@ def run_automation():
                         if attr_option not in attr_payload[attr_name]:
                             attr_payload[attr_name].append(attr_option)
 
-                assign_attributes_to_product(pt_product_id, attr_payload)
+                assign_attributes_to_product(pt_product_id, attr_payload, lang="pt")
                 pt_row_to_variation_id = sync_variations_by_ids(pt_product_id, variation_entries_pt, lang="pt")
                 _write_variation_ids_to_sheet(pt_row_to_variation_id, "WP VARIATION ID PT", headers)
 

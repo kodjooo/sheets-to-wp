@@ -91,7 +91,7 @@ def get_or_create_attribute(name):
         )
 
 
-def get_or_create_attribute_term(attr_id, value):
+def get_or_create_attribute_term(attr_id, value, lang=None):
     # Если value — это список, обрабатываем только первый элемент
     if isinstance(value, list):
         if not value:
@@ -102,7 +102,10 @@ def get_or_create_attribute_term(attr_id, value):
         logging.warning(f"⚠️ Пустое значение терма для атрибута ID={attr_id}, пропускаем создание терма.")
         return None
 
-    response = _safe_wc_request("get", f"products/attributes/{attr_id}/terms")
+    endpoint = f"products/attributes/{attr_id}/terms"
+    if lang:
+        endpoint += f"?lang={lang}"
+    response = _safe_wc_request("get", endpoint)
     terms = response.json()
 
     for term in terms:
@@ -111,7 +114,10 @@ def get_or_create_attribute_term(attr_id, value):
 
     data = {"name": value}
     logging.debug(f"🔧 Пытаемся создать терм '{value}' в атрибуте ID={attr_id}")
-    response = _safe_wc_request("post", f"products/attributes/{attr_id}/terms", data=data)
+    create_endpoint = f"products/attributes/{attr_id}/terms"
+    if lang:
+        create_endpoint += f"?lang={lang}"
+    response = _safe_wc_request("post", create_endpoint, data=data)
 
     try:
         response.raise_for_status()
@@ -137,7 +143,7 @@ def get_or_create_attribute_term(attr_id, value):
         raise
 
 
-def assign_attributes_to_product(product_id, attributes_dict):
+def assign_attributes_to_product(product_id, attributes_dict, lang=None):
     attr_payload = []
     variation_attrs = []
 
@@ -156,7 +162,7 @@ def assign_attributes_to_product(product_id, attributes_dict):
                 logging.info(f"⚠️ Значение для атрибута '{attr_name}' пустое или не строка — пропускаем.")
                 continue
 
-            term_id = get_or_create_attribute_term(attr_id, val)
+            term_id = get_or_create_attribute_term(attr_id, val, lang=lang)
             if term_id is None:
                 logging.warning(f"⚠️ Терм '{val}' для атрибута '{attr_name}' не создан — пропускаем.")
                 continue
@@ -180,7 +186,10 @@ def assign_attributes_to_product(product_id, attributes_dict):
         })
 
     if attr_payload:
-        _safe_wc_request("put", f"products/{product_id}", data={"attributes": attr_payload})
+        product_endpoint = f"products/{product_id}"
+        if lang:
+            product_endpoint += f"?lang={lang}"
+        _safe_wc_request("put", product_endpoint, data={"attributes": attr_payload})
     else:
         logging.info(f"⚠️ Ни одного атрибута не собрано для продукта ID={product_id} — пропуск wcapi.put")
 

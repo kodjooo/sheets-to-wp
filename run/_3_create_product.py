@@ -72,7 +72,7 @@ def upload_image_from_path(image_path, token):
         print(f"⚠️ Другая ошибка загрузки изображения в WP: {e}")
         return None
 
-def get_category_id_by_name(name, parent_id=None):
+def get_category_id_by_name(name, parent_id=None, lang=None):
     """
     Возвращает ID категории WooCommerce по названию.
     Если такой нет — создаёт.
@@ -83,7 +83,7 @@ def get_category_id_by_name(name, parent_id=None):
     response = requests.get(
         WC_API_URL + "/wp-json/wc/v3/products/categories",
         auth=(WC_CONSUMER_KEY, WC_CONSUMER_SECRET),
-        params={"search": name}
+        params={"search": name, **({"lang": lang} if lang else {})}
     )
     response.raise_for_status()
     print("🔍 Ответ от WooCommerce (категории):", response.text)
@@ -114,6 +114,8 @@ def get_category_id_by_name(name, parent_id=None):
     }
     if parent_id:
         payload["parent"] = parent_id
+    if lang:
+        payload["lang"] = lang
     create_response = requests.post(
         WC_API_URL + "/wp-json/wc/v3/products/categories",
         auth=(WC_CONSUMER_KEY, WC_CONSUMER_SECRET),
@@ -230,13 +232,13 @@ def create_product(data):
     category_ids_seen = set()
     for parent_name, child_name in categories_normalized:
         try:
-            parent_id = get_category_id_by_name(parent_name)
+            parent_id = get_category_id_by_name(parent_name, lang="pt")
             if parent_id:
                 if parent_id not in category_ids_seen:
                     category_ids.append({"id": parent_id})
                     category_ids_seen.add(parent_id)
                 if child_name:
-                    child_id = get_category_id_by_name(child_name, parent_id=parent_id)
+                    child_id = get_category_id_by_name(child_name, parent_id=parent_id, lang="pt")
                     if child_id:
                         if child_id not in category_ids_seen:
                             category_ids.append({"id": child_id})
@@ -355,12 +357,12 @@ def _collect_category_ids(data):
     category_ids = []
     category_ids_seen = set()
     for parent_name, child_name in categories_normalized:
-        parent_id = get_category_id_by_name(parent_name)
+        parent_id = get_category_id_by_name(parent_name, lang="pt")
         if parent_id and parent_id not in category_ids_seen:
             category_ids.append({"id": parent_id})
             category_ids_seen.add(parent_id)
         if parent_id and child_name:
-            child_id = get_category_id_by_name(child_name, parent_id=parent_id)
+            child_id = get_category_id_by_name(child_name, parent_id=parent_id, lang="pt")
             if child_id and child_id not in category_ids_seen:
                 category_ids.append({"id": child_id})
                 category_ids_seen.add(child_id)
