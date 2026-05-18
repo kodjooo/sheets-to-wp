@@ -302,7 +302,7 @@ def create_product(data):
     benefits = data.get("BENEFITS (PT)", "")
     if isinstance(benefits, list):
         benefits = "\n".join(benefits)
-    faq_items = parse_faq_items(data.get("FAQ", ""))
+    faq_items = parse_faq_items(data.get("FAQ (PT)", ""))
 
     location_city = (data.get("LOCATION (CITY)") or "").strip()
 
@@ -376,7 +376,7 @@ def _build_acf_fields_partial(data):
     benefits = data.get("BENEFITS (PT)", "")
     if isinstance(benefits, list):
         benefits = "\n".join(benefits)
-    faq_items = parse_faq_items(data.get("FAQ", ""))
+    faq_items = parse_faq_items(data.get("FAQ (PT)", ""))
 
     event_start_date = format_date_ymd(data.get("EVENT START DATE", ""))
     event_end_date = format_date_ymd(data.get("EVENT END DATE", ""))
