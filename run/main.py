@@ -489,7 +489,7 @@ def run_automation():
                             attr_payload[attr_name].append(attr_option)
 
                 assign_attributes_to_product(pt_product_id, attr_payload)
-                pt_row_to_variation_id = sync_variations_by_ids(pt_product_id, variation_entries_pt)
+                pt_row_to_variation_id = sync_variations_by_ids(pt_product_id, variation_entries_pt, lang="pt")
                 _write_variation_ids_to_sheet(pt_row_to_variation_id, "WP VARIATION ID PT", headers)
 
                 existing_en_product_id = _cell_value_as_str(row.get("WP PRODUCT ID EN", "")) if not is_incomplete else ""
@@ -502,7 +502,7 @@ def run_automation():
                     existing_pt_product_id=existing_en_product_id or None
                 )
                 last_main_row["en_product_id"] = en_product_id
-                en_row_to_variation_id = sync_variations_by_ids(en_product_id, variation_entries_en)
+                en_row_to_variation_id = sync_variations_by_ids(en_product_id, variation_entries_en, lang="en")
                 _write_variation_ids_to_sheet(en_row_to_variation_id, "WP VARIATION ID EN", headers)
 
                 snapshot_hash = ""

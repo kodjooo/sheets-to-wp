@@ -64,11 +64,13 @@ def _norm_text(value):
     return str(value).strip()
 
 
-def _load_all_variations(product_id):
+def _load_all_variations(product_id, lang: str | None = None):
     items = []
     page = 1
     while True:
         endpoint = f"products/{product_id}/variations?per_page=100&page={page}"
+        if lang:
+            endpoint += f"&lang={lang}"
         response = _wcapi_request_with_retry("GET", endpoint)
         response.raise_for_status()
         batch = response.json() or []
@@ -137,7 +139,7 @@ def _normalize_existing_variation(variation):
     }
 
 
-def sync_variations_by_ids(product_id, variation_entries):
+def sync_variations_by_ids(product_id, variation_entries, lang: str | None = None):
     """
     Полная синхронизация вариаций продукта:
     - update существующих по existing_variation_id,
@@ -153,7 +155,7 @@ def sync_variations_by_ids(product_id, variation_entries):
     }
     """
     attr_name_to_id = _build_product_attr_map(product_id)
-    existing_variations = _load_all_variations(product_id)
+    existing_variations = _load_all_variations(product_id, lang=lang)
     existing_by_id = {
         int(v["id"]): v
         for v in existing_variations
@@ -197,6 +199,8 @@ def sync_variations_by_ids(product_id, variation_entries):
                     )
                 else:
                     endpoint = f"products/{product_id}/variations/{existing_id}"
+                    if lang:
+                        endpoint += f"?lang={lang}"
                     response = _wcapi_request_with_retry("PUT", endpoint, payload)
                     response.raise_for_status()
                     logging.info("♻️ Вариация обновлена: product=%s variation=%s", product_id, existing_id)
@@ -209,6 +213,8 @@ def sync_variations_by_ids(product_id, variation_entries):
                 logging.info("🔁 Найдена существующая вариация по ключу: product=%s variation=%s", product_id, final_id)
             else:
                 endpoint = f"products/{product_id}/variations"
+                if lang:
+                    endpoint += f"?lang={lang}"
                 response = _wcapi_request_with_retry("POST", endpoint, payload)
                 response.raise_for_status()
                 body = response.json() or {}
@@ -225,6 +231,8 @@ def sync_variations_by_ids(product_id, variation_entries):
     stale_ids = sorted(set(existing_by_id.keys()) - kept_ids)
     for variation_id in stale_ids:
         endpoint = f"products/{product_id}/variations/{variation_id}"
+        if lang:
+            endpoint += f"?lang={lang}"
         response = _wcapi_request_with_retry("DELETE", endpoint, {"force": True})
         response.raise_for_status()
         logging.info("🗑️ Вариация удалена: product=%s variation=%s", product_id, variation_id)
@@ -232,7 +240,7 @@ def sync_variations_by_ids(product_id, variation_entries):
     # Финальная дедупликация по фактическому состоянию в WooCommerce:
     # если по одному ключу вариации (цена+атрибуты) осталось несколько ID,
     # оставляем один, остальные удаляем.
-    final_variations = _load_all_variations(product_id)
+    final_variations = _load_all_variations(product_id, lang=lang)
     by_key = {}
     for variation in final_variations:
         variation_id = _as_int(variation.get("id"))
@@ -250,6 +258,8 @@ def sync_variations_by_ids(product_id, variation_entries):
             if duplicate_id == keep_id:
                 continue
             endpoint = f"products/{product_id}/variations/{duplicate_id}"
+            if lang:
+                endpoint += f"?lang={lang}"
             response = _wcapi_request_with_retry("DELETE", endpoint, {"force": True})
             response.raise_for_status()
             logging.info(
@@ -261,7 +271,7 @@ def sync_variations_by_ids(product_id, variation_entries):
             )
 
     # Пересобираем сопоставление row -> variation_id только по живым вариациям после дедупа.
-    alive_variations = _load_all_variations(product_id)
+    alive_variations = _load_all_variations(product_id, lang=lang)
     alive_by_key = {}
     for variation in alive_variations:
         variation_id = _as_int(variation.get("id"))
