@@ -1,14 +1,14 @@
 # Архитектура сервиса
 
 ## Обзор
-Сервис — однопроцессный Python-воркер в Docker. Он читает строки Google Sheets, обрабатывает статусы `Revised (incomplete)` и `Revised (complete)`, публикует/обновляет EN/PT товары в WooCommerce, хранит baseline hash `WEBSITE`, мониторит изменения страниц и отправляет уведомления в Telegram.
+Сервис — однопроцессный Python-воркер в Docker. Он читает строки Google Sheets, обрабатывает статусы `Revised (incomplete)` и `Revised (complete)`, публикует/обновляет PT/EN товары в WooCommerce (PT как основной язык, EN как перевод), хранит baseline hash `WEBSITE`, мониторит изменения страниц и отправляет уведомления в Telegram.
 
 ## Компоненты
 - `run/main.py` — оркестрация пайплайна, планировщик, обновление статусов, логирование.
 - `run/_1_google_loader.py` — чтение/обновление Google Sheets, кеш worksheet, ретраи, загрузка конфигурации из `.env`.
 - `run/_2_content_generation.py` — загрузка и валидация источников (WEBSITE/REGULATIONS), OpenAI-вызовы, перевод заголовка, геокодинг, генерация изображения.
-- `run/_3_create_product.py` — создание/обновление EN-продукта, категорий, ACF-полей, JWT для ACF.
-- `run/_4_create_translation.py` — создание/обновление PT-продукта, связка перевода с EN через WPML API, ACF PT.
+- `run/_3_create_product.py` — создание/обновление PT-продукта (основного), категорий, ACF-полей, JWT для ACF.
+- `run/_4_create_translation.py` — создание/обновление EN-перевода, связка перевода с PT через WPML API, ACF EN.
 - `run/_5_taxonomy_and_attributes.py` — создание/поиск атрибутов и термов, назначение атрибутов продукту.
 - `run/_6_create_variations.py` — синхронизация вариаций (create/update/delete) с retry-запросами.
 - `run/recover_wp_ids.py` / `run/recovery_wp_ids.py` — ручной recovery-сценарий для восстановления `WP PRODUCT ID EN/PT` и `WP VARIATION ID EN/PT` у ранее опубликованных строк; не вызывается из `main.py`.
@@ -30,15 +30,15 @@
 6. Генерация контента первым ассистентом (Responses API).
 7. Пост-обработка вторым ассистентом (очистка блоков, проверка структуры).
 8. Проверка пар EN/PT (`summary`, `org_info`, `benefits`, `faq`) и дополнительные повторы второго ассистента по `PT_RETRY_ATTEMPTS`.
-9. Создание или обновление EN-продукта (draft), категорий, ACF.
-Для `Revised (complete)` используется update при наличии `WP PRODUCT ID EN`, иначе create.
+9. Создание или обновление PT-продукта (основного) (draft), категорий, ACF.
+Для `Revised (complete)` используется update при наличии `WP PRODUCT ID PT`, иначе create.
 Для `Revised (incomplete)` сейчас используется create-flow с последующим мониторингом.
-10. Назначение атрибутов EN и синхронизация вариаций EN по `WP VARIATION ID EN`:
+10. Назначение атрибутов PT и синхронизация вариаций PT по `WP VARIATION ID PT`:
 - обновление существующих,
 - создание новых,
 - удаление отсутствующих в таблице.
-11. Создание или обновление PT-перевода, связка WPML, ACF PT, атрибуты PT.
-12. Синхронизация вариаций PT по `WP VARIATION ID PT` (update/create/delete).
+11. Создание или обновление EN-перевода, связка WPML, ACF EN, атрибуты EN.
+12. Синхронизация вариаций EN по `WP VARIATION ID EN` (update/create/delete).
 13. Для `Revised (incomplete)` генерируются и записываются поля `ORG INFO/SUMMARY/BENEFITS/FAQ` (EN/PT), затем рассчитывается baseline hash `WEBSITE`.
 14. Для `Published (incomplete)` рассчитывается текущий hash `WEBSITE`; при изменениях отправляется Telegram.
 15. Обновление полей и статуса строки в Google Sheets, включая `WP VARIATION ID EN/PT` для каждой строки вариации.

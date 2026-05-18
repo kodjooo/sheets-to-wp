@@ -80,7 +80,7 @@ from _2_content_generation import (
     translate_title_to_en
 )
 
-from _3_create_product import create_or_update_product as create_product_en
+from _3_create_product import create_or_update_product as create_product_pt_primary
 from _4_create_translation import create_or_update_product_pt as create_product_pt
 from _5_taxonomy_and_attributes import assign_attributes_to_product
 from _6_create_variations import sync_variations_by_ids
@@ -90,6 +90,9 @@ from website_snapshot import (
     has_website_changed,
     send_telegram_notification,
 )
+
+# Обратная совместимость для тестов/моков со старым именем.
+create_product_en = create_product_pt_primary
 
 
 def log_network_diagnostics():
@@ -135,6 +138,7 @@ def _write_variation_ids_to_sheet(row_to_variation_id: dict, column_name: str, h
         return
     for target_row_index, variation_id in row_to_variation_id.items():
         batch_update_cells(target_row_index, {column_name: str(variation_id)}, headers)
+
 
 def get_next_run_time():
     """Вычисляет время следующего запуска по расписанию"""
@@ -445,16 +449,16 @@ def run_automation():
                     if cat
                 ]
 
-                existing_en_product_id = _cell_value_as_str(row.get("WP PRODUCT ID EN", "")) if not is_incomplete else ""
-                en_product_id = create_product_en(
+                existing_pt_product_id = _cell_value_as_str(row.get("WP PRODUCT ID PT", "")) if not is_incomplete else ""
+                pt_product_id = create_product_pt_primary(
                     last_main_row,
-                    existing_product_id=existing_en_product_id or None
+                    existing_product_id=existing_pt_product_id or None
                 )
-                last_main_row["en_product_id"] = en_product_id
+                last_main_row["pt_product_id"] = pt_product_id
 
                 # Получаем slug
                 try:
-                    r = requests.get(f"{config['wp_url']}/wp-json/wc/v3/products/{en_product_id}",
+                    r = requests.get(f"{config['wp_url']}/wp-json/wc/v3/products/{pt_product_id}",
                                      auth=(config["consumer_key"], config["consumer_secret"]))
                     r.raise_for_status()
                     data = r.json()
@@ -484,22 +488,22 @@ def run_automation():
                         if attr_option not in attr_payload[attr_name]:
                             attr_payload[attr_name].append(attr_option)
 
-                assign_attributes_to_product(en_product_id, attr_payload)
-                en_row_to_variation_id = sync_variations_by_ids(en_product_id, variation_entries_en)
-                _write_variation_ids_to_sheet(en_row_to_variation_id, "WP VARIATION ID EN", headers)
+                assign_attributes_to_product(pt_product_id, attr_payload)
+                pt_row_to_variation_id = sync_variations_by_ids(pt_product_id, variation_entries_pt)
+                _write_variation_ids_to_sheet(pt_row_to_variation_id, "WP VARIATION ID PT", headers)
 
-                existing_pt_product_id = _cell_value_as_str(row.get("WP PRODUCT ID PT", "")) if not is_incomplete else ""
-                pt_product_id = create_product_pt(
+                existing_en_product_id = _cell_value_as_str(row.get("WP PRODUCT ID EN", "")) if not is_incomplete else ""
+                en_product_id = create_product_pt(
                     last_main_row,
-                    en_product_id,
+                    pt_product_id,
                     attributes=attr_payload,
                     last_variations=None,
                     config=config,
-                    existing_pt_product_id=existing_pt_product_id or None
+                    existing_pt_product_id=existing_en_product_id or None
                 )
-                last_main_row["pt_product_id"] = pt_product_id
-                pt_row_to_variation_id = sync_variations_by_ids(pt_product_id, variation_entries_pt)
-                _write_variation_ids_to_sheet(pt_row_to_variation_id, "WP VARIATION ID PT", headers)
+                last_main_row["en_product_id"] = en_product_id
+                en_row_to_variation_id = sync_variations_by_ids(en_product_id, variation_entries_en)
+                _write_variation_ids_to_sheet(en_row_to_variation_id, "WP VARIATION ID EN", headers)
 
                 snapshot_hash = ""
                 if is_incomplete:

@@ -189,9 +189,10 @@ def create_product(data):
 
     # Формируем данные для основного товара
     product_data = {
-        "name": data["RACE NAME"],
+        "name": data.get("RACE NAME (PT)", "") or data.get("RACE NAME", ""),
         "type": "variable",
-        "status": "draft"
+        "status": "draft",
+        "lang": "pt",
     }
 
     # Получаем категории из таблицы
@@ -298,7 +299,7 @@ def create_product(data):
         return float(Decimal(value).quantize(Decimal("0.0001"), rounding=ROUND_DOWN))
 
     # ACF данные
-    benefits = data.get("BENEFITS", "")
+    benefits = data.get("BENEFITS (PT)", "")
     if isinstance(benefits, list):
         benefits = "\n".join(benefits)
     faq_items = parse_faq_items(data.get("FAQ", ""))
@@ -312,8 +313,8 @@ def create_product(data):
             "event_ticket_url": data["WEBSITE"],
             "event_latitude": format_coord(data["LAT"]) if data.get("LAT") else "",
             "event_longitude": format_coord(data["LON"]) if data.get("LON") else "",
-            "event_short_description": data["SUMMARY"],
-            "organizer_description": data["ORG INFO"],
+            "event_short_description": data.get("SUMMARY (PT)", ""),
+            "organizer_description": data.get("ORG INFO (PT)", ""),
             "race_benefits": benefits,
             "event_faq_headline": "FAQ",
             "event_faq_items": faq_items,
@@ -372,7 +373,7 @@ def _build_acf_fields_partial(data):
     def format_coord(value):
         return float(Decimal(value).quantize(Decimal("0.0001"), rounding=ROUND_DOWN))
 
-    benefits = data.get("BENEFITS", "")
+    benefits = data.get("BENEFITS (PT)", "")
     if isinstance(benefits, list):
         benefits = "\n".join(benefits)
     faq_items = parse_faq_items(data.get("FAQ", ""))
@@ -386,8 +387,8 @@ def _build_acf_fields_partial(data):
         "event_ticket_url": data.get("WEBSITE", ""),
         "event_latitude": format_coord(data["LAT"]) if data.get("LAT") else "",
         "event_longitude": format_coord(data["LON"]) if data.get("LON") else "",
-        "event_short_description": data.get("SUMMARY", ""),
-        "organizer_description": data.get("ORG INFO", ""),
+        "event_short_description": data.get("SUMMARY (PT)", ""),
+        "organizer_description": data.get("ORG INFO (PT)", ""),
         "race_benefits": benefits,
         "event_faq_headline": "FAQ" if faq_items else "",
         "event_faq_items": faq_items,
@@ -404,7 +405,7 @@ def create_or_update_product(data, existing_product_id=None):
         return create_product(data)
 
     # Не передаём status при обновлении, чтобы сохранить текущее состояние публикации в WP.
-    payload = {"name": data.get("RACE NAME", "")}
+    payload = {"name": data.get("RACE NAME (PT)", "") or data.get("RACE NAME", ""), "lang": "pt"}
     category_ids = _collect_category_ids(data)
     if category_ids:
         payload["categories"] = category_ids

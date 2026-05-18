@@ -10,7 +10,7 @@ class TranslationAcfTests(unittest.TestCase):
 
         self.assertIn("/wp-json/acf/v3/product/", content)
         self.assertIn("\"event_location_text\": location_city", content)
-        self.assertIn("\"event_faq_items\": faq_items_pt", content)
+        self.assertIn("\"event_faq_items\": faq_items_en", content)
 
 
 if __name__ == "__main__":

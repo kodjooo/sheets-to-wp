@@ -23,6 +23,9 @@ if "woocommerce" not in sys.modules:
 if "openai" not in sys.modules:
     openai_stub = types.ModuleType("openai")
     openai_stub.files = types.SimpleNamespace(create=lambda **kwargs: types.SimpleNamespace(id="file_1"))
+    openai_stub.OpenAI = lambda *args, **kwargs: types.SimpleNamespace(
+        responses=types.SimpleNamespace(create=lambda **_kw: types.SimpleNamespace(output_text="{}"))
+    )
     sys.modules["openai"] = openai_stub
 
 if "requests" not in sys.modules:

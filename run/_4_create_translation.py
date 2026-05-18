@@ -1,5 +1,4 @@
 import requests
-import openai
 from requests.auth import HTTPBasicAuth
 from _5_taxonomy_and_attributes import assign_attributes_to_product
 from _6_create_variations import create_variations
@@ -9,7 +8,7 @@ from utils import normalize_category_pairs, parse_faq_items
 import logging
 import json  
 
-def send_acf_data_pt(base_url, product_id, acf_data, token):
+def send_acf_data_translation(base_url, product_id, acf_data, token):
     acf_headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {token}"
@@ -21,30 +20,30 @@ def send_acf_data_pt(base_url, product_id, acf_data, token):
     )
 
 
-def create_product_pt(row, en_product_id, attributes=None, last_variations=None, config=None):
+def create_product_translation_en(row, pt_product_id, attributes=None, last_variations=None, config=None):
     auth = HTTPBasicAuth(config["consumer_key"], config["consumer_secret"])
     base_url = config["wp_url"]
 
-    logging.info("🌍 Создаём перевод продукта на португальский")
-    logging.debug("📦 Получены last_variations в create_product_pt: %s", json.dumps(last_variations or [], ensure_ascii=False))
+    logging.info("🌍 Создаём перевод продукта на английский")
+    logging.debug("📦 Получены last_variations в create_product_translation_en: %s", json.dumps(last_variations or [], ensure_ascii=False))
 
     # Получаем slug оригинала
     response_en = requests.get(
-        f"{base_url}/wp-json/wc/v3/products/{en_product_id}",
+        f"{base_url}/wp-json/wc/v3/products/{pt_product_id}",
         auth=auth
     )
     response_en.raise_for_status()
-    en_product_data = response_en.json()
-    original_slug = en_product_data.get("slug", "")
+    pt_product_data = response_en.json()
+    original_slug = pt_product_data.get("slug", "")
 
     # Формируем данные для перевода с правильным slug
     data = {
-        "title": row.get("RACE NAME (PT)", "") or row.get("RACE NAME", ""),
+        "title": row.get("RACE NAME", "") or row.get("RACE NAME (PT)", ""),
         "status": "draft",
-        "lang": "pt",
+        "lang": "en",
         "slug": original_slug if original_slug else "",
         "translations": {
-            "en": en_product_id
+            "pt": pt_product_id
         }
     }
 
@@ -111,9 +110,9 @@ def create_product_pt(row, en_product_id, attributes=None, last_variations=None,
         response.raise_for_status()
         json_data = response.json()
 
-        pt_id = json_data.get("id")
-        logging.info(f"✅ Перевод создан: ID={pt_id}")
-        if not pt_id:
+        en_id = json_data.get("id")
+        logging.info(f"✅ Перевод создан: ID={en_id}")
+        if not en_id:
             raise Exception("Перевод не был создан")
 
         # # 🖼️ Присваиваем изображение через wp/v2
@@ -135,52 +134,52 @@ def create_product_pt(row, en_product_id, attributes=None, last_variations=None,
 
         # 💾 Обновляем повторно title (его WPML может сбросить)
         update_payload = {
-            "name": row.get("RACE NAME (PT)", "") or row.get("RACE NAME", ""),
-            "lang": "pt"
+            "name": row.get("RACE NAME", "") or row.get("RACE NAME (PT)", ""),
+            "lang": "en"
         }
         update_response = requests.put(
-            f"{base_url}/wp-json/wc/v3/products/{pt_id}",
+            f"{base_url}/wp-json/wc/v3/products/{en_id}",
             auth=auth,
             json=update_payload
         )
         if update_response.status_code == 200:
-            logging.info(f"✅ Название обновлено у перевода PT-продукта ID={pt_id}")
+            logging.info(f"✅ Название обновлено у EN-перевода ID={en_id}")
         else:
             logging.warning(f"⚠️ Название не обновлено! Код={update_response.status_code}, ответ={update_response.text}")
 
         # 🔄 Обновляем ACF-поля через ACF REST API
-        benefits_pt = row.get("BENEFITS (PT)", "")
-        if isinstance(benefits_pt, list):
-            benefits_pt = "\n".join(benefits_pt)
-        faq_items_pt = parse_faq_items(row.get("FAQ (PT)", ""))
+        benefits_en = row.get("BENEFITS", "")
+        if isinstance(benefits_en, list):
+            benefits_en = "\n".join(benefits_en)
+        faq_items_en = parse_faq_items(row.get("FAQ", ""))
         location_city = (row.get("LOCATION (CITY)") or "").strip()
 
         acf_update_payload = {
             "fields": {
                 "event_location_text": location_city,
-                "event_short_description": row.get("SUMMARY (PT)", ""),
-                "organizer_description": row.get("ORG INFO (PT)", ""),
-                "race_benefits": benefits_pt,
+                "event_short_description": row.get("SUMMARY", ""),
+                "organizer_description": row.get("ORG INFO", ""),
+                "race_benefits": benefits_en,
                 "event_faq_headline": "FAQ",
-                "event_faq_items": faq_items_pt
+                "event_faq_items": faq_items_en
             }
         }
 
         token = get_jwt_token()
-        acf_update_response = send_acf_data_pt(base_url, pt_id, acf_update_payload, token)
+        acf_update_response = send_acf_data_translation(base_url, en_id, acf_update_payload, token)
         if acf_update_response.status_code in [200, 201]:
-            logging.info(f"✅ ACF-поля обновлены у PT-продукта ID={pt_id}")
+            logging.info(f"✅ ACF-поля обновлены у EN-перевода ID={en_id}")
         else:
             logging.warning(
-                f"⚠️ ACF не обновлены у PT! Код={acf_update_response.status_code}, "
+                f"⚠️ ACF не обновлены у EN! Код={acf_update_response.status_code}, "
                 f"ответ={acf_update_response.text}"
             )
 
         # 📡 Отправляем связку перевода на WPML
         hook_payload = {
-            "original_id": en_product_id,
-            "translated_id": pt_id,
-            "lang_code": "pt"
+            "original_id": pt_product_id,
+            "translated_id": en_id,
+            "lang_code": "en"
         }
 
         logging.info("🔗 Пытаемся связать перевод с оригиналом через WPML API")
@@ -198,7 +197,7 @@ def create_product_pt(row, en_product_id, attributes=None, last_variations=None,
             if not hook_response.ok:
                 logging.error(f"❌ Связь через WPML API не удалась: {hook_response.status_code} — {hook_response.text}")
             else:
-                logging.info(f"✅ Перевод успешно связан: EN={en_product_id} ⇄ PT={pt_id}")
+                logging.info(f"✅ Перевод успешно связан: PT={pt_product_id} ⇄ EN={en_id}")
 
         except Exception as hook_error:
             logging.exception(f"❌ Ошибка при связывании перевода через WPML API: {hook_error}")
@@ -206,15 +205,15 @@ def create_product_pt(row, en_product_id, attributes=None, last_variations=None,
         # Присваиваем атрибуты и создаём вариации
         if attributes:
             logging.debug("🧩 Присваиваемые атрибуты: %s", json.dumps(attributes, ensure_ascii=False))
-            assign_attributes_to_product(pt_id, attributes)
+            assign_attributes_to_product(en_id, attributes)
         if last_variations:
-            logging.info(f"🔁 Создаём вариации для PT-продукта ID={pt_id}")
+            logging.info(f"🔁 Создаём вариации для EN-перевода ID={en_id}")
             logging.debug("🧬 last_variations для create_variations: %s", json.dumps(last_variations, ensure_ascii=False))
-            create_variations(pt_id, last_variations)
+            create_variations(en_id, last_variations)
         else:
             logging.warning("⚠️ last_variations пуст или не передан — вариации не будут созданы")
 
-        return pt_id
+        return en_id
 
     except Exception as e:
         raise Exception(f"Ошибка при создании перевода: {e}")
@@ -222,16 +221,16 @@ def create_product_pt(row, en_product_id, attributes=None, last_variations=None,
 
 def create_or_update_product_pt(
     row,
-    en_product_id,
+    pt_product_id,
     attributes=None,
     last_variations=None,
     config=None,
     existing_pt_product_id=None
 ):
     if not existing_pt_product_id:
-        return create_product_pt(
+        return create_product_translation_en(
             row,
-            en_product_id,
+            pt_product_id,
             attributes=attributes,
             last_variations=last_variations,
             config=config
@@ -239,11 +238,11 @@ def create_or_update_product_pt(
 
     auth = HTTPBasicAuth(config["consumer_key"], config["consumer_secret"])
     base_url = config["wp_url"]
-    pt_id = int(existing_pt_product_id)
+    en_id = int(existing_pt_product_id)
 
     update_payload = {
-        "name": row.get("RACE NAME (PT)", "") or row.get("RACE NAME", ""),
-        "lang": "pt"
+        "name": row.get("RACE NAME", "") or row.get("RACE NAME (PT)", ""),
+        "lang": "en"
     }
 
     categories_raw = []
@@ -276,35 +275,35 @@ def create_or_update_product_pt(
         update_payload["categories"] = category_ids
 
     response = requests.put(
-        f"{base_url}/wp-json/wc/v3/products/{pt_id}",
+        f"{base_url}/wp-json/wc/v3/products/{en_id}",
         auth=auth,
         json=update_payload
     )
     response.raise_for_status()
 
-    benefits_pt = row.get("BENEFITS (PT)", "")
-    if isinstance(benefits_pt, list):
-        benefits_pt = "\n".join(benefits_pt)
-    faq_items_pt = parse_faq_items(row.get("FAQ (PT)", ""))
+    benefits_en = row.get("BENEFITS", "")
+    if isinstance(benefits_en, list):
+        benefits_en = "\n".join(benefits_en)
+    faq_items_en = parse_faq_items(row.get("FAQ", ""))
     location_city = (row.get("LOCATION (CITY)") or "").strip()
 
     acf_fields = {
         "event_location_text": location_city,
-        "event_short_description": row.get("SUMMARY (PT)", ""),
-        "organizer_description": row.get("ORG INFO (PT)", ""),
-        "race_benefits": benefits_pt,
-        "event_faq_headline": "FAQ" if faq_items_pt else "",
-        "event_faq_items": faq_items_pt
+        "event_short_description": row.get("SUMMARY", ""),
+        "organizer_description": row.get("ORG INFO", ""),
+        "race_benefits": benefits_en,
+        "event_faq_headline": "FAQ" if faq_items_en else "",
+        "event_faq_items": faq_items_en
     }
     acf_fields = {k: v for k, v in acf_fields.items() if v not in ("", None, [])}
     if acf_fields:
         token = get_jwt_token()
-        send_acf_data_pt(base_url, pt_id, {"fields": acf_fields}, token)
+        send_acf_data_translation(base_url, en_id, {"fields": acf_fields}, token)
 
     if attributes:
-        assign_attributes_to_product(pt_id, attributes)
+        assign_attributes_to_product(en_id, attributes)
     if last_variations:
-        create_variations(pt_id, last_variations)
+        create_variations(en_id, last_variations)
 
-    logging.info(f"♻️ PT-продукт обновлён: ID={pt_id}")
-    return pt_id
+    logging.info(f"♻️ EN-перевод обновлён: ID={en_id}")
+    return en_id
