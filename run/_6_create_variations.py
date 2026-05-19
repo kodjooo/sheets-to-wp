@@ -126,6 +126,12 @@ def _normalize_payload(payload):
     }
 
 
+def _drop_attr_ids(norm_key, attr_ids_to_drop: set[int]):
+    price, attrs = norm_key
+    filtered = tuple((attr_id, option) for attr_id, option in attrs if int(attr_id) not in attr_ids_to_drop)
+    return (price, filtered)
+
+
 def _normalize_existing_variation(variation):
     attrs = []
     for attr in variation.get("attributes", []):
@@ -284,6 +290,16 @@ def sync_variations_by_ids(product_id, variation_entries, lang: str | None = Non
     reconciled = {}
     for row_index, desired_key in desired_key_by_row.items():
         ids = sorted(alive_by_key.get(desired_key, []))
+        # PT fallback: translated term values may differ from sheet EN values for translatable attrs.
+        # Match by stable attributes only (date/time/price etc.) when exact key lookup fails.
+        if not ids and lang == "pt":
+            fallback_drop_ids = {1, 3}  # Running / Distance
+            desired_relaxed = _drop_attr_ids(desired_key, fallback_drop_ids)
+            candidates = []
+            for key, key_ids in alive_by_key.items():
+                if _drop_attr_ids(key, fallback_drop_ids) == desired_relaxed:
+                    candidates.extend(key_ids)
+            ids = sorted(set(candidates))
         if not ids:
             logging.warning(
                 "⚠️ Не найдена вариация после финальной синхронизации: product=%s row=%s key=%s",
