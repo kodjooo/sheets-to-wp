@@ -162,24 +162,57 @@ def _build_pt_category_ids_from_en(row: dict) -> list[dict]:
             if isinstance(item, (list, tuple)) and len(item) == 2 and item[0]:
                 categories_raw.append((item[0], item[1]))
 
+    normalized_pairs = normalize_category_pairs(categories_raw)
+    logging.debug("🧭 CATEGORY MAP INPUT (row_id=%s): raw=%s normalized=%s", row.get("ID"), categories_raw, normalized_pairs)
+
     category_ids = []
     seen = set()
-    for parent_name, child_name in normalize_category_pairs(categories_raw):
+    for parent_name, child_name in normalized_pairs:
+        logging.debug("🧭 CATEGORY PAIR START (row_id=%s): parent='%s' child='%s'", row.get("ID"), parent_name, child_name)
         en_parent_id = get_category_id_by_name(parent_name, lang="en")
         if not en_parent_id:
+            logging.warning("🧭 CATEGORY SKIP: EN parent not found (row_id=%s, parent='%s')", row.get("ID"), parent_name)
             continue
+        logging.debug("🧭 CATEGORY EN parent resolved (row_id=%s): '%s' -> %s", row.get("ID"), parent_name, en_parent_id)
         pt_parent_id = get_category_translation_id(en_parent_id, "pt")
+        logging.debug("🧭 CATEGORY PT parent translation (row_id=%s): en_parent_id=%s -> pt_parent_id=%s", row.get("ID"), en_parent_id, pt_parent_id)
         if pt_parent_id and pt_parent_id not in seen:
             category_ids.append({"id": pt_parent_id})
             seen.add(pt_parent_id)
+            logging.debug("🧭 CATEGORY ADD parent (row_id=%s): pt_parent_id=%s", row.get("ID"), pt_parent_id)
+        elif pt_parent_id in seen:
+            logging.debug("🧭 CATEGORY DUP parent ignored (row_id=%s): pt_parent_id=%s", row.get("ID"), pt_parent_id)
+        else:
+            logging.warning("🧭 CATEGORY SKIP parent translation missing (row_id=%s): en_parent_id=%s name='%s'", row.get("ID"), en_parent_id, parent_name)
         if child_name:
             en_child_id = get_category_id_by_name(child_name, parent_id=en_parent_id, lang="en")
             if not en_child_id:
+                logging.warning(
+                    "🧭 CATEGORY SKIP: EN child not found (row_id=%s, parent='%s'[%s], child='%s')",
+                    row.get("ID"), parent_name, en_parent_id, child_name
+                )
                 continue
+            logging.debug(
+                "🧭 CATEGORY EN child resolved (row_id=%s): '%s' under parent_id=%s -> child_id=%s",
+                row.get("ID"), child_name, en_parent_id, en_child_id
+            )
             pt_child_id = get_category_translation_id(en_child_id, "pt")
+            logging.debug(
+                "🧭 CATEGORY PT child translation (row_id=%s): en_child_id=%s -> pt_child_id=%s",
+                row.get("ID"), en_child_id, pt_child_id
+            )
             if pt_child_id and pt_child_id not in seen:
                 category_ids.append({"id": pt_child_id})
                 seen.add(pt_child_id)
+                logging.debug("🧭 CATEGORY ADD child (row_id=%s): pt_child_id=%s", row.get("ID"), pt_child_id)
+            elif pt_child_id in seen:
+                logging.debug("🧭 CATEGORY DUP child ignored (row_id=%s): pt_child_id=%s", row.get("ID"), pt_child_id)
+            else:
+                logging.warning(
+                    "🧭 CATEGORY SKIP child translation missing (row_id=%s): en_child_id=%s child='%s'",
+                    row.get("ID"), en_child_id, child_name
+                )
+    logging.debug("🧭 CATEGORY MAP RESULT (row_id=%s): pt_category_ids=%s", row.get("ID"), category_ids)
     return category_ids
 
 
