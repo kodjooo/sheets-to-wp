@@ -7,6 +7,7 @@ from woocommerce import API
 
 from _1_google_loader import load_config
 from utils import select_attribute_id
+from utils import merge_attribute_map_case_insensitive
 
 config = load_config()
 wcapi = API(
@@ -147,7 +148,9 @@ def assign_attributes_to_product(product_id, attributes_dict, lang=None):
     attr_payload = []
     variation_attrs = []
 
-    for attr_name, value in attributes_dict.items():
+    merged_attributes = merge_attribute_map_case_insensitive(attributes_dict)
+
+    for attr_name, value in merged_attributes.items():
         # Если value — не список, делаем списком
         values = value if isinstance(value, list) else [value]
 

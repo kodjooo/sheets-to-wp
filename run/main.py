@@ -88,7 +88,13 @@ from _3_create_product import (
 from _4_create_translation import create_or_update_product_pt as create_product_pt
 from _5_taxonomy_and_attributes import assign_attributes_to_product
 from _6_create_variations import sync_variations_by_ids
-from utils import normalize_attribute_payload, normalize_category_pairs, parse_subcategory_values, get_missing_pt_fields
+from utils import (
+    normalize_attribute_payload,
+    normalize_category_pairs,
+    parse_subcategory_values,
+    get_missing_pt_fields,
+    normalize_attribute_name,
+)
 from website_snapshot import (
     compute_website_hash,
     has_website_changed,
@@ -122,7 +128,7 @@ def collect_all_attributes(variations):
     all_attributes = {}
     for var in variations:
         for attr in var["attributes"]:
-            name = attr["name"]
+            name = normalize_attribute_name(attr["name"])
             value = attr["option"]
             if name not in all_attributes:
                 all_attributes[name] = set()
@@ -397,7 +403,7 @@ def run_automation():
                     else:
                         last_main_row["extra_categories"].add((main_category, None))
                 if row.get("ATTRIBUTE") and row.get("VALUE"):
-                    last_main_attributes[row["ATTRIBUTE"]] = row["VALUE"]
+                    last_main_attributes[normalize_attribute_name(row["ATTRIBUTE"])] = row["VALUE"]
 
                 for attr_name, col in [
                     ("Distance", "DISTANCE"),
@@ -438,7 +444,7 @@ def run_automation():
                     if sub_status == "":
                         var_attrs = []
                         if sub_row.get("ATTRIBUTE") and sub_row.get("VALUE"):
-                            var_attrs.append({"name": sub_row["ATTRIBUTE"], "option": sub_row["VALUE"]})
+                            var_attrs.append({"name": normalize_attribute_name(sub_row["ATTRIBUTE"]), "option": sub_row["VALUE"]})
                         variation_category = sub_row.get("CATEGORY")
                         if variation_category:
                             variation_subcategories = parse_subcategory_values(sub_row.get("SUBCATEGORY"))
@@ -516,7 +522,7 @@ def run_automation():
                 attr_payload = normalize_attribute_payload(last_main_attributes)
                 for var in variation_entries_en:
                     for attr in var["attributes"]:
-                        attr_name = str(attr.get("name", "")).strip()
+                        attr_name = normalize_attribute_name(attr.get("name", ""))
                         attr_option = str(attr.get("option", "")).strip()
                         if not attr_name or not attr_option:
                             continue

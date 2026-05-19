@@ -1,19 +1,39 @@
-def normalize_attribute_payload(raw_attributes: dict) -> dict:
-    normalized = {}
-    for key, value in raw_attributes.items():
-        key_norm = str(key).strip() if key is not None else ""
+def normalize_attribute_name(name: str) -> str:
+    return str(name or "").strip()
+
+
+def merge_attribute_map_case_insensitive(raw_attributes: dict) -> dict:
+    merged = {}
+    key_by_fold = {}
+
+    for raw_key, raw_value in (raw_attributes or {}).items():
+        key_norm = normalize_attribute_name(raw_key)
         if not key_norm:
             continue
+        fold_key = key_norm.casefold()
+        canonical_key = key_by_fold.get(fold_key)
+        if canonical_key is None:
+            canonical_key = key_norm
+            key_by_fold[fold_key] = canonical_key
+            merged[canonical_key] = []
 
-        if isinstance(value, list):
-            values = [str(item).strip() for item in value if str(item).strip()]
-            normalized[key_norm] = values
-        elif value in (None, ""):
-            normalized[key_norm] = []
+        if isinstance(raw_value, list):
+            values = [str(item).strip() for item in raw_value if str(item).strip()]
+        elif raw_value in (None, ""):
+            values = []
         else:
-            value_norm = str(value).strip()
-            normalized[key_norm] = [value_norm] if value_norm else []
-    return normalized
+            value_norm = str(raw_value).strip()
+            values = [value_norm] if value_norm else []
+
+        for value in values:
+            if value not in merged[canonical_key]:
+                merged[canonical_key].append(value)
+
+    return merged
+
+
+def normalize_attribute_payload(raw_attributes: dict) -> dict:
+    return merge_attribute_map_case_insensitive(raw_attributes)
 
 
 def select_attribute_id(attributes: list, name: str):
