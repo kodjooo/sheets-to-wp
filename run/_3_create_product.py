@@ -166,9 +166,9 @@ def ensure_category_translation(category_id: int, source_lang: str, target_lang:
         return None
 
     payload = {
-        "original_id": category_id if source_lang == "pt" else target_id,
-        "translated_id": target_id if source_lang == "pt" else category_id,
-        "lang_code": target_lang if source_lang == "pt" else source_lang,
+        "original_id": category_id,
+        "translated_id": target_id,
+        "lang_code": target_lang,
     }
     wpml_auth = (config["wp_admin_user"], config["wp_admin_pass"])
     wpml_response = requests.post(
@@ -177,7 +177,11 @@ def ensure_category_translation(category_id: int, source_lang: str, target_lang:
         headers=headers,
         data=json.dumps(payload),
     )
-    wpml_response.raise_for_status()
+    if wpml_response.status_code >= 400:
+        raise requests.HTTPError(
+            f"WPML set-translation failed: {wpml_response.status_code} {wpml_response.text}",
+            response=wpml_response,
+        )
     return int(target_id)
 
 def get_jwt_token():
