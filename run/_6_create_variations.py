@@ -64,6 +64,10 @@ def _norm_text(value):
     return str(value).strip()
 
 
+def _norm_key(value):
+    return _norm_text(value).casefold()
+
+
 def _load_all_variations(product_id, lang: str | None = None):
     items = []
     page = 1
@@ -88,11 +92,16 @@ def _build_product_attr_map(product_id):
     response.raise_for_status()
     product = response.json() or {}
     product_attributes = product.get("attributes", [])
-    return {
-        _norm_text(attr.get("name")): attr["id"]
-        for attr in product_attributes
-        if "id" in attr and _norm_text(attr.get("name"))
-    }
+    mapping = {}
+    for attr in product_attributes:
+        if "id" not in attr:
+            continue
+        raw_name = _norm_text(attr.get("name"))
+        if not raw_name:
+            continue
+        mapping[raw_name] = attr["id"]
+        mapping[_norm_key(raw_name)] = attr["id"]
+    return mapping
 
 
 def _build_payload(entry, attr_name_to_id):
@@ -102,7 +111,7 @@ def _build_payload(entry, attr_name_to_id):
         option = _norm_text(attr.get("option"))
         if not name or not option:
             continue
-        attr_id = attr_name_to_id.get(name)
+        attr_id = attr_name_to_id.get(name) or attr_name_to_id.get(_norm_key(name))
         if not attr_id:
             logging.warning("⚠️ Атрибут '%s' не найден у продукта, пропускаем в вариации.", name)
             continue

@@ -161,6 +161,52 @@ class VariationSyncTests(unittest.TestCase):
 
         self.assertEqual(mapping, {2: 11, 3: 22})
 
+    @patch("_6_create_variations._wcapi_request_with_retry")
+    def test_sync_variations_attribute_name_is_case_insensitive(self, mock_wcapi):
+        class DummyResponse:
+            def __init__(self, payload):
+                self._payload = payload
+                self.status_code = 200
+                self.text = ""
+
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return self._payload
+
+        calls = []
+
+        def side_effect(method, endpoint, payload=None):
+            calls.append((method, endpoint, payload))
+            if method == "GET" and endpoint == "products/100":
+                return DummyResponse({"attributes": [{"id": 1, "name": "Running"}]})
+            if method == "GET" and endpoint == "products/100/variations?per_page=100&page=1":
+                return DummyResponse([])
+            if method == "POST" and endpoint == "products/100/variations":
+                return DummyResponse({"id": 777})
+            raise AssertionError(f"Unexpected call: {method} {endpoint} {payload}")
+
+        mock_wcapi.side_effect = side_effect
+
+        mapping = sync_variations_by_ids(
+            100,
+            [
+                {
+                    "row_index": 10,
+                    "existing_variation_id": "",
+                    "regular_price": "15",
+                    "attributes": [{"name": "RUnning", "option": "Walk"}],
+                }
+            ],
+        )
+
+        self.assertEqual(mapping, {10: 777})
+        self.assertIn(
+            ("POST", "products/100/variations", {"regular_price": "15", "attributes": [{"id": 1, "option": "Walk"}]}),
+            calls,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
