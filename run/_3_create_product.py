@@ -172,10 +172,10 @@ def ensure_category_translation(category_id: int, source_lang: str, target_lang:
     }
     wpml_auth = (config["wp_admin_user"], config["wp_admin_pass"])
     wpml_response = requests.post(
-        f"{WC_API_URL}/wp-json/custom-api/v1/set-translation/",
+        f"{WC_API_URL}/wp-json/custom-api/v1/set-term-translation/",
         auth=wpml_auth,
         headers=headers,
-        data=json.dumps(payload),
+        data=json.dumps({**payload, "taxonomy": "product_cat"}),
     )
     if wpml_response.status_code >= 400:
         raise requests.HTTPError(
