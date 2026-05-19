@@ -22,6 +22,7 @@ def send_acf_data_translation(base_url, product_id, acf_data, token):
 
 def create_product_translation_en(row, pt_product_id, attributes=None, last_variations=None, config=None):
     auth = HTTPBasicAuth(config["consumer_key"], config["consumer_secret"])
+    wpml_auth = HTTPBasicAuth(config["wp_admin_user"], config["wp_admin_pass"])
     base_url = config["wp_url"]
 
     logging.info("🌍 Создаём перевод продукта на английский")
@@ -189,7 +190,7 @@ def create_product_translation_en(row, pt_product_id, attributes=None, last_vari
             hook_response = requests.post(
                 f"{base_url}/wp-json/custom-api/v1/set-translation/",
                 json=hook_payload,
-                auth=auth
+                auth=wpml_auth
             )
 
             logging.debug("📡 Ответ WPML API: %s", hook_response.text)
