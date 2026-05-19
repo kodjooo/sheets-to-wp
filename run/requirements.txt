@@ -9,3 +9,4 @@ python-wordpress-xmlrpc==2.3
 woocommerce==3.0.0
 pytz==2024.2
 telethon==1.37.0
+pytest==8.3.5

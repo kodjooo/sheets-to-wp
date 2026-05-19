@@ -98,7 +98,7 @@ def load_translation_aliases(path: str = "/app/run/translation_aliases.json") ->
         with open(path, encoding="utf-8") as fh:
             payload = json.load(fh) or {}
     except Exception:
-        return {}, {}, {}, {}
+        return {}, {}, {}, {}, {}
     type_aliases = {_norm(k).replace("-", " "): _norm(v) for k, v in (payload.get("type_aliases") or {}).items()}
     value_aliases = {_norm(k).replace("-", " "): _norm(v) for k, v in (payload.get("value_aliases") or {}).items()}
     distance_aliases = {_norm(k).replace("-", " "): _norm(v) for k, v in (payload.get("distance_aliases") or {}).items()}

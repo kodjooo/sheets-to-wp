@@ -126,12 +126,6 @@ def _normalize_payload(payload):
     }
 
 
-def _drop_attr_ids(norm_key, attr_ids_to_drop: set[int]):
-    price, attrs = norm_key
-    filtered = tuple((attr_id, option) for attr_id, option in attrs if int(attr_id) not in attr_ids_to_drop)
-    return (price, filtered)
-
-
 def _normalize_existing_variation(variation):
     attrs = []
     for attr in variation.get("attributes", []):
@@ -176,7 +170,6 @@ def sync_variations_by_ids(product_id, variation_entries, lang: str | None = Non
         ).append(variation_id)
 
     row_to_variation_id = {}
-    desired_key_by_row = {}
     kept_ids = set()
 
     for entry in variation_entries:
@@ -184,8 +177,6 @@ def sync_variations_by_ids(product_id, variation_entries, lang: str | None = Non
         payload = _build_payload(entry, attr_name_to_id)
         desired_norm = _normalize_payload(payload)
         desired_key = (desired_norm["regular_price"], tuple(desired_norm["attributes"]))
-        if row_index is not None:
-            desired_key_by_row[row_index] = desired_key
         existing_id = _as_int(entry.get("existing_variation_id"))
 
         # Сначала пытаемся использовать ID из таблицы, но только если он реально соответствует текущей записи.
@@ -243,74 +234,6 @@ def sync_variations_by_ids(product_id, variation_entries, lang: str | None = Non
         response.raise_for_status()
         logging.info("🗑️ Вариация удалена: product=%s variation=%s", product_id, variation_id)
 
-    # Финальная дедупликация по фактическому состоянию в WooCommerce:
-    # если по одному ключу вариации (цена+атрибуты) осталось несколько ID,
-    # оставляем один, остальные удаляем.
-    final_variations = _load_all_variations(product_id, lang=lang)
-    by_key = {}
-    for variation in final_variations:
-        variation_id = _as_int(variation.get("id"))
-        if not variation_id:
-            continue
-        norm = _normalize_existing_variation(variation)
-        key = (norm["regular_price"], tuple(norm["attributes"]))
-        by_key.setdefault(key, []).append(variation_id)
-
-    for key, ids in by_key.items():
-        if len(ids) <= 1:
-            continue
-        keep_id = max(ids)
-        for duplicate_id in ids:
-            if duplicate_id == keep_id:
-                continue
-            endpoint = f"products/{product_id}/variations/{duplicate_id}"
-            if lang:
-                endpoint += f"?lang={lang}"
-            response = _wcapi_request_with_retry("DELETE", endpoint, {"force": True})
-            response.raise_for_status()
-            logging.info(
-                "🧹 Дубликат вариации удалён: product=%s keep=%s removed=%s key=%s",
-                product_id,
-                keep_id,
-                duplicate_id,
-                key,
-            )
-
-    # Пересобираем сопоставление row -> variation_id только по живым вариациям после дедупа.
-    alive_variations = _load_all_variations(product_id, lang=lang)
-    alive_by_key = {}
-    for variation in alive_variations:
-        variation_id = _as_int(variation.get("id"))
-        if not variation_id:
-            continue
-        norm = _normalize_existing_variation(variation)
-        key = (norm["regular_price"], tuple(norm["attributes"]))
-        alive_by_key.setdefault(key, []).append(variation_id)
-
-    reconciled = {}
-    for row_index, desired_key in desired_key_by_row.items():
-        ids = sorted(alive_by_key.get(desired_key, []))
-        # PT fallback: translated term values may differ from sheet EN values for translatable attrs.
-        # Match by stable attributes only (date/time/price etc.) when exact key lookup fails.
-        if not ids and lang == "pt":
-            fallback_drop_ids = {1, 3}  # Running / Distance
-            desired_relaxed = _drop_attr_ids(desired_key, fallback_drop_ids)
-            candidates = []
-            for key, key_ids in alive_by_key.items():
-                if _drop_attr_ids(key, fallback_drop_ids) == desired_relaxed:
-                    candidates.extend(key_ids)
-            ids = sorted(set(candidates))
-        if not ids:
-            logging.warning(
-                "⚠️ Не найдена вариация после финальной синхронизации: product=%s row=%s key=%s",
-                product_id,
-                row_index,
-                desired_key,
-            )
-            continue
-        reconciled[row_index] = ids[-1]
-
-    row_to_variation_id = reconciled
     return row_to_variation_id
 
 def create_variations(product_id, variation_data_list):
