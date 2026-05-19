@@ -84,6 +84,7 @@ from _3_create_product import (
     create_or_update_product as create_product_pt_primary,
     get_category_id_by_name,
     get_category_translation_id,
+    ensure_category_translation,
 )
 from _4_create_translation import create_or_update_product_pt as create_product_pt
 from _5_taxonomy_and_attributes import assign_attributes_to_product
@@ -201,6 +202,23 @@ def _build_pt_category_ids_from_en(row: dict) -> list[dict]:
                 "🧭 CATEGORY PT child translation (row_id=%s): en_child_id=%s -> pt_child_id=%s",
                 row.get("ID"), en_child_id, pt_child_id
             )
+            if not pt_child_id:
+                try:
+                    pt_child_id = ensure_category_translation(
+                        en_child_id,
+                        source_lang="en",
+                        target_lang="pt",
+                        target_parent_id=pt_parent_id,
+                    )
+                    logging.info(
+                        "🧭 CATEGORY PT child translation created (row_id=%s): en_child_id=%s -> pt_child_id=%s",
+                        row.get("ID"), en_child_id, pt_child_id
+                    )
+                except Exception as exc:
+                    logging.warning(
+                        "🧭 CATEGORY PT child translation create failed (row_id=%s): en_child_id=%s error=%s",
+                        row.get("ID"), en_child_id, exc
+                    )
             if pt_child_id and pt_child_id not in seen:
                 category_ids.append({"id": pt_child_id})
                 seen.add(pt_child_id)

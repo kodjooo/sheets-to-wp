@@ -143,6 +143,43 @@ def get_category_translation_id(category_id, target_lang):
         return int(translated_id)
     return None
 
+
+def ensure_category_translation(category_id: int, source_lang: str, target_lang: str, target_parent_id: int | None = None):
+    response = requests.get(
+        f"{WC_API_URL}/wp-json/wc/v3/products/categories/{category_id}",
+        auth=(WC_CONSUMER_KEY, WC_CONSUMER_SECRET),
+        params={"lang": "all"},
+    )
+    response.raise_for_status()
+    source_data = response.json() or {}
+    translations = source_data.get("translations") or {}
+    existing_target = translations.get(target_lang)
+    if existing_target:
+        return int(existing_target)
+
+    source_name = str(source_data.get("name") or "").strip()
+    if not source_name:
+        return None
+
+    target_id = get_category_id_by_name(source_name, parent_id=target_parent_id, lang=target_lang)
+    if not target_id:
+        return None
+
+    payload = {
+        "original_id": category_id if source_lang == "pt" else target_id,
+        "translated_id": target_id if source_lang == "pt" else category_id,
+        "lang_code": target_lang if source_lang == "pt" else source_lang,
+    }
+    wpml_auth = (config["wp_admin_user"], config["wp_admin_pass"])
+    wpml_response = requests.post(
+        f"{WC_API_URL}/wp-json/custom-api/v1/set-translation/",
+        auth=wpml_auth,
+        headers=headers,
+        data=json.dumps(payload),
+    )
+    wpml_response.raise_for_status()
+    return int(target_id)
+
 def get_jwt_token():
     admin_username = config["wp_admin_user"]
     admin_password = config["wp_admin_pass"]
