@@ -47,7 +47,7 @@ def _safe_wc_request(method: str, endpoint: str, **kwargs):
 def get_or_create_attribute(name):
     response = _safe_wc_request("get", "products/attributes")
     attributes = response.json()
-    existing_id = select_attribute_id(attributes, name)
+    existing_id = _select_attribute_id_lenient(attributes, name)
     if existing_id is not None:
         return existing_id
 
@@ -72,7 +72,7 @@ def get_or_create_attribute(name):
             )
             # Fallback: атрибут мог быть создан ранее/параллельно или конфликтует по slug.
             retry_attrs = _safe_wc_request("get", "products/attributes").json()
-            existing_id = select_attribute_id(retry_attrs, name)
+            existing_id = _select_attribute_id_lenient(retry_attrs, name)
             if existing_id is not None:
                 logging.warning(
                     "⚠️ Атрибут '%s' найден после 400 (ID=%s), используем его.",
@@ -90,6 +90,38 @@ def get_or_create_attribute(name):
             f"Не удалось создать атрибут '{name}': HTTP {create_response.status_code}. "
             f"Ответ: {create_response.text}"
         )
+
+
+def _select_attribute_id_lenient(attributes: list, name: str):
+    """Pick existing attribute ID even if Woo has duplicate slug/name rows."""
+    try:
+        return select_attribute_id(attributes, name)
+    except RuntimeError as err:
+        normalized_name = str(name).strip().lower()
+        normalized_slug = normalized_name.replace(" ", "-")
+        candidates = []
+        for attr in attributes or []:
+            attr_id = attr.get("id")
+            if attr_id is None:
+                continue
+            attr_slug = str(attr.get("slug", "")).strip().lower()
+            attr_name = str(attr.get("name", "")).strip().lower()
+            if attr_slug == normalized_slug or attr_name == normalized_name:
+                candidates.append(attr)
+        if not candidates:
+            logging.warning("⚠️ Не удалось выбрать атрибут '%s' после конфликта: %s", name, err)
+            return None
+        # Prefer the smallest ID as the oldest canonical attribute.
+        chosen = sorted(candidates, key=lambda x: int(x.get("id")))[0]
+        chosen_id = int(chosen.get("id"))
+        logging.warning(
+            "⚠️ Обнаружены дубли атрибута '%s', используем ID=%s (slug=%s, name=%s)",
+            name,
+            chosen_id,
+            chosen.get("slug"),
+            chosen.get("name"),
+        )
+        return chosen_id
 
 
 def get_or_create_attribute_term(attr_id, value, lang=None):
