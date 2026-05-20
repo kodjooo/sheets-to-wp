@@ -114,6 +114,7 @@ def _select_attribute_id_lenient(attributes: list, name: str):
     except RuntimeError as err:
         normalized_name = str(name).strip().lower()
         normalized_slug = normalized_name.replace(" ", "-")
+        normalized_slug_with_prefix = f"pa_{normalized_slug}"
         candidates = []
         for attr in attributes or []:
             attr_id = attr.get("id")
@@ -121,7 +122,7 @@ def _select_attribute_id_lenient(attributes: list, name: str):
                 continue
             attr_slug = str(attr.get("slug", "")).strip().lower()
             attr_name = str(attr.get("name", "")).strip().lower()
-            if attr_slug == normalized_slug or attr_name == normalized_name:
+            if attr_slug in {normalized_slug, normalized_slug_with_prefix} or attr_name == normalized_name:
                 candidates.append(attr)
         if not candidates:
             logging.warning("⚠️ Не удалось выбрать атрибут '%s' после конфликта: %s", name, err)

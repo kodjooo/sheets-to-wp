@@ -39,13 +39,15 @@ def normalize_attribute_payload(raw_attributes: dict) -> dict:
 def select_attribute_id(attributes: list, name: str):
     normalized_name = str(name).strip().lower()
     normalized_slug = normalized_name.replace(" ", "-")
+    normalized_slug_with_prefix = f"pa_{normalized_slug}"
 
     def _id_from(attr):
         return attr.get("id")
 
     slug_matches = [
         attr for attr in attributes
-        if str(attr.get("slug", "")).strip().lower() == normalized_slug and _id_from(attr) is not None
+        if str(attr.get("slug", "")).strip().lower() in {normalized_slug, normalized_slug_with_prefix}
+        and _id_from(attr) is not None
     ]
     if len(slug_matches) == 1:
         return _id_from(slug_matches[0])
