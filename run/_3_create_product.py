@@ -4,11 +4,13 @@ import base64
 import os
 import datetime
 import openai
+import logging
 from io import BytesIO
 from PIL import Image
 from wordpress_xmlrpc import Client, WordPressPost
 from wordpress_xmlrpc.methods import media, posts
 from wordpress_xmlrpc.compat import xmlrpc_client
+from openai import OpenAI
 
 from _1_google_loader import load_config
 from utils import normalize_category_pairs, parse_faq_items
@@ -22,6 +24,32 @@ WC_CONSUMER_SECRET = config["consumer_secret"]
 headers = {
     "Content-Type": "application/json"
 }
+_OPENAI_CLIENT = OpenAI(api_key=config.get("openai_api_key"))
+
+
+def _translate_category_name_to_pt(name: str) -> str:
+    text = str(name or "").strip()
+    if not text:
+        return ""
+    try:
+        response = _OPENAI_CLIENT.responses.create(
+            model=config.get("openai_text_model") or "gpt-4o-mini",
+            input=[
+                {
+                    "role": "system",
+                    "content": "Translate taxonomy labels from English to European Portuguese. "
+                    "Return only translated label text, no quotes or explanation.",
+                },
+                {"role": "user", "content": text},
+            ],
+            temperature=0,
+        )
+        translated = (response.output_text or "").strip()
+        if translated:
+            return translated
+    except Exception as exc:
+        logging.warning("⚠️ Category translation EN->PT failed for '%s': %s", text, exc)
+    return text
 
 def download_image_from_url(image_url):
     """
@@ -161,7 +189,11 @@ def ensure_category_translation(category_id: int, source_lang: str, target_lang:
     if not source_name:
         return None
 
-    target_id = get_category_id_by_name(source_name, parent_id=target_parent_id, lang=target_lang)
+    target_name = source_name
+    if source_lang == "en" and target_lang == "pt":
+        target_name = _translate_category_name_to_pt(source_name)
+
+    target_id = get_category_id_by_name(target_name, parent_id=target_parent_id, lang=target_lang)
     if not target_id:
         return None
 
