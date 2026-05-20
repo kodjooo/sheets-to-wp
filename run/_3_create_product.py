@@ -107,15 +107,22 @@ def get_category_id_by_name(name, parent_id=None, lang=None):
     Если parent_id указан, ищет категорию с этим родителем.
     Если parent_id не указан — ищет категорию с parent == 0 (верхний уровень).
     """
-    # Ищем категорию по имени
-    response = requests.get(
-        WC_API_URL + "/wp-json/wc/v3/products/categories",
-        auth=(WC_CONSUMER_KEY, WC_CONSUMER_SECRET),
-        params={"search": name, **({"lang": lang} if lang else {})}
-    )
-    response.raise_for_status()
-    print("🔍 Ответ от WooCommerce (категории):", response.text)
-    categories = response.json()
+    categories = []
+    page = 1
+    while True:
+        response = requests.get(
+            WC_API_URL + "/wp-json/wc/v3/products/categories",
+            auth=(WC_CONSUMER_KEY, WC_CONSUMER_SECRET),
+            params={"search": name, "per_page": 100, "page": page, **({"lang": lang} if lang else {})}
+        )
+        response.raise_for_status()
+        batch = response.json() or []
+        if not isinstance(batch, list) or not batch:
+            break
+        categories.extend(batch)
+        if len(batch) < 100:
+            break
+        page += 1
 
     print(f"🔍 Поиск категории '{name}': {len(categories)} найдено")
     # Фильтруем категории по точному совпадению имени
@@ -150,6 +157,18 @@ def get_category_id_by_name(name, parent_id=None, lang=None):
         headers=headers,
         data=json.dumps(payload)
     )
+    if create_response.status_code == 400:
+        try:
+            error_data = create_response.json()
+        except ValueError:
+            error_data = {}
+        existing_id = (
+            error_data.get("data", {}).get("resource_id")
+            or error_data.get("data", {}).get("term_id")
+        )
+        if existing_id:
+            print(f"⚠️ Категория '{name}' уже существует (ID={existing_id}), используем её.")
+            return int(existing_id)
     create_response.raise_for_status()
     print("🔍 Ответ от WooCommerce (категория создана):", create_response.text)
     created_cat = create_response.json()

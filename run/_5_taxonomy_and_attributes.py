@@ -45,8 +45,7 @@ def _safe_wc_request(method: str, endpoint: str, **kwargs):
 
 
 def get_or_create_attribute(name):
-    response = _safe_wc_request("get", "products/attributes")
-    attributes = response.json()
+    attributes = _list_all_attributes()
     existing_id = _select_attribute_id_lenient(attributes, name)
     if existing_id is not None:
         return existing_id
@@ -71,7 +70,7 @@ def get_or_create_attribute(name):
                 create_response.text,
             )
             # Fallback: атрибут мог быть создан ранее/параллельно или конфликтует по slug.
-            retry_attrs = _safe_wc_request("get", "products/attributes").json()
+            retry_attrs = _list_all_attributes()
             existing_id = _select_attribute_id_lenient(retry_attrs, name)
             if existing_id is not None:
                 logging.warning(
@@ -90,6 +89,22 @@ def get_or_create_attribute(name):
             f"Не удалось создать атрибут '{name}': HTTP {create_response.status_code}. "
             f"Ответ: {create_response.text}"
         )
+
+
+def _list_all_attributes() -> list:
+    """Fetch all WooCommerce global attributes with pagination."""
+    all_attrs = []
+    page = 1
+    while True:
+        response = _safe_wc_request("get", "products/attributes", params={"per_page": 100, "page": page})
+        chunk = response.json() or []
+        if not isinstance(chunk, list) or not chunk:
+            break
+        all_attrs.extend(chunk)
+        if len(chunk) < 100:
+            break
+        page += 1
+    return all_attrs
 
 
 def _select_attribute_id_lenient(attributes: list, name: str):
@@ -135,11 +150,7 @@ def get_or_create_attribute_term(attr_id, value, lang=None):
         logging.warning(f"⚠️ Пустое значение терма для атрибута ID={attr_id}, пропускаем создание терма.")
         return None
 
-    endpoint = f"products/attributes/{attr_id}/terms"
-    if lang:
-        endpoint += f"?lang={lang}"
-    response = _safe_wc_request("get", endpoint)
-    terms = response.json()
+    terms = _list_all_attribute_terms(attr_id, lang=lang)
 
     for term in terms:
         if term['name'].lower() == value.lower():
@@ -174,6 +185,25 @@ def get_or_create_attribute_term(attr_id, value, lang=None):
 
         logging.error(f"❌ Ошибка при создании терма '{value}' для атрибута {attr_id}: {response.text}")
         raise
+
+
+def _list_all_attribute_terms(attr_id: int, lang: str | None = None) -> list:
+    terms = []
+    page = 1
+    while True:
+        endpoint = f"products/attributes/{attr_id}/terms"
+        params = {"per_page": 100, "page": page}
+        if lang:
+            params["lang"] = lang
+        response = _safe_wc_request("get", endpoint, params=params)
+        batch = response.json() or []
+        if not isinstance(batch, list) or not batch:
+            break
+        terms.extend(batch)
+        if len(batch) < 100:
+            break
+        page += 1
+    return terms
 
 
 def assign_attributes_to_product(product_id, attributes_dict, lang=None):
