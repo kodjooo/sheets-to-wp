@@ -96,11 +96,37 @@ def _build_product_attr_map(product_id):
     for attr in product_attributes:
         if "id" not in attr:
             continue
+        attr_id = _as_int(attr.get("id"))
+        if not attr_id:
+            continue
         raw_name = _norm_text(attr.get("name"))
         if not raw_name:
             continue
-        mapping[raw_name] = attr["id"]
-        mapping[_norm_key(raw_name)] = attr["id"]
+        mapping[raw_name] = attr_id
+        mapping[_norm_key(raw_name)] = attr_id
+    # Add stable slug/name aliases from global attribute registry (language-agnostic).
+    try:
+        global_attrs = _wcapi_request_with_retry("GET", "products/attributes?per_page=100&page=1").json() or []
+        for item in global_attrs:
+            attr_id = _as_int(item.get("id"))
+            if not attr_id:
+                continue
+            slug = _norm_text(item.get("slug"))
+            if slug:
+                mapping[slug] = attr_id
+                mapping[_norm_key(slug)] = attr_id
+                if slug.startswith("pa_"):
+                    base = slug[3:]
+                    mapping[base] = attr_id
+                    mapping[_norm_key(base)] = attr_id
+                    mapping[base.replace("-", " ")] = attr_id
+                    mapping[_norm_key(base.replace("-", " "))] = attr_id
+            name = _norm_text(item.get("name"))
+            if name:
+                mapping[name] = attr_id
+                mapping[_norm_key(name)] = attr_id
+    except Exception as exc:
+        logging.warning("⚠️ Не удалось обогатить карту атрибутов из global registry: %s", exc)
     return mapping
 
 
