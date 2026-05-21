@@ -520,14 +520,6 @@ def run_automation():
                         var_attrs = []
                         if sub_row.get("ATTRIBUTE") and sub_row.get("VALUE"):
                             var_attrs.append({"name": normalize_attribute_name(sub_row["ATTRIBUTE"]), "option": sub_row["VALUE"]})
-                        variation_category = sub_row.get("CATEGORY")
-                        if variation_category:
-                            variation_subcategories = parse_subcategory_values(sub_row.get("SUBCATEGORY"))
-                            if variation_subcategories:
-                                for subcategory in variation_subcategories:
-                                    last_main_row["extra_categories"].add((variation_category, subcategory))
-                            else:
-                                last_main_row["extra_categories"].add((variation_category, None))
                         for attr_name, col in [
                             ("Distance", "DISTANCE"),
                             ("Team", "TEAM"),
