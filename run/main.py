@@ -616,7 +616,7 @@ def run_automation():
                     last_main_row,
                     pt_product_id,
                     attributes=attr_payload,
-                    last_variations=None,
+                    last_variations=variation_entries_en,
                     config=config,
                     existing_pt_product_id=existing_en_product_id or None
                 )
