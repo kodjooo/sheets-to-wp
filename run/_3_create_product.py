@@ -143,8 +143,21 @@ def get_category_id_by_name(name, parent_id=None, lang=None):
     print(f"❌ Точная категория '{name}' не найдена с parent_id={parent_id}")
 
     # Если не найдено — создаём категорию
+    def _display_category_name(value: str) -> str:
+        raw = str(value or "").strip()
+        if not raw:
+            return raw
+        words = []
+        for token in raw.split():
+            if token.isupper():
+                words.append(token)
+            else:
+                words.append(token[:1].upper() + token[1:])
+        return " ".join(words)
+
+    display_name = _display_category_name(name)
     payload = {
-        "name": name,
+        "name": display_name,
         "slug": name.lower().replace(" ", "-")
     }
     if parent_id:
@@ -172,7 +185,7 @@ def get_category_id_by_name(name, parent_id=None, lang=None):
     create_response.raise_for_status()
     print("🔍 Ответ от WooCommerce (категория создана):", create_response.text)
     created_cat = create_response.json()
-    print(f"🆕 Создана категория '{name}' с ID {created_cat.get('id')}")
+    print(f"🆕 Создана категория '{display_name}' с ID {created_cat.get('id')}")
     return created_cat.get("id")
 
 
