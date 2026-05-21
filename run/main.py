@@ -151,6 +151,26 @@ def _write_variation_ids_to_sheet(row_to_variation_id: dict, column_name: str, h
         batch_update_cells(target_row_index, {column_name: str(variation_id)}, headers)
 
 
+def _norm_category_key(value: str) -> str:
+    return " ".join(str(value or "").strip().lower().split())
+
+
+def _load_category_root_map() -> dict[str, dict[str, int]]:
+    raw = os.getenv("CATEGORY_ROOT_MAP_JSON", "").strip()
+    if not raw:
+        return {}
+    parsed = json.loads(raw)
+    result = {}
+    for key, value in parsed.items():
+        if not isinstance(value, dict):
+            continue
+        en_id = int(value.get("en_parent_id") or 0)
+        pt_id = int(value.get("pt_parent_id") or 0)
+        if en_id and pt_id:
+            result[_norm_category_key(key)] = {"en_parent_id": en_id, "pt_parent_id": pt_id}
+    return result
+
+
 def _build_pt_category_ids_from_en(row: dict) -> list[dict]:
     categories_raw = []
     main_category = row.get("CATEGORY")
@@ -166,16 +186,21 @@ def _build_pt_category_ids_from_en(row: dict) -> list[dict]:
     normalized_pairs = normalize_category_pairs(categories_raw)
     logging.debug("🧭 CATEGORY MAP INPUT (row_id=%s): raw=%s normalized=%s", row.get("ID"), categories_raw, normalized_pairs)
 
+    root_map = _load_category_root_map()
     category_ids = []
     seen = set()
     for parent_name, child_name in normalized_pairs:
         logging.debug("🧭 CATEGORY PAIR START (row_id=%s): parent='%s' child='%s'", row.get("ID"), parent_name, child_name)
-        en_parent_id = get_category_id_by_name(parent_name, lang="en")
-        if not en_parent_id:
-            logging.warning("🧭 CATEGORY SKIP: EN parent not found (row_id=%s, parent='%s')", row.get("ID"), parent_name)
-            continue
+        root_key = _norm_category_key(parent_name)
+        mapped = root_map.get(root_key)
+        if not mapped:
+            raise RuntimeError(
+                f"CATEGORY '{parent_name}' отсутствует в CATEGORY_ROOT_MAP_JSON. "
+                f"Публикация ID={row.get('ID')} остановлена."
+            )
+        en_parent_id = mapped["en_parent_id"]
         logging.debug("🧭 CATEGORY EN parent resolved (row_id=%s): '%s' -> %s", row.get("ID"), parent_name, en_parent_id)
-        pt_parent_id = get_category_translation_id(en_parent_id, "pt")
+        pt_parent_id = mapped["pt_parent_id"]
         logging.debug("🧭 CATEGORY PT parent translation (row_id=%s): en_parent_id=%s -> pt_parent_id=%s", row.get("ID"), en_parent_id, pt_parent_id)
         if pt_parent_id and pt_parent_id not in seen:
             category_ids.append({"id": pt_parent_id})
@@ -188,11 +213,10 @@ def _build_pt_category_ids_from_en(row: dict) -> list[dict]:
         if child_name:
             en_child_id = get_category_id_by_name(child_name, parent_id=en_parent_id, lang="en")
             if not en_child_id:
-                logging.warning(
-                    "🧭 CATEGORY SKIP: EN child not found (row_id=%s, parent='%s'[%s], child='%s')",
-                    row.get("ID"), parent_name, en_parent_id, child_name
+                raise RuntimeError(
+                    f"Не удалось найти/создать EN child '{child_name}' под parent_id={en_parent_id} "
+                    f"(ID={row.get('ID')})."
                 )
-                continue
             logging.debug(
                 "🧭 CATEGORY EN child resolved (row_id=%s): '%s' under parent_id=%s -> child_id=%s",
                 row.get("ID"), child_name, en_parent_id, en_child_id
