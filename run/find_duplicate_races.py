@@ -409,7 +409,7 @@ def write_report_tab(rows: list[list], tab_name: str):
     except gspread.WorksheetNotFound:
         ws = spreadsheet.add_worksheet(title=tab_name, rows=max(len(rows) + 10, 100), cols=len(REPORT_HEADER))
         logger.info("➕ Создана вкладка '%s'", tab_name)
-    ws.update(rows, value_input_option="RAW")
+    ws.update(rows)  # raw=True по умолчанию — пишем значения как есть
     logger.info("✅ Записано строк в отчёт: %d (групп-дублей: %d)", len(rows) - 1, max(int(rows[-1][0]) if len(rows) > 1 else 0, 0))
 
 
