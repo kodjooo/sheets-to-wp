@@ -42,7 +42,9 @@ from _1_google_loader import load_config, _load_credentials, load_all_rows, SPRE
 logger = logging.getLogger("DuplicateFinder")
 
 # --- Пороги (консервативные: лучше пропустить сомнительное, чем нафлудить) ---
-NAME_SIM_MIN = 0.62           # минимальная похожесть имени, чтобы пара вообще рассматривалась
+# Дубль = ПОЧТИ ИДЕНТИЧНОЕ имя. Разные суб-события одного организатора в один
+# день (общий URL/локация, разные названия) — НЕ дубли, поэтому имя обязательно.
+NAME_SIM_MIN = 0.85           # минимальная похожесть имени для попадания в отчёт
 SCORE_REPORT_THRESHOLD = 65   # ниже этого балла пара не попадает в отчёт
 GEO_MAX_KM = 10.0             # «та же локация» — в пределах этого радиуса
 
@@ -284,35 +286,25 @@ def candidate_pairs(records: list[dict]):
                     yield pair
 
 
-# Минимальная похожесть имени, когда дата НЕ подтверждает совпадение
-# (обе даты известны и равны — самый сильный сигнал; иначе имя должно быть почти идентичным).
-NAME_SIM_STRICT = 0.88
-
-
 def score_pair(x: dict, y: dict) -> tuple[int, list[str]]:
+    # 1) Имя должно быть почти идентичным — иначе это разные гонки.
     sim = name_similarity(x["norm"], x["tokens"], y["norm"], y["tokens"])
-    same_url = bool(x["website"]) and x["website"] == y["website"]
-    if sim < NAME_SIM_MIN and not same_url:
+    if sim < NAME_SIM_MIN:
         return 0, []
 
+    # 2) Логика клиента: разные известные даты => разные издания, а не дубль.
     xd, yd = x["date"], y["date"]
-    # Логика клиента: разные известные даты => разные издания, а не дубль.
     if xd and yd and xd != yd:
         return 0, []
     same_date = bool(xd) and xd == yd
 
+    same_url = bool(x["website"]) and x["website"] == y["website"]
     dist = haversine_km(x["lat"], x["lon"], y["lat"], y["lon"])
     geo_close = dist is not None and dist <= GEO_MAX_KM
 
-    # Гейт: если дата НЕ подтверждает (хотя бы одна отсутствует), требуем
-    # почти идентичное имя И хотя бы один вспомогательный сигнал (URL/гео).
-    # Это отсекает «общий URL федерации» у разных ивентов.
-    if same_date:
-        if sim < NAME_SIM_MIN and not same_url:
-            return 0, []
-    else:
-        if sim < NAME_SIM_STRICT or not (same_url or geo_close):
-            return 0, []
+    # 3) Нужен хотя бы один подтверждающий сигнал (дата/URL/гео).
+    if not (same_date or same_url or geo_close):
+        return 0, []
 
     reasons = []
     score = sim * 50
