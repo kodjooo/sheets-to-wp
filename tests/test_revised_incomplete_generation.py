@@ -223,6 +223,59 @@ class RevisedIncompleteGenerationTests(unittest.TestCase):
         self.assertIsNotNone(status_update)
         self.assertEqual(status_update.get("STATUS"), main.STATUS_PUBLISHED_INCOMPLETE)
 
+    @patch.object(main, "create_product_pt_primary", return_value=202)
+    @patch.object(main, "sync_variations_by_ids", return_value={})
+    @patch.object(main, "assign_attributes_to_product")
+    @patch.object(main, "create_product_pt", return_value=101)
+    @patch.object(main, "create_product_en", return_value=101)
+    @patch.object(main, "compute_website_hash", return_value=("snapshot-hash", "normalized"))
+    @patch.object(main, "translate_title_to_en", return_value="Race Name EN")
+    @patch.object(main, "extract_text_from_url", return_value=("source text", None))
+    @patch.object(main, "build_first_assistant_prompt", return_value="combined source text")
+    @patch.object(main, "validate_source_texts", return_value=[])
+    @patch.object(main, "generate_image", return_value={"url": "", "id": None})
+    @patch.object(main, "call_openai_assistant", return_value={"facts": "ok"})
+    @patch.object(main, "call_second_openai_assistant", return_value={"summary": "s"})
+    @patch.object(main, "get_missing_pt_fields", return_value=[])
+    @patch.object(main, "get_coordinates_with_city_fallback", return_value=(1.0, 2.0))
+    @patch.object(main, "load_config", return_value={"wp_url": "https://example.test", "consumer_key": "ck", "consumer_secret": "cs"})
+    @patch.object(main, "log_network_diagnostics")
+    @patch.object(main.requests, "get", return_value=_FakeResponse({"slug": "race-slug", "permalink": "https://example.test/event/race-slug"}))
+    def test_subcategories_collected_from_variation_rows(self, *_mocks):
+        """Подкатегории со строк-вариаций (Trail Run / Walking / Kids) должны все
+        попадать в extra_categories, а не только подкатегория главной строки."""
+        main_row = {
+            "ID": "1", "STATUS": "Revised (complete)", "RACE NAME (PT)": "Corrida Teste",
+            "WEBSITE": "https://example.com", "REGULATIONS": "",
+            "CATEGORY": "Running", "SUBCATEGORY": "Trail Run",
+            "ATTRIBUTE": "", "VALUE": "", "PRICE": "10",
+            "LOCATION": "Lisbon", "LOCATION (CITY)": "Lisbon",
+            "WP PRODUCT ID EN": "", "WP PRODUCT ID PT": "",
+            "WP VARIATION ID EN": "", "WP VARIATION ID PT": "",
+        }
+        var_walking = dict(main_row, ID="", STATUS="", SUBCATEGORY="Walking", DISTANCE="10 km")
+        var_kids = dict(main_row, ID="", STATUS="", SUBCATEGORY="Kids", DISTANCE="")
+        headers = {"STATUS": 9}
+        rows = [(2, main_row), (3, var_walking), (4, var_kids)]
+
+        captured = {}
+
+        def _spy(row):
+            captured["extra"] = set(row.get("extra_categories") or [])
+            return []
+
+        with patch.dict("os.environ", {"CATEGORY_ROOT_MAP_JSON": "{}"}):
+            with patch.object(main, "load_all_rows", return_value=(rows, headers)):
+                with patch.object(main, "batch_update_cells"):
+                    with patch.object(main, "_build_pt_category_ids_from_en", side_effect=_spy):
+                        with patch.object(main, "SKIP_AI", True):
+                            with patch.object(main, "SKIP_IMAGE", True):
+                                main.run_automation()
+
+        self.assertIn(("Running", "Trail Run"), captured.get("extra", set()))
+        self.assertIn(("Running", "Walking"), captured.get("extra", set()))
+        self.assertIn(("Running", "Kids"), captured.get("extra", set()))
+
 
 if __name__ == "__main__":
     unittest.main()

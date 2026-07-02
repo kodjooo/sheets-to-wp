@@ -518,6 +518,17 @@ def run_automation():
                     ):
                         break
                     if sub_status == "":
+                        # Подкатегории из строк-вариаций (Trail Run / Walking / Kids
+                        # и т.п. живут на разных строках блока) — собираем все, иначе
+                        # применится только подкатегория главной строки.
+                        var_category = sub_row.get("CATEGORY")
+                        if var_category:
+                            var_subcategories = parse_subcategory_values(sub_row.get("SUBCATEGORY"))
+                            if var_subcategories:
+                                for subcategory in var_subcategories:
+                                    last_main_row["extra_categories"].add((var_category, subcategory))
+                            else:
+                                last_main_row["extra_categories"].add((var_category, None))
                         var_attrs = []
                         if sub_row.get("ATTRIBUTE") and sub_row.get("VALUE"):
                             var_attrs.append({"name": normalize_attribute_name(sub_row["ATTRIBUTE"]), "option": sub_row["VALUE"]})
