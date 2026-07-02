@@ -384,25 +384,47 @@ def find_duplicate_groups(records: list[dict]):
 # --------------------------- Отчёт ---------------------------
 
 REPORT_HEADER = [
-    "GROUP", "SCORE", "MATCH REASONS", "PRODUCT ID", "STATUS",
-    "RACE NAME", "DATE", "LOCATION", "WEBSITE", "PERMALINK",
+    "GROUP", "RACE NAME", "STATUS", "DATE", "LOCATION",
+    "SUGGESTED", "DECISION", "NOTES",
+    "SCORE", "MATCH REASONS", "PRODUCT ID", "WEBSITE", "PERMALINK",
 ]
+DECISION_OPTIONS = ["Keep", "Delete", "Not a duplicate"]
+
+
+def _pick_keeper(indices, records):
+    """Кого предлагаем оставить: приоритет опубликованному, затем меньший ID
+    (более старый = каноничный, накопил ссылки/SEO)."""
+    def sort_key(i):
+        r = records[i]
+        status_rank = 0 if r["status"] == "publish" else 1
+        try:
+            id_val = int(r["id"])
+        except (TypeError, ValueError):
+            id_val = 10 ** 12
+        return (status_rank, id_val)
+
+    return sorted(indices, key=sort_key)[0]
 
 
 def build_report_rows(groups, records) -> list[list]:
     rows = [REPORT_HEADER]
     for gi, group in enumerate(groups, start=1):
+        keeper = _pick_keeper(group["indices"], records)
         for idx in group["indices"]:
             r = records[idx]
+            suggested = "Keep" if idx == keeper else "Delete"
             rows.append([
                 gi,
+                r["name"],
+                r["status"],
+                r["date"],
+                r["location"],
+                suggested,
+                "",   # DECISION — заполняет клиент
+                "",   # NOTES
                 group["score"],
                 ", ".join(group["reasons"]),
                 r["id"],
-                r["status"],
-                r["name"],
-                r["date"],
-                r["location"],
                 r["website_raw"],
                 r["permalink"],
             ])
@@ -421,7 +443,68 @@ def write_report_tab(rows: list[list], tab_name: str):
         ws = spreadsheet.add_worksheet(title=tab_name, rows=max(len(rows) + 10, 100), cols=len(REPORT_HEADER))
         logger.info("➕ Создана вкладка '%s'", tab_name)
     ws.update(rows)  # raw=True по умолчанию — пишем значения как есть
+    _apply_formatting(spreadsheet, ws, rows)
     logger.info("✅ Записано строк в отчёт: %d (групп-дублей: %d)", len(rows) - 1, max(int(rows[-1][0]) if len(rows) > 1 else 0, 0))
+
+
+# Чередующиеся мягкие цвета фона для соседних групп (чтобы видеть, что с чем сравнивается).
+_GROUP_COLORS = [
+    {"red": 0.85, "green": 0.92, "blue": 1.00},   # голубой
+    {"red": 0.87, "green": 0.95, "blue": 0.85},   # зелёный
+    {"red": 1.00, "green": 0.95, "blue": 0.80},   # жёлтый
+    {"red": 0.96, "green": 0.86, "blue": 0.90},   # розовый
+]
+
+
+def _apply_formatting(spreadsheet, ws, rows):
+    sheet_id = ws.id
+    ncols = len(REPORT_HEADER)
+    requests = [
+        # жирная шапка
+        {"repeatCell": {
+            "range": {"sheetId": sheet_id, "startRowIndex": 0, "endRowIndex": 1},
+            "cell": {"userEnteredFormat": {"textFormat": {"bold": True}}},
+            "fields": "userEnteredFormat.textFormat.bold",
+        }},
+        # заморозка шапки
+        {"updateSheetProperties": {
+            "properties": {"sheetId": sheet_id, "gridProperties": {"frozenRowCount": 1}},
+            "fields": "gridProperties.frozenRowCount",
+        }},
+    ]
+
+    # выпадающий список в колонке DECISION
+    dcol = REPORT_HEADER.index("DECISION")
+    requests.append({"setDataValidation": {
+        "range": {"sheetId": sheet_id, "startRowIndex": 1, "endRowIndex": len(rows),
+                  "startColumnIndex": dcol, "endColumnIndex": dcol + 1},
+        "rule": {
+            "condition": {"type": "ONE_OF_LIST",
+                          "values": [{"userEnteredValue": v} for v in DECISION_OPTIONS]},
+            "showCustomUi": True, "strict": False,
+        },
+    }})
+
+    # раскраска групп: соседние группы — разные цвета; строки одной группы идут подряд
+    group_index = 0
+    start = 1  # строка данных (0 — шапка)
+    while start < len(rows):
+        current_group = rows[start][0]
+        end = start
+        while end < len(rows) and rows[end][0] == current_group:
+            end += 1
+        color = _GROUP_COLORS[group_index % len(_GROUP_COLORS)]
+        requests.append({"repeatCell": {
+            "range": {"sheetId": sheet_id, "startRowIndex": start, "endRowIndex": end,
+                      "startColumnIndex": 0, "endColumnIndex": ncols},
+            "cell": {"userEnteredFormat": {"backgroundColor": color}},
+            "fields": "userEnteredFormat.backgroundColor",
+        }})
+        group_index += 1
+        start = end
+
+    spreadsheet.batch_update({"requests": requests})
+    logger.info("🎨 Применено форматирование: %d групп раскрашено, dropdown в DECISION", group_index)
 
 
 def main():
