@@ -255,8 +255,10 @@ class RevisedIncompleteGenerationTests(unittest.TestCase):
         }
         var_walking = dict(main_row, ID="", STATUS="", SUBCATEGORY="Walking", DISTANCE="10 km")
         var_kids = dict(main_row, ID="", STATUS="", SUBCATEGORY="Kids", DISTANCE="")
+        # строка-вариация ЧУЖОЙ категории — не должна попасть (межкатегорийное засорение)
+        var_cross = dict(main_row, ID="", STATUS="", CATEGORY="Cycling", SUBCATEGORY="BTT", DISTANCE="20 km")
         headers = {"STATUS": 9}
-        rows = [(2, main_row), (3, var_walking), (4, var_kids)]
+        rows = [(2, main_row), (3, var_walking), (4, var_kids), (5, var_cross)]
 
         captured = {}
 
@@ -272,9 +274,13 @@ class RevisedIncompleteGenerationTests(unittest.TestCase):
                             with patch.object(main, "SKIP_IMAGE", True):
                                 main.run_automation()
 
-        self.assertIn(("Running", "Trail Run"), captured.get("extra", set()))
-        self.assertIn(("Running", "Walking"), captured.get("extra", set()))
-        self.assertIn(("Running", "Kids"), captured.get("extra", set()))
+        extra = captured.get("extra", set())
+        self.assertIn(("Running", "Trail Run"), extra)
+        self.assertIn(("Running", "Walking"), extra)
+        self.assertIn(("Running", "Kids"), extra)
+        # чужая категория со строки-вариации не должна засорять гонку
+        self.assertNotIn(("Cycling", "BTT"), extra)
+        self.assertNotIn(("Running", "BTT"), extra)
 
 
 if __name__ == "__main__":
