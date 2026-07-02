@@ -205,9 +205,15 @@ def build_product_id_to_website(rows) -> dict:
 
 def build_records(products: list[dict], id_to_website: dict) -> list[dict]:
     records = []
+    seen_ids = set()
     for p in products:
-        meta = _meta_map(p)
         pid = str(p.get("id", ""))
+        # WC API (пагинация + WPML) может вернуть один и тот же продукт несколько
+        # раз — иначе он спарится «сам с собой». Оставляем только первое вхождение.
+        if pid in seen_ids:
+            continue
+        seen_ids.add(pid)
+        meta = _meta_map(p)
         name = (p.get("name") or "").strip()
         norm, tokens = normalize_name(name)
         website = id_to_website.get(pid, "") or meta.get("event_ticket_url", "") or ""
