@@ -35,6 +35,7 @@ test.txt
 
 # Виртуальные окружения
 .venv/
+.venv*/
 venv/
 env/
 

@@ -145,11 +145,19 @@ def extract_text_from_url(url):
             # Для PDF файлов (включая Google Drive)
             response = _fetch_with_retries(direct_url)
             
-            # Проверяем, что получили именно PDF, а не HTML страницу с ошибкой
+            # Проверяем, что получили именно PDF, а не HTML страницу (обёртка/ошибка)
             content_type = response.headers.get('content-type', '').lower()
             if 'text/html' in content_type and 'drive.google.com' in direct_url:
                 logger.warning(f"⚠️ Google Drive файл может быть недоступен для публичного скачивания: {url}")
                 logger.warning("⚠️ Убедитесь, что файл имеет публичный доступ")
+                return "", None
+            is_pdf_bytes = response.content[:5] == b"%PDF-"
+            if 'text/html' in content_type or not is_pdf_bytes:
+                logger.warning(
+                    "⚠️ Ожидался PDF, но получен не-PDF контент (content-type=%s) для %s — пропускаем загрузку файла",
+                    content_type,
+                    url
+                )
                 return "", None
             
             pdf_path = "/tmp/temp.pdf"

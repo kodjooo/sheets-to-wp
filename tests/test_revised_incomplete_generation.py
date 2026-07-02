@@ -64,6 +64,8 @@ if "_3_create_product" not in sys.modules:
     cp_stub = types.ModuleType("_3_create_product")
     cp_stub.create_or_update_product = lambda *args, **kwargs: 0
     cp_stub.get_category_id_by_name = lambda *args, **kwargs: 0
+    cp_stub.get_category_translation_id = lambda *args, **kwargs: 0
+    cp_stub.ensure_category_translation = lambda *args, **kwargs: 0
     sys.modules["_3_create_product"] = cp_stub
 
 if "_4_create_translation" not in sys.modules:
@@ -86,6 +88,10 @@ if "utils" not in sys.modules:
     utils_stub.normalize_attribute_payload = lambda payload: payload or {}
     utils_stub.parse_subcategory_values = lambda value: [v.strip() for v in str(value).split(",") if v.strip()]
     utils_stub.get_missing_pt_fields = lambda _result: []
+    utils_stub.normalize_category_pairs = lambda pairs: [
+        (c, (s or None)) for c, s in pairs if c
+    ]
+    utils_stub.normalize_attribute_name = lambda name: name
     sys.modules["utils"] = utils_stub
 
 if "website_snapshot" not in sys.modules:
@@ -110,6 +116,7 @@ class _FakeResponse:
 
 
 class RevisedIncompleteGenerationTests(unittest.TestCase):
+    @patch.object(main, "create_product_pt_primary", return_value=202)
     @patch.object(main, "sync_variations_by_ids", return_value={})
     @patch.object(main, "assign_attributes_to_product")
     @patch.object(main, "create_product_pt", return_value=202)
@@ -160,6 +167,7 @@ class RevisedIncompleteGenerationTests(unittest.TestCase):
         _mock_create_pt,
         _mock_assign_attrs,
         _mock_sync_vars,
+        _mock_create_pt_primary,
     ):
         row = {
             "ID": "1",
@@ -196,11 +204,13 @@ class RevisedIncompleteGenerationTests(unittest.TestCase):
         def _capture_update(row_index, values, _headers):
             updates.append((row_index, values.copy()))
 
-        with patch.object(main, "load_all_rows", return_value=([(2, row)], headers)):
-            with patch.object(main, "batch_update_cells", side_effect=_capture_update):
-                with patch.object(main, "SKIP_AI", False):
-                    with patch.object(main, "SKIP_IMAGE", True):
-                        main.run_automation()
+        category_root_map = '{"road": {"en_parent_id": 10, "pt_parent_id": 11}}'
+        with patch.dict("os.environ", {"CATEGORY_ROOT_MAP_JSON": category_root_map}):
+            with patch.object(main, "load_all_rows", return_value=([(2, row)], headers)):
+                with patch.object(main, "batch_update_cells", side_effect=_capture_update):
+                    with patch.object(main, "SKIP_AI", False):
+                        with patch.object(main, "SKIP_IMAGE", True):
+                            main.run_automation()
 
         ai_update = next((values for _idx, values in updates if "SUMMARY" in values and "FAQ (PT)" in values), None)
         self.assertIsNotNone(ai_update, "Expected AI fields update for Revised (incomplete)")

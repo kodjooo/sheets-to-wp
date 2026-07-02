@@ -79,6 +79,7 @@ from _2_content_generation import (
     get_coordinates_with_city_fallback,
     translate_title_to_en
 )
+from url_utils import unwrap_google_viewer_url
 
 from _3_create_product import (
     create_or_update_product as create_product_pt_primary,
@@ -348,7 +349,7 @@ def run_automation():
                 ):
                     website_text, _ = extract_text_from_url(row.get("WEBSITE", ""))
 
-                    regulations_url = row.get("REGULATIONS", "")
+                    regulations_url = unwrap_google_viewer_url(row.get("REGULATIONS", ""))
                     regulations_text, pdf_path = "", None
                     file_ids = []
                     if regulations_url:
