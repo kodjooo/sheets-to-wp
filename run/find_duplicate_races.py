@@ -46,13 +46,13 @@ NAME_SIM_MIN = 0.62           # минимальная похожесть име
 SCORE_REPORT_THRESHOLD = 65   # ниже этого балла пара не попадает в отчёт
 GEO_MAX_KM = 10.0             # «та же локация» — в пределах этого радиуса
 
-# Слова-шум в названиях гонок (убираем перед сравнением).
+# Слова-шум: ТОЛЬКО артикли/предлоги и маркеры издания. Названия форматов
+# (maratona, meia, trail, triatlo, btt...) НЕ убираем — они различают гонки
+# (полумарафон ≠ марафон). Слишком частые токены и так отсекаются порогом
+# частоты при генерации пар-кандидатов.
 STOPWORDS = {
-    "corrida", "trail", "race", "running", "run", "edicao", "edition", "ed",
-    "prova", "grande", "open", "water", "maratona", "meia", "ultra", "btt",
-    "mtb", "gravel", "de", "da", "do", "dos", "das", "e", "the", "of", "a", "o",
-    "os", "as", "em", "no", "na", "trilho", "trilhos", "caminhada", "walk",
-    "km", "kids", "cup", "series", "circuito", "etapa",
+    "de", "da", "do", "dos", "das", "e", "the", "of", "and",
+    "a", "o", "os", "as", "em", "no", "na", "edicao", "edition", "ed",
 }
 
 # Римские числа (издания): убираем как отдельные токены.
@@ -272,7 +272,7 @@ def candidate_pairs(records: list[dict]):
 
 # Минимальная похожесть имени, когда дата НЕ подтверждает совпадение
 # (обе даты известны и равны — самый сильный сигнал; иначе имя должно быть почти идентичным).
-NAME_SIM_STRICT = 0.85
+NAME_SIM_STRICT = 0.88
 
 
 def score_pair(x: dict, y: dict) -> tuple[int, list[str]]:
