@@ -106,17 +106,31 @@ def normalize_url(url: str) -> str:
 
 
 def parse_date(value: str) -> str:
-    """Приводим дату к YYYY-MM-DD для сравнения. Пусто, если распарсить нельзя."""
+    """Приводим дату к YYYY-MM-DD для сравнения. Пусто, если распарсить нельзя.
+
+    WooCommerce хранит event_date_start в формате YYYYMMDD (напр. '20260920'),
+    но поддерживаем также YYYY-MM-DD и DD/MM/YYYY на всякий случай.
+    """
     if not value:
         return ""
     s = str(value).strip()
-    m = re.search(r"(\d{4})-(\d{2})-(\d{2})", s)
+
+    def _valid(y, mth, d):
+        return 1 <= mth <= 12 and 1 <= d <= 31
+
+    m = re.fullmatch(r"(\d{4})(\d{2})(\d{2})", s)  # YYYYMMDD
+    if m:
+        y, mth, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if _valid(y, mth, d):
+            return f"{y:04d}-{mth:02d}-{d:02d}"
+    m = re.search(r"(\d{4})-(\d{2})-(\d{2})", s)  # YYYY-MM-DD
     if m:
         return f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
-    m = re.search(r"(\d{1,2})[/.](\d{1,2})[/.](\d{4})", s)
+    m = re.search(r"(\d{1,2})[/.](\d{1,2})[/.](\d{4})", s)  # DD/MM/YYYY
     if m:
-        d, mth, y = m.group(1), m.group(2), m.group(3)
-        return f"{y}-{int(mth):02d}-{int(d):02d}"
+        d, mth, y = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        if _valid(y, mth, d):
+            return f"{y:04d}-{mth:02d}-{d:02d}"
     return ""
 
 
@@ -302,16 +316,16 @@ def score_pair(x: dict, y: dict) -> tuple[int, list[str]]:
 
     reasons = []
     score = sim * 50
-    reasons.append(f"имя~{int(sim * 100)}%")
+    reasons.append(f"name~{int(sim * 100)}%")
     if same_date:
         score += 30
-        reasons.append(f"дата={xd}")
+        reasons.append(f"same date={xd}")
     if same_url:
         score += 25
-        reasons.append("URL совпадает")
+        reasons.append("same URL")
     if geo_close:
         score += 15
-        reasons.append(f"гео≈{dist:.1f}км")
+        reasons.append(f"geo~{dist:.1f}km")
 
     return int(min(score, 100)), reasons
 
