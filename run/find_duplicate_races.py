@@ -270,36 +270,48 @@ def candidate_pairs(records: list[dict]):
                     yield pair
 
 
+# Минимальная похожесть имени, когда дата НЕ подтверждает совпадение
+# (обе даты известны и равны — самый сильный сигнал; иначе имя должно быть почти идентичным).
+NAME_SIM_STRICT = 0.85
+
+
 def score_pair(x: dict, y: dict) -> tuple[int, list[str]]:
-    reasons = []
     sim = name_similarity(x["norm"], x["tokens"], y["norm"], y["tokens"])
-    if sim < NAME_SIM_MIN and not (x["website"] and x["website"] == y["website"]):
+    same_url = bool(x["website"]) and x["website"] == y["website"]
+    if sim < NAME_SIM_MIN and not same_url:
         return 0, []
 
-    score = 0.0
-    if sim > 0:
-        score += sim * 50
-        reasons.append(f"имя~{int(sim * 100)}%")
+    xd, yd = x["date"], y["date"]
+    # Логика клиента: разные известные даты => разные издания, а не дубль.
+    if xd and yd and xd != yd:
+        return 0, []
+    same_date = bool(xd) and xd == yd
 
-    same_date = bool(x["date"]) and x["date"] == y["date"]
+    dist = haversine_km(x["lat"], x["lon"], y["lat"], y["lon"])
+    geo_close = dist is not None and dist <= GEO_MAX_KM
+
+    # Гейт: если дата НЕ подтверждает (хотя бы одна отсутствует), требуем
+    # почти идентичное имя И хотя бы один вспомогательный сигнал (URL/гео).
+    # Это отсекает «общий URL федерации» у разных ивентов.
+    if same_date:
+        if sim < NAME_SIM_MIN and not same_url:
+            return 0, []
+    else:
+        if sim < NAME_SIM_STRICT or not (same_url or geo_close):
+            return 0, []
+
+    reasons = []
+    score = sim * 50
+    reasons.append(f"имя~{int(sim * 100)}%")
     if same_date:
         score += 30
-        reasons.append(f"дата={x['date']}")
-
-    same_url = bool(x["website"]) and x["website"] == y["website"]
+        reasons.append(f"дата={xd}")
     if same_url:
         score += 25
         reasons.append("URL совпадает")
-
-    dist = haversine_km(x["lat"], x["lon"], y["lat"], y["lon"])
-    if dist is not None and dist <= GEO_MAX_KM:
+    if geo_close:
         score += 15
         reasons.append(f"гео≈{dist:.1f}км")
-
-    # Консервативно: имя-в-имя без подтверждения датой/URL — это часто разные
-    # издания. Требуем хотя бы один сильный подтверждающий сигнал.
-    if not (same_date or same_url):
-        return 0, reasons
 
     return int(min(score, 100)), reasons
 
