@@ -242,23 +242,24 @@ class RevisedIncompleteGenerationTests(unittest.TestCase):
     @patch.object(main, "log_network_diagnostics")
     @patch.object(main.requests, "get", return_value=_FakeResponse({"slug": "race-slug", "permalink": "https://example.test/event/race-slug"}))
     def test_subcategories_collected_from_variation_rows(self, *_mocks):
-        """Подкатегории со строк-вариаций (Trail Run / Walking / Kids) должны все
-        попадать в extra_categories, а не только подкатегория главной строки."""
+        """Подкатегории со строк-вариаций собираются как есть — каждый дочерний
+        элемент под СВОИМ родителем. Одна гонка может быть в разных родительских
+        категориях (пример 2451: главная Cycling/MTB + вариация Running/Walking)."""
         main_row = {
             "ID": "1", "STATUS": "Revised (complete)", "RACE NAME (PT)": "Corrida Teste",
             "WEBSITE": "https://example.com", "REGULATIONS": "",
-            "CATEGORY": "Running", "SUBCATEGORY": "Trail Run",
+            "CATEGORY": "Cycling", "SUBCATEGORY": "MTB",
             "ATTRIBUTE": "", "VALUE": "", "PRICE": "10",
             "LOCATION": "Lisbon", "LOCATION (CITY)": "Lisbon",
             "WP PRODUCT ID EN": "", "WP PRODUCT ID PT": "",
             "WP VARIATION ID EN": "", "WP VARIATION ID PT": "",
         }
-        var_walking = dict(main_row, ID="", STATUS="", SUBCATEGORY="Walking", DISTANCE="10 km")
-        var_kids = dict(main_row, ID="", STATUS="", SUBCATEGORY="Kids", DISTANCE="")
-        # строка-вариация ЧУЖОЙ категории — не должна попасть (межкатегорийное засорение)
-        var_cross = dict(main_row, ID="", STATUS="", CATEGORY="Cycling", SUBCATEGORY="BTT", DISTANCE="20 km")
+        # строка-вариация ДРУГОЙ родительской категории — легитимна, должна попасть
+        var_walking = dict(main_row, ID="", STATUS="", CATEGORY="Running", SUBCATEGORY="Walking", DISTANCE="10 km")
+        # ещё одна подкатегория того же (главного) родителя
+        var_gravel = dict(main_row, ID="", STATUS="", CATEGORY="Cycling", SUBCATEGORY="Gravel", DISTANCE="80 km")
         headers = {"STATUS": 9}
-        rows = [(2, main_row), (3, var_walking), (4, var_kids), (5, var_cross)]
+        rows = [(2, main_row), (3, var_walking), (4, var_gravel)]
 
         captured = {}
 
@@ -275,12 +276,12 @@ class RevisedIncompleteGenerationTests(unittest.TestCase):
                                 main.run_automation()
 
         extra = captured.get("extra", set())
-        self.assertIn(("Running", "Trail Run"), extra)
+        # каждый дочерний элемент под своим родителем
+        self.assertIn(("Cycling", "MTB"), extra)
         self.assertIn(("Running", "Walking"), extra)
-        self.assertIn(("Running", "Kids"), extra)
-        # чужая категория со строки-вариации не должна засорять гонку
-        self.assertNotIn(("Cycling", "BTT"), extra)
-        self.assertNotIn(("Running", "BTT"), extra)
+        self.assertIn(("Cycling", "Gravel"), extra)
+        # Walking НЕ должен оказаться под Cycling (родитель — из своей строки)
+        self.assertNotIn(("Cycling", "Walking"), extra)
 
 
 if __name__ == "__main__":

@@ -518,19 +518,22 @@ def run_automation():
                     ):
                         break
                     if sub_status == "":
-                        # Подкатегории со строк-вариаций (Trail Run / Walking / Kids
-                        # живут на разных строках блока) добавляем ТОЛЬКО если категория
-                        # строки совпадает с категорией главной строки. Так добираем
-                        # подкатегории того же типа, но НЕ засоряем гонку чужой
-                        # категорией (напр. Cycling у беговой гонки) — именно это
-                        # межкатегорийное засорение и убирал коммит f1ba788.
-                        var_category = (sub_row.get("CATEGORY") or "").strip()
-                        if (
-                            var_category and main_category
-                            and var_category.lower() == str(main_category).strip().lower()
-                        ):
-                            for subcategory in parse_subcategory_values(sub_row.get("SUBCATEGORY")):
-                                last_main_row["extra_categories"].add((main_category, subcategory))
+                        # Подкатегории со строк-вариаций: каждая пара (CATEGORY,
+                        # SUBCATEGORY) берётся КАК ЕСТЬ — дочерний элемент привязывается
+                        # к СВОЕМУ родителю (MTB→Cycling, Walking→Running), т.к. одна
+                        # гонка может относиться к разным родительским категориям.
+                        # Защиту от дублей родителей даёт строгая root-карта
+                        # (CATEGORY_ROOT_MAP_JSON): каждый родитель = один фиксированный
+                        # ID. Именно она чинит мусорные категории; blanket-удаление в
+                        # f1ba788 было перебором и ломало мультикатегорийные гонки.
+                        var_category = sub_row.get("CATEGORY")
+                        if var_category:
+                            var_subcategories = parse_subcategory_values(sub_row.get("SUBCATEGORY"))
+                            if var_subcategories:
+                                for subcategory in var_subcategories:
+                                    last_main_row["extra_categories"].add((var_category, subcategory))
+                            else:
+                                last_main_row["extra_categories"].add((var_category, None))
                         var_attrs = []
                         if sub_row.get("ATTRIBUTE") and sub_row.get("VALUE"):
                             var_attrs.append({"name": normalize_attribute_name(sub_row["ATTRIBUTE"]), "option": sub_row["VALUE"]})
