@@ -302,9 +302,14 @@ def score_pair(x: dict, y: dict) -> tuple[int, list[str]]:
     dist = haversine_km(x["lat"], x["lon"], y["lat"], y["lon"])
     geo_close = dist is not None and dist <= GEO_MAX_KM
 
-    # 3) Нужен хотя бы один подтверждающий сигнал (дата/URL/гео).
-    if not (same_date or same_url or geo_close):
-        return 0, []
+    # 3) Подтверждение: тот же URL или та же локация. Совпадение ТОЛЬКО по дате
+    # принимаем лишь при идентичных нормализованных именах — иначе это разные
+    # события одной серии в один праздничный день (напр. «Corrida da Liberdade»
+    # 25 апреля в разных городах).
+    identical_name = bool(x["tokens"]) and x["tokens"] == y["tokens"]
+    if not (same_url or geo_close):
+        if not (same_date and identical_name):
+            return 0, []
 
     reasons = []
     score = sim * 50
