@@ -13,6 +13,7 @@
 - `run/_6_create_variations.py` — синхронизация вариаций (create/update/delete) с retry-запросами.
 - `run/recover_wp_ids.py` / `run/recovery_wp_ids.py` — ручной recovery-сценарий для восстановления `WP PRODUCT ID EN/PT` и `WP VARIATION ID EN/PT` у ранее опубликованных строк; не вызывается из `main.py`.
 - `run/utils.py` — нормализация атрибутов/категорий, проверка неполных PT-полей, FAQ parser.
+- `run/find_duplicate_races.py` — разовый read-only аудит: ищет дубли гонок на racefinder.pt (WC REST API, все статусы, lang=pt) и пишет отчёт в отдельную вкладку `DUPLICATES REVIEW` Google-таблицы. Ничего не меняет на сайте/в основных данных. Критерии: fuzzy-имя + дата (разные известные даты ⇒ разные издания, не дубль) + внешний URL (из колонки WEBSITE по WP PRODUCT ID) + гео. Не вызывается из `main.py`. Запуск: `python run/find_duplicate_races.py [--dry-run] [--limit N] [--tab NAME]`.
 - `run/website_snapshot.py` — расчёт/сравнение hash `WEBSITE` с нормализацией HTML и Telegram-уведомления.
 - `run/prompts/*.txt` — системные промпты для первого и второго ассистента.
 
