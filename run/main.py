@@ -4,6 +4,7 @@ import os
 import logging
 import time
 import json
+import re
 import socket
 import openai
 import requests
@@ -150,6 +151,41 @@ def _write_variation_ids_to_sheet(row_to_variation_id: dict, column_name: str, h
         return
     for target_row_index, variation_id in row_to_variation_id.items():
         batch_update_cells(target_row_index, {column_name: str(variation_id)}, headers)
+
+
+# --- Cancellation & refund policy (Race Info) + organizer contacts (internal) ---
+CANCELLATION_FALLBACK_EN = "Cancellation and refund policies are defined by the Event Organizer."
+CANCELLATION_FALLBACK_PT = "As políticas de cancelamento e reembolso são definidas pela organização do evento."
+_CANCELLATION_HEADER = {
+    "en": "Cancellation &amp; refund policy:",
+    "pt": "Política de cancelamento e reembolso:",
+}
+_EMAIL_RE = re.compile(r"[^@\s,;<>()]+@[^@\s,;<>()]+\.[^@\s,;<>()]+")
+
+
+def _append_cancellation_block(org_info: str, text: str, lang: str) -> str:
+    """Добавляет блок политики отмены/возврата в конец org_info (Race Info).
+    Если text пуст — подставляется фолбэк-текст на нужном языке."""
+    fallback = CANCELLATION_FALLBACK_PT if lang == "pt" else CANCELLATION_FALLBACK_EN
+    text = (text or "").strip() or fallback
+    header = _CANCELLATION_HEADER.get(lang, _CANCELLATION_HEADER["en"])
+    block = f"<strong>{header}</strong> {text}"
+    org_info = (org_info or "").rstrip()
+    return f"{org_info}\n\n{block}" if org_info else block
+
+
+def _extract_valid_emails(raw: str) -> str:
+    """Достаёт валидные email из произвольного текста, дедуп, объединяет через ', '."""
+    if not raw:
+        return ""
+    seen = set()
+    out = []
+    for match in _EMAIL_RE.findall(str(raw)):
+        email = match.strip().lower().rstrip(".")
+        if email and email not in seen:
+            seen.add(email)
+            out.append(email)
+    return ", ".join(out)
 
 
 def _norm_category_key(value: str) -> str:
@@ -432,17 +468,29 @@ def run_automation():
                     else:
                         image_info = generate_image(result["image_prompt"])
 
+                    # Race Info: добавляем блок политики отмены/возврата (с фолбэком,
+                    # если в регламенте/на сайте её нет) в конец org_info EN и PT.
+                    org_info_en = _append_cancellation_block(
+                        result.get("org_info", ""), result.get("cancellation", ""), "en"
+                    )
+                    org_info_pt = _append_cancellation_block(
+                        result.get("org_info_pt", ""), result.get("cancellation_pt", ""), "pt"
+                    )
+
                     row.update({
                         "SUMMARY": result.get("summary", ""),
-                        "ORG INFO": result.get("org_info", ""),
+                        "ORG INFO": org_info_en,
                         "BENEFITS": "\n".join(result["benefits"]) if isinstance(result.get("benefits"), list) else result.get("benefits", ""),
                         "FAQ": result.get("faq", ""),
                         "IMAGE URL": image_info.get("url", ""),
                         "IMAGE ID": image_info.get("id", ""),
                         "SUMMARY (PT)": result.get("summary_pt", ""),
-                        "ORG INFO (PT)": result.get("org_info_pt", ""),
+                        "ORG INFO (PT)": org_info_pt,
                         "BENEFITS (PT)": "\n".join(result["benefits_pt"]) if isinstance(result.get("benefits_pt"), list) else result.get("benefits_pt", ""),
                         "FAQ (PT)": result.get("faq_pt", ""),
+                        # Организатор — только для таблицы (внутреннее), в WP не публикуется.
+                        "ORGANIZER NAME": (result.get("organizer_name", "") or "").strip(),
+                        "ORGANIZER EMAIL": _extract_valid_emails(result.get("organizer_email", "")),
                         "LAT": row["LAT"],
                         "LON": row["LON"],
                         "RACE NAME (PT)": row.get("RACE NAME (PT)", ""),
@@ -459,6 +507,8 @@ def run_automation():
                         "ORG INFO (PT)": row["ORG INFO (PT)"],
                         "BENEFITS (PT)": row["BENEFITS (PT)"],
                         "FAQ (PT)": row["FAQ (PT)"],
+                        "ORGANIZER NAME": row["ORGANIZER NAME"],
+                        "ORGANIZER EMAIL": row["ORGANIZER EMAIL"],
                         "RACE NAME (PT)": row["RACE NAME (PT)"],
                         "RACE NAME": row.get("RACE NAME", "")
                     }, headers)

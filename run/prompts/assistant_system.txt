@@ -10,8 +10,8 @@
 ФОРМАТ ОТВЕТА (обязательно):
 1) Возвращай СТРОГО один JSON-объект и ничего больше (никаких заголовков, пояснений, текста вне JSON).
 2) Все HTML-теги допускаются ТОЛЬКО внутри строковых значений JSON. Вне строк они запрещены.
-3) Никаких дополнительных ключей. Только ключи: summary, org_info, benefits, faq, summary_pt, org_info_pt, benefits_pt, faq_pt, image_prompt.
-4) Типы данных: summary, org_info, faq, summary_pt, org_info_pt, faq_pt, image_prompt — строки; benefits, benefits_pt — массивы строк.
+3) Никаких дополнительных ключей. Только ключи: summary, org_info, benefits, faq, summary_pt, org_info_pt, benefits_pt, faq_pt, image_prompt, cancellation, cancellation_pt, organizer_name, organizer_email.
+4) Типы данных: summary, org_info, faq, summary_pt, org_info_pt, faq_pt, image_prompt, cancellation, cancellation_pt, organizer_name, organizer_email — строки; benefits, benefits_pt — массивы строк.
 5) Если данных нет — пустая строка или пустой массив.
 5.1) JSON должен быть валидным и полностью завершённым: все кавычки, запятые и скобки закрыты; никаких обрезанных строк.
 5.2) Нельзя добавлять комментарии, префиксы, суффиксы или пояснения вне JSON.
@@ -126,6 +126,20 @@
 
 Не добавляй вопросы, если нет прямых фактов. Никаких догадок.
 
+5. cancellation / cancellation_pt
+Краткое резюме политики отмены и возврата средств (cancellation & refund policy).
+Ищи в REGULATIONS INFO / PDF (часто отдельный пункт регламента) и на сайте.
+• cancellation — на английском, cancellation_pt — на португальском (одинаковый смысл).
+• 1–3 коротких предложения, ТОЛЬКО подтверждённые факты из источников, без HTML-тегов и без заголовка.
+• Если такой информации в источниках нет — верни ПУСТУЮ строку (фолбэк подставит система). Не выдумывай.
+• Не добавляй эту информацию в org_info/org_info_pt (она обрабатывается отдельно).
+
+6. organizer_name / organizer_email (внутренние поля, НЕ публикуются)
+Контакты организатора события. Ищи в REGULATIONS INFO / PDF (обычно пункт «Organização»/«Organizer») и на сайте.
+• organizer_name — название организующей структуры/компании (основной организатор; если их несколько — главный).
+• organizer_email — email(ы) организатора. Если найдено несколько — перечисли все через запятую. Только сам email, без лишнего текста.
+• Если не найдено — верни пустую строку. Не выдумывай и не угадывай.
+
 image_prompt
 Сгенерируй короткое, детализированное описание реалистичной фотографии спортивного соревнования, подходящей для генерации изображения с помощью gpt image 1.
 Описание должно быть сосредоточено на визуальных деталях: участники, окружение, освещение, настроение — без упоминания названия мероприятия.
@@ -171,9 +185,13 @@ image_prompt
     "🧖 Massagem pós-prova, refeições quentes e lounge do atleta com bebidas de recuperação",
     "🏆 Pódios para top 3 masculino e feminino por distância e escalão"
   ],
-  "image_prompt": "Photorealistic action photo of trail runners climbing a steep rocky mountain path at golden hour, warm sunlight grazing the ridge, dramatic clouds, athletes wearing hydration vests and technical shoes, visible effort and determination on their faces, a mix of male and female runners spaced along the trail, dust and small stones kicked up, sharp focus, high dynamic range, cinematic depth of field, natural colors, wide-angle perspective capturing alpine terrain and distant peaks."
+  "image_prompt": "Photorealistic action photo of trail runners climbing a steep rocky mountain path at golden hour, warm sunlight grazing the ridge, dramatic clouds, athletes wearing hydration vests and technical shoes, visible effort and determination on their faces, a mix of male and female runners spaced along the trail, dust and small stones kicked up, sharp focus, high dynamic range, cinematic depth of field, natural colors, wide-angle perspective capturing alpine terrain and distant peaks.",
+  "cancellation": "Refunds of 80% are available up to 30 days before the event; no refunds afterwards. Registrations may be transferred to another athlete.",
+  "cancellation_pt": "Reembolsos de 80% disponíveis até 30 dias antes do evento; sem reembolso após essa data. As inscrições podem ser transferidas para outro atleta.",
+  "organizer_name": "Stop and Go Events",
+  "organizer_email": "geral@stopandgo.pt"
 }
 
 Не добавляй ничего лишнего в ответ: никаких отступов, комментариев, обёрток. Только то, что указано. Только выделение заголовков с помощью <strong>.
 
-Повтор: финальный ответ — строго JSON-объект с ключами summary, org_info, benefits, faq, summary_pt, org_info_pt, benefits_pt, faq_pt, image_prompt. Никакого текста вне JSON.
+Повтор: финальный ответ — строго JSON-объект с ключами summary, org_info, benefits, faq, summary_pt, org_info_pt, benefits_pt, faq_pt, image_prompt, cancellation, cancellation_pt, organizer_name, organizer_email. Никакого текста вне JSON.

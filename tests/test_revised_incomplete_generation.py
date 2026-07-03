@@ -215,9 +215,15 @@ class RevisedIncompleteGenerationTests(unittest.TestCase):
         ai_update = next((values for _idx, values in updates if "SUMMARY" in values and "FAQ (PT)" in values), None)
         self.assertIsNotNone(ai_update, "Expected AI fields update for Revised (incomplete)")
         self.assertEqual(ai_update.get("SUMMARY"), "Summary EN")
-        self.assertEqual(ai_update.get("ORG INFO"), "Org EN")
         self.assertEqual(ai_update.get("SUMMARY (PT)"), "Summary PT")
         self.assertEqual(ai_update.get("FAQ (PT)"), "Q: Q1 / A: A1")
+        # Cancellation policy: без данных подставляется фолбэк, дописанный в конец ORG INFO
+        self.assertTrue(ai_update.get("ORG INFO", "").startswith("Org EN"))
+        self.assertIn(main.CANCELLATION_FALLBACK_EN, ai_update.get("ORG INFO", ""))
+        self.assertIn(main.CANCELLATION_FALLBACK_PT, ai_update.get("ORG INFO (PT)", ""))
+        # Организатор: колонки пишутся (пустые, т.к. AI их не вернул)
+        self.assertIn("ORGANIZER NAME", ai_update)
+        self.assertIn("ORGANIZER EMAIL", ai_update)
 
         status_update = next((values for _idx, values in updates if "STATUS" in values), None)
         self.assertIsNotNone(status_update)
