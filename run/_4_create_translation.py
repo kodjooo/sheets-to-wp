@@ -220,6 +220,19 @@ def create_product_translation_en(row, pt_product_id, attributes=None, last_vari
         raise Exception(f"Ошибка при создании перевода: {e}")
 
 
+def _en_product_exists(base_url, auth, product_id) -> bool:
+    """Существует ли EN-продукт. При неопределённости возвращает True (не плодим дубли)."""
+    try:
+        r = requests.get(f"{base_url}/wp-json/wc/v3/products/{product_id}", auth=auth, timeout=15)
+        if r.status_code == 200:
+            return True
+        if r.status_code == 404 or "woocommerce_rest_product_invalid_id" in (r.text or ""):
+            return False
+    except Exception as exc:
+        logging.warning("⚠️ Не удалось проверить существование EN-продукта %s: %s", product_id, exc)
+    return True
+
+
 def create_or_update_product_pt(
     row,
     pt_product_id,
@@ -280,7 +293,19 @@ def create_or_update_product_pt(
         auth=auth,
         json=update_payload
     )
-    response.raise_for_status()
+    if not response.ok:
+        # Устаревший EN-ID (перевод удалён) — создаём перевод заново.
+        if not _en_product_exists(base_url, auth, en_id):
+            logging.warning("♻️ EN-перевод %s не существует (устаревший ID) — создаём заново", en_id)
+            return create_product_translation_en(
+                row, pt_product_id, attributes=attributes,
+                last_variations=last_variations, config=config,
+            )
+        logging.error(
+            "❌ Ошибка обновления EN-перевода %s: %s %s",
+            en_id, response.status_code, (response.text or "")[:300],
+        )
+        response.raise_for_status()
 
     benefits_en = row.get("BENEFITS", "")
     if isinstance(benefits_en, list):

@@ -528,6 +528,24 @@ def _build_acf_fields_partial(data):
     return {k: v for k, v in fields.items() if v not in ("", None, [])}
 
 
+def _product_exists(product_id) -> bool:
+    """Проверяет, существует ли WC-продукт. При неопределённости (сетевые ошибки)
+    возвращает True, чтобы не создать дубль на ровном месте."""
+    try:
+        r = requests.get(
+            f"{WC_API_URL}/wp-json/wc/v3/products/{product_id}",
+            auth=(WC_CONSUMER_KEY, WC_CONSUMER_SECRET),
+            timeout=15,
+        )
+        if r.status_code == 200:
+            return True
+        if r.status_code == 404 or "woocommerce_rest_product_invalid_id" in (r.text or ""):
+            return False
+    except Exception as exc:
+        logging.warning("⚠️ Не удалось проверить существование продукта %s: %s", product_id, exc)
+    return True
+
+
 def create_or_update_product(data, existing_product_id=None):
     if not existing_product_id:
         return create_product(data)
@@ -544,7 +562,20 @@ def create_or_update_product(data, existing_product_id=None):
         headers=headers,
         data=json.dumps(payload)
     )
-    response.raise_for_status()
+    if not response.ok:
+        # Сохранённый ID мог устареть (продукт удалён, напр. как дубль) — тогда
+        # создаём продукт заново вместо падения.
+        if not _product_exists(existing_product_id):
+            logging.warning(
+                "♻️ PT продукт %s не существует (устаревший ID) — создаём заново",
+                existing_product_id,
+            )
+            return create_product(data)
+        logging.error(
+            "❌ Ошибка обновления PT продукта %s: %s %s",
+            existing_product_id, response.status_code, (response.text or "")[:300],
+        )
+        response.raise_for_status()
 
     partial_fields = _build_acf_fields_partial(data)
     if partial_fields:
