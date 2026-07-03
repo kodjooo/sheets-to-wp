@@ -131,6 +131,7 @@
 Ищи в REGULATIONS INFO / PDF (часто отдельный пункт регламента) и на сайте.
 • cancellation — на английском, cancellation_pt — на португальском (одинаковый смысл).
 • 1–3 коротких предложения, ТОЛЬКО подтверждённые факты из источников, без HTML-тегов и без заголовка.
+• Разделяй предложения ТОЧКОЙ. НЕ используй точку с запятой (;) — она не применяется в остальном контенте.
 • Если такой информации в источниках нет — верни ПУСТУЮ строку (фолбэк подставит система). Не выдумывай.
 • Не добавляй эту информацию в org_info/org_info_pt (она обрабатывается отдельно).
 
@@ -191,8 +192,8 @@ image_prompt
     "🏆 Pódios para top 3 masculino e feminino por distância e escalão"
   ],
   "image_prompt": "Photorealistic action photo of trail runners climbing a steep rocky mountain path at golden hour, warm sunlight grazing the ridge, dramatic clouds, athletes wearing hydration vests and technical shoes, visible effort and determination on their faces, a mix of male and female runners spaced along the trail, dust and small stones kicked up, sharp focus, high dynamic range, cinematic depth of field, natural colors, wide-angle perspective capturing alpine terrain and distant peaks.",
-  "cancellation": "Refunds of 80% are available up to 30 days before the event; no refunds afterwards. Registrations may be transferred to another athlete.",
-  "cancellation_pt": "Reembolsos de 80% disponíveis até 30 dias antes do evento; sem reembolso após essa data. As inscrições podem ser transferidas para outro atleta.",
+  "cancellation": "Refunds of 80% are available up to 30 days before the event. No refunds afterwards. Registrations may be transferred to another athlete.",
+  "cancellation_pt": "Reembolsos de 80% disponíveis até 30 dias antes do evento. Sem reembolso após essa data. As inscrições podem ser transferidas para outro atleta.",
   "organizer_name": "Stop and Go Events",
   "organizer_email": "geral@stopandgo.pt"
 }
