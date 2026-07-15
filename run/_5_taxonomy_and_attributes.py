@@ -14,7 +14,8 @@ wcapi = API(
     url=config["wp_url"],
     consumer_key=config["consumer_key"],
     consumer_secret=config["consumer_secret"],
-    version="wc/v3"
+    version="wc/v3",
+    timeout=float(config.get("wcapi_timeout_sec", 20))
 )
 
 _WCAPI_MAX_ATTEMPTS = int(os.getenv("WCAPI_MAX_ATTEMPTS", "4"))
