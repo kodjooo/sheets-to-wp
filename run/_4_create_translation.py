@@ -47,6 +47,12 @@ def create_product_translation_en(row, pt_product_id, attributes=None, last_vari
             "pt": pt_product_id
         }
     }
+    # Структурная локация на EN-переводе: PT создаётся раньше EN, поэтому WPML-синк
+    # при создании PT не находит EN. Ставим мету и на EN — mu-plugin достроит её сам.
+    if row.get("RF_MUNICIPALITY_NAME"):
+        data["meta_data"] = [
+            {"key": "_rf_location_municipality_name", "value": row["RF_MUNICIPALITY_NAME"]}
+        ]
 
     # # Вместо загрузки новой картинки используем уже существующий ID от оригинала
     # image_id = row.get("IMAGE ID") or row.get("image_id")
@@ -258,6 +264,10 @@ def create_or_update_product_pt(
         "name": row.get("RACE NAME", "") or row.get("RACE NAME (PT)", ""),
         "lang": "en"
     }
+    if row.get("RF_MUNICIPALITY_NAME"):
+        update_payload["meta_data"] = [
+            {"key": "_rf_location_municipality_name", "value": row["RF_MUNICIPALITY_NAME"]}
+        ]
 
     categories_raw = []
     main_category = row.get("CATEGORY")
