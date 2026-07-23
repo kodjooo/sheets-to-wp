@@ -317,6 +317,13 @@ def create_product(data):
         "lang": "pt",
     }
 
+    # Структурная локация: имя муниципалитета → mu-plugin rf-auto-location
+    # достроит district+region, термы и EN-синк.
+    if data.get("RF_MUNICIPALITY_NAME"):
+        product_data["meta_data"] = [
+            {"key": "_rf_location_municipality_name", "value": data["RF_MUNICIPALITY_NAME"]}
+        ]
+
     # Получаем категории из таблицы (или заранее рассчитанный override EN->PT)
     if isinstance(data.get("CATEGORY_IDS_PT"), list) and data.get("CATEGORY_IDS_PT"):
         product_data["categories"] = data["CATEGORY_IDS_PT"]
@@ -555,6 +562,10 @@ def create_or_update_product(data, existing_product_id=None):
     category_ids = _collect_category_ids(data)
     if category_ids:
         payload["categories"] = category_ids
+    if data.get("RF_MUNICIPALITY_NAME"):
+        payload["meta_data"] = [
+            {"key": "_rf_location_municipality_name", "value": data["RF_MUNICIPALITY_NAME"]}
+        ]
 
     response = requests.put(
         f"{WC_API_URL}/wp-json/wc/v3/products/{existing_product_id}",

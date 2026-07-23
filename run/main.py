@@ -81,6 +81,7 @@ from _2_content_generation import (
     translate_title_to_en
 )
 from url_utils import unwrap_google_viewer_url
+from rf_location import resolve_municipality
 
 from _3_create_product import (
     create_or_update_product as create_product_pt_primary,
@@ -383,6 +384,17 @@ def run_automation():
                     STATUS_REVISED_INCOMPLETE.lower(),
                     STATUS_REVISED_COMPLETE.lower(),
                 ):
+                    # Структурная локация (PT): резолвим муниципалитет из «Location (City)».
+                    # Имя пишем в мету товара; district+region+термы+EN достраивает
+                    # mu-plugin rf-auto-location на стороне WP. Флаг — в колонку LOCATION NOTE.
+                    municipality_name = resolve_municipality(row.get("LOCATION (CITY)", ""))
+                    row["RF_MUNICIPALITY_NAME"] = municipality_name or ""
+                    batch_update_cells(
+                        row_index,
+                        {"LOCATION NOTE": "" if municipality_name else "⚠ Location not matched"},
+                        headers,
+                    )
+
                     website_text, _ = extract_text_from_url(row.get("WEBSITE", ""))
 
                     regulations_url = unwrap_google_viewer_url(row.get("REGULATIONS", ""))
