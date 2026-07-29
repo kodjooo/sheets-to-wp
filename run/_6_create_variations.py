@@ -300,50 +300,17 @@ def _option_signature(attributes):
     )
 
 
-def _apply_schedules_once(product_id, wanted, lang):
-    """Один проход: ставит расписание на текущие вариации, матча по атрибутам.
-    Возвращает True, если для всех нужных сигнатур расписание фактически на месте."""
-    current = _load_all_variations(product_id, lang=lang)
-    seen_ok = set()
-    for variation in current:
-        sig = _option_signature(variation.get("attributes", []))
-        schedule = wanted.get(sig)
-        if not schedule:
-            continue
-        variation_id = variation.get("id")
-        endpoint = f"products/{product_id}/variations/{variation_id}"
-        if lang:
-            endpoint += f"?lang={lang}"
-        # уже стоит нужное число записей? считаем сигнатуру закрытой
-        existing = variation.get("meta_data") or []
-        cur = next((m.get("value") for m in existing
-                    if m.get("key") == "_miss_events_price_schedule"), None)
-        if isinstance(cur, list) and len(cur) == len(schedule):
-            seen_ok.add(sig)
-            continue
-        resp = _wcapi_request_with_retry(
-            "PUT", endpoint, {"miss_events": {"price_schedule": schedule}}
-        )
-        resp.raise_for_status()
-        seen_ok.add(sig)
-        logging.info(
-            "🗓 price_schedule (final) применён: product=%s variation=%s (%d записей)",
-            product_id, variation_id, len(schedule)
-        )
-    return seen_ok >= set(wanted.keys())
+def reapply_price_schedules(product_id, variation_entries, lang: str | None = None):
+    """Идемпотентно проставляет miss_events.price_schedule на ТЕКУЩИЕ вариации
+    продукта, матча по набору значений атрибутов (а не по устаревшим ID из прохода).
 
+    Для PT (оригинал) это надёжно фиксирует расписание на финальном наборе вариаций.
 
-def reapply_price_schedules(product_id, variation_entries, lang: str | None = None,
-                            attempts: int = 3, delay_sec: float = 5.0):
-    """Финальное идемпотентное проставление miss_events.price_schedule на ТЕКУЩИЕ
-    вариации продукта (матчинг по набору значений атрибутов, не по устаревшим ID).
-
-    Нужно потому, что многопроходная синхронизация + WPML пересоздают вариации
-    (особенно EN-переводы) АСИНХРОННО — расписание, поставленное во время прохода,
-    попадает в вариацию, которую WPML затем выбрасывает, создавая новую пустую.
-    Поэтому применяем и ПЕРЕПРОВЕРЯЕМ с повтором: первая попытка может опередить
-    регенерацию WPML, следующая попадёт уже в стабильный набор (после регенерации
-    PT больше не меняется, поэтому запись приживается)."""
+    ВАЖНО про EN-перевод: WPML пересоздаёт вариации перевода АСИНХРОННО (на shutdown
+    запроса, менявшего PT) и не связывает их с оригиналом, поэтому запись сюда может
+    быть затёрта, а fallback плагина (get_meta_with_fallback) не резолвит вариацию на
+    PT. Полноценное scheduled-pricing на EN-фронте этим способом не гарантируется —
+    см. docs/architecture.md (известное ограничение)."""
     wanted = {}
     for entry in variation_entries:
         schedule = entry.get("price_schedule")
@@ -352,20 +319,22 @@ def reapply_price_schedules(product_id, variation_entries, lang: str | None = No
     if not wanted:
         return
 
-    for attempt in range(1, attempts + 1):
-        ok = _apply_schedules_once(product_id, wanted, lang)
-        # финальная сверка отдельным чтением (запись WPML могла произойти между PUT и сейчас)
-        confirmed = _apply_schedules_once(product_id, wanted, lang) if ok else False
-        if confirmed:
-            logging.info("✅ price_schedule подтверждён: product=%s lang=%s", product_id, lang)
-            return
-        if attempt < attempts:
-            time.sleep(delay_sec)
-    logging.warning(
-        "⚠️ price_schedule не подтверждён после %d попыток: product=%s lang=%s "
-        "(возможна отложенная регенерация WPML)",
-        attempts, product_id, lang
-    )
+    for variation in _load_all_variations(product_id, lang=lang):
+        schedule = wanted.get(_option_signature(variation.get("attributes", [])))
+        if not schedule:
+            continue
+        variation_id = variation.get("id")
+        endpoint = f"products/{product_id}/variations/{variation_id}"
+        if lang:
+            endpoint += f"?lang={lang}"
+        resp = _wcapi_request_with_retry(
+            "PUT", endpoint, {"miss_events": {"price_schedule": schedule}}
+        )
+        resp.raise_for_status()
+        logging.info(
+            "🗓 price_schedule применён: product=%s variation=%s (%d записей)",
+            product_id, variation_id, len(schedule)
+        )
 
 
 def create_variations(product_id, variation_data_list):
