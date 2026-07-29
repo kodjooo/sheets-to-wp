@@ -53,6 +53,11 @@ def create_product_translation_en(row, pt_product_id, attributes=None, last_vari
         data["meta_data"] = [
             {"key": "_rf_location_municipality_name", "value": row["RF_MUNICIPALITY_NAME"]}
         ]
+    # Registration deadline — по той же причине (PT раньше EN) дублируем на EN.
+    if row.get("RF_REGISTRATION_DEADLINE"):
+        data["miss_events"] = {
+            "registration_deadline": row["RF_REGISTRATION_DEADLINE"]
+        }
 
     # # Вместо загрузки новой картинки используем уже существующий ID от оригинала
     # image_id = row.get("IMAGE ID") or row.get("image_id")
@@ -268,6 +273,10 @@ def create_or_update_product_pt(
         update_payload["meta_data"] = [
             {"key": "_rf_location_municipality_name", "value": row["RF_MUNICIPALITY_NAME"]}
         ]
+    if row.get("RF_REGISTRATION_DEADLINE"):
+        update_payload["miss_events"] = {
+            "registration_deadline": row["RF_REGISTRATION_DEADLINE"]
+        }
 
     categories_raw = []
     main_category = row.get("CATEGORY")

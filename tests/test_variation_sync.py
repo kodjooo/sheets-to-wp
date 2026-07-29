@@ -208,5 +208,46 @@ class VariationSyncTests(unittest.TestCase):
         )
 
 
+    @patch("_6_create_variations._wcapi_request_with_retry")
+    def test_price_schedule_put_issued_even_when_variation_unchanged(self, mock_wcapi):
+        calls = []
+
+        def side_effect(method, endpoint, payload=None):
+            calls.append((method, endpoint, payload))
+            if method == "GET" and endpoint == "products/100":
+                return _FakeResponse(json_data={"attributes": [{"id": 9, "name": "Distance"}]})
+            if method == "GET" and endpoint == "products/100/variations?per_page=100&page=1":
+                # вариация уже полностью соответствует строке (цена+атрибуты совпадают)
+                return _FakeResponse(json_data=[
+                    {"id": 11, "regular_price": "15", "attributes": [{"id": 9, "option": "5 km"}]},
+                ])
+            if method == "GET" and endpoint == "products/100/variations?per_page=100&page=2":
+                return _FakeResponse(json_data=[])
+            if method == "PUT" and endpoint == "products/100/variations/11":
+                return _FakeResponse(json_data={"id": 11})
+            raise AssertionError(f"Unexpected call: {method} {endpoint} {payload}")
+
+        mock_wcapi.side_effect = side_effect
+
+        schedule = [{"datetime": "2026-07-20 18:00", "price": "20.00"}]
+        mapping = sync_variations_by_ids(
+            100,
+            [{
+                "row_index": 7,
+                "existing_variation_id": "11",
+                "regular_price": "15",
+                "attributes": [{"name": "Distance", "option": "5 km"}],
+                "price_schedule": schedule,
+            }],
+        )
+
+        self.assertEqual(mapping[7], 11)
+        # несмотря на то, что цена/атрибуты не менялись, расписание всё равно применяется
+        self.assertIn(
+            ("PUT", "products/100/variations/11", {"miss_events": {"price_schedule": schedule}}),
+            calls,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

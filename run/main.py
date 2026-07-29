@@ -82,6 +82,7 @@ from _2_content_generation import (
 )
 from url_utils import unwrap_google_viewer_url
 from rf_location import resolve_municipality
+from rf_schedule import parse_datetime, parse_price_changes
 
 from _3_create_product import (
     create_or_update_product as create_product_pt_primary,
@@ -395,6 +396,24 @@ def run_automation():
                         headers,
                     )
 
+                    # miss-events: registration deadline (товар) + scheduled price
+                    # changes (вариация, главная строка). Время дедлайна по умолчанию
+                    # 18:00 (см. rf_schedule). Ошибки формата — во флаг SCHEDULE NOTE.
+                    schedule_notes = []
+                    deadline, dl_err = parse_datetime(row.get("REGISTRATION DEADLINE", ""))
+                    row["RF_REGISTRATION_DEADLINE"] = deadline or ""
+                    if dl_err:
+                        schedule_notes.append(f"deadline: {dl_err}")
+                    main_schedule, ps_err = parse_price_changes(row.get("PRICE CHANGES", ""))
+                    row["RF_PRICE_SCHEDULE"] = main_schedule
+                    schedule_notes.extend(ps_err)
+                    if "SCHEDULE NOTE" in headers:
+                        batch_update_cells(
+                            row_index,
+                            {"SCHEDULE NOTE": ("⚠ " + "; ".join(schedule_notes)) if schedule_notes else ""},
+                            headers,
+                        )
+
                     website_text, _ = extract_text_from_url(row.get("WEBSITE", ""))
 
                     regulations_url = unwrap_google_viewer_url(row.get("REGULATIONS", ""))
@@ -555,17 +574,20 @@ def run_automation():
                         last_main_attributes[attr_name] = row[col]
 
                 variation_attributes = [{"name": k, "option": v} for k, v in last_main_attributes.items()]
+                main_price_schedule = row.get("RF_PRICE_SCHEDULE") or []
                 variation_entries_en = [{
                     "row_index": row_index,
                     "existing_variation_id": _cell_value_as_str(row.get("WP VARIATION ID EN", "")),
                     "regular_price": str(row.get("PRICE", "0")),
                     "attributes": variation_attributes,
+                    "price_schedule": main_price_schedule,
                 }]
                 variation_entries_pt = [{
                     "row_index": row_index,
                     "existing_variation_id": _cell_value_as_str(row.get("WP VARIATION ID PT", "")),
                     "regular_price": str(row.get("PRICE", "0")),
                     "attributes": variation_attributes,
+                    "price_schedule": main_price_schedule,
                 }]
 
                 # --- 3. Собираем подвариации ---
@@ -610,17 +632,27 @@ def run_automation():
                             if sub_row.get(col):
                                 var_attrs.append({"name": attr_name, "option": sub_row[col]})
                         if var_attrs:
+                            # scheduled price changes для строки-вариации
+                            sub_schedule, sub_err = parse_price_changes(sub_row.get("PRICE CHANGES", ""))
+                            if "SCHEDULE NOTE" in headers:
+                                batch_update_cells(
+                                    sub_row_index,
+                                    {"SCHEDULE NOTE": ("⚠ " + "; ".join(sub_err)) if sub_err else ""},
+                                    headers,
+                                )
                             variation_entries_en.append({
                                 "row_index": sub_row_index,
                                 "existing_variation_id": _cell_value_as_str(sub_row.get("WP VARIATION ID EN", "")),
                                 "regular_price": str(sub_row.get("PRICE", "0")),
                                 "attributes": var_attrs,
+                                "price_schedule": sub_schedule,
                             })
                             variation_entries_pt.append({
                                 "row_index": sub_row_index,
                                 "existing_variation_id": _cell_value_as_str(sub_row.get("WP VARIATION ID PT", "")),
                                 "regular_price": str(sub_row.get("PRICE", "0")),
                                 "attributes": var_attrs,
+                                "price_schedule": sub_schedule,
                             })
                     else:
                         break

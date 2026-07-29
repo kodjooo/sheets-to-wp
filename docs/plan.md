@@ -129,3 +129,12 @@
 - Добавлен CSV-отчет recovery.
 - Добавлена защита от неоднозначных совпадений и запрет перезаписи уже заполненных ID.
 - Обновлены тесты, env-шаблоны, README и архитектурная документация.
+
+27. Registration deadline + scheduled price changes (плагин miss-events) — выполнено
+- Новый модуль `run/rf_schedule.py`: парсинг/валидация даты-времени (дефолт времени 18:00) и ячейки scheduled price changes (`YYYY-MM-DD HH:MM = цена`, разделители `;`/перенос строки).
+- `REGISTRATION DEADLINE` (главная строка) → `miss_events.registration_deadline` на товаре: `_3` (PT create/update) + `_4` (EN create/update, из-за порядка создания PT→EN).
+- `PRICE CHANGES` (главная + строки-вариаций) → `miss_events.price_schedule` на вариации: `_6` отдельным идемпотентным PUT (применяется даже без изменения цены/атрибутов).
+- Колонка-флаг `SCHEDULE NOTE` (перед STATUS) с ошибками формата по строкам.
+- «Don't Miss»-чекбокс — вне таблицы (ведётся в WP) по решению клиента.
+- Тесты: `tests/test_rf_schedule.py`, дополнен `tests/test_variation_sync.py`. Обновлён `docs/architecture.md`.
+- Осталось: добавить в таблицу колонки `REGISTRATION DEADLINE`, `PRICE CHANGES`, `SCHEDULE NOTE` (перед STATUS) и один реальный прогон.

@@ -256,6 +256,24 @@ def sync_variations_by_ids(product_id, variation_entries, lang: str | None = Non
                 final_id = int(created_id)
                 logging.info("🆕 Вариация создана: product=%s variation=%s", product_id, final_id)
 
+        # Scheduled price changes (плагин miss-events, уровень вариации).
+        # Отдельный идемпотентный PUT: гарантирует применение расписания даже
+        # когда вариация не менялась по цене/атрибутам (базовая цена та же, а
+        # расписание клиент отредактировал) и dedup выше пропустил бы запись.
+        price_schedule = entry.get("price_schedule")
+        if price_schedule:
+            endpoint = f"products/{product_id}/variations/{final_id}"
+            if lang:
+                endpoint += f"?lang={lang}"
+            resp = _wcapi_request_with_retry(
+                "PUT", endpoint, {"miss_events": {"price_schedule": price_schedule}}
+            )
+            resp.raise_for_status()
+            logging.info(
+                "🗓 price_schedule применён: variation=%s (%d записей)",
+                final_id, len(price_schedule)
+            )
+
         if row_index is not None:
             row_to_variation_id[row_index] = final_id
         kept_ids.add(final_id)

@@ -324,6 +324,13 @@ def create_product(data):
             {"key": "_rf_location_municipality_name", "value": data["RF_MUNICIPALITY_NAME"]}
         ]
 
+    # Registration deadline (плагин miss-events, уровень товара) через штатный
+    # WC REST param `miss_events`. Время по умолчанию 18:00 подставляется в rf_schedule.
+    if data.get("RF_REGISTRATION_DEADLINE"):
+        product_data["miss_events"] = {
+            "registration_deadline": data["RF_REGISTRATION_DEADLINE"]
+        }
+
     # Получаем категории из таблицы (или заранее рассчитанный override EN->PT)
     if isinstance(data.get("CATEGORY_IDS_PT"), list) and data.get("CATEGORY_IDS_PT"):
         product_data["categories"] = data["CATEGORY_IDS_PT"]
@@ -566,6 +573,10 @@ def create_or_update_product(data, existing_product_id=None):
         payload["meta_data"] = [
             {"key": "_rf_location_municipality_name", "value": data["RF_MUNICIPALITY_NAME"]}
         ]
+    if data.get("RF_REGISTRATION_DEADLINE"):
+        payload["miss_events"] = {
+            "registration_deadline": data["RF_REGISTRATION_DEADLINE"]
+        }
 
     response = requests.put(
         f"{WC_API_URL}/wp-json/wc/v3/products/{existing_product_id}",
