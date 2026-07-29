@@ -32,6 +32,8 @@ class ParseDatetimeTests(unittest.TestCase):
         norm, err = parse_datetime("not a date")
         self.assertIsNone(norm)
         self.assertIsNotNone(err)
+        # сообщение об ошибке — на английском (клиент читает EN)
+        self.assertIn("unrecognized date/time", err)
 
 
 class ParsePriceTests(unittest.TestCase):
@@ -77,6 +79,8 @@ class ParsePriceChangesTests(unittest.TestCase):
         # только валидная запись попадает в результат
         self.assertEqual(result, [{"datetime": "2026-07-20 18:00", "price": "15.00"}])
         self.assertEqual(len(errors), 2)
+        # ошибки — на английском
+        self.assertTrue(all(any(w in e for w in ("missing", "invalid", "unrecognized")) for e in errors))
 
 
 if __name__ == "__main__":

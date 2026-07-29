@@ -387,30 +387,30 @@ def run_automation():
                 ):
                     # Структурная локация (PT): резолвим муниципалитет из «Location (City)».
                     # Имя пишем в мету товара; district+region+термы+EN достраивает
-                    # mu-plugin rf-auto-location на стороне WP. Флаг — в колонку LOCATION NOTE.
+                    # mu-plugin rf-auto-location на стороне WP.
+                    # Единая колонка-флаг NOTE (текст — на английском для клиента):
+                    # копит проблемы локации + дедлайна + scheduled price changes.
                     municipality_name = resolve_municipality(row.get("LOCATION (CITY)", ""))
                     row["RF_MUNICIPALITY_NAME"] = municipality_name or ""
-                    batch_update_cells(
-                        row_index,
-                        {"LOCATION NOTE": "" if municipality_name else "⚠ Location not matched"},
-                        headers,
-                    )
+
+                    notes = []
+                    if not municipality_name:
+                        notes.append("Location not matched")
 
                     # miss-events: registration deadline (товар) + scheduled price
-                    # changes (вариация, главная строка). Время дедлайна по умолчанию
-                    # 18:00 (см. rf_schedule). Ошибки формата — во флаг SCHEDULE NOTE.
-                    schedule_notes = []
+                    # changes (вариация, главная строка). Время дедлайна по умолчанию 18:00.
                     deadline, dl_err = parse_datetime(row.get("REGISTRATION DEADLINE", ""))
                     row["RF_REGISTRATION_DEADLINE"] = deadline or ""
                     if dl_err:
-                        schedule_notes.append(f"deadline: {dl_err}")
+                        notes.append(f"deadline: {dl_err}")
                     main_schedule, ps_err = parse_price_changes(row.get("PRICE CHANGES", ""))
                     row["RF_PRICE_SCHEDULE"] = main_schedule
-                    schedule_notes.extend(ps_err)
-                    if "SCHEDULE NOTE" in headers:
+                    notes.extend(ps_err)
+
+                    if "NOTE" in headers:
                         batch_update_cells(
                             row_index,
-                            {"SCHEDULE NOTE": ("⚠ " + "; ".join(schedule_notes)) if schedule_notes else ""},
+                            {"NOTE": ("⚠ " + "; ".join(notes)) if notes else ""},
                             headers,
                         )
 
@@ -634,10 +634,10 @@ def run_automation():
                         if var_attrs:
                             # scheduled price changes для строки-вариации
                             sub_schedule, sub_err = parse_price_changes(sub_row.get("PRICE CHANGES", ""))
-                            if "SCHEDULE NOTE" in headers:
+                            if "NOTE" in headers:
                                 batch_update_cells(
                                     sub_row_index,
-                                    {"SCHEDULE NOTE": ("⚠ " + "; ".join(sub_err)) if sub_err else ""},
+                                    {"NOTE": ("⚠ " + "; ".join(sub_err)) if sub_err else ""},
                                     headers,
                                 )
                             variation_entries_en.append({

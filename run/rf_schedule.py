@@ -43,7 +43,7 @@ def parse_datetime(value: str, default_time: str = DEFAULT_TIME):
             return f"{d.strftime('%Y-%m-%d')} {default_time}", None
         except ValueError:
             continue
-    return None, f"нераспознанная дата/время: '{s}'"
+    return None, f"unrecognized date/time: '{s}'"
 
 
 def parse_price(value: str):
@@ -66,16 +66,16 @@ def parse_price_changes(cell: str):
     result, errors = [], []
     for entry in entries:
         if "=" not in entry:
-            errors.append(f"нет '=' в записи: '{entry}'")
+            errors.append(f"missing '=' in entry: '{entry}'")
             continue
         dt_part, price_part = entry.split("=", 1)
         dt, err = parse_datetime(dt_part)
         price = parse_price(price_part)
         if err or not dt:
-            errors.append(err or f"плохая дата в '{entry}'")
+            errors.append(err or f"invalid date in '{entry}'")
             continue
         if price is None:
-            errors.append(f"плохая цена в '{entry}'")
+            errors.append(f"invalid price in '{entry}'")
             continue
         result.append({"datetime": dt, "price": price})
     return result, errors
