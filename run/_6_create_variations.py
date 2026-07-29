@@ -289,6 +289,53 @@ def sync_variations_by_ids(product_id, variation_entries, lang: str | None = Non
 
     return row_to_variation_id
 
+
+def _option_signature(attributes):
+    """Набор значений атрибутов вариации — устойчивый ключ для сопоставления
+    вариаций между строками таблицы и фактическими объектами в WC/WPML."""
+    return frozenset(
+        _norm_text(a.get("option"))
+        for a in (attributes or [])
+        if _norm_text(a.get("option"))
+    )
+
+
+def reapply_price_schedules(product_id, variation_entries, lang: str | None = None):
+    """Финальное идемпотентное проставление miss_events.price_schedule на ТЕКУЩИЕ
+    вариации продукта (по набору значений атрибутов, а не по устаревшим ID).
+
+    Нужно потому, что многопроходная синхронизация + WPML пересоздают вариации
+    (особенно EN-переводы) и рвут связь по ID: расписание, поставленное во время
+    прохода, может попасть в вариацию, которую WPML затем выбросит. Здесь набор
+    вариаций уже стабилен, поэтому запись приживается. Матчинг по option-signature
+    работает и для PT, и для EN (значения атрибутов у перевода те же)."""
+    wanted = {}
+    for entry in variation_entries:
+        schedule = entry.get("price_schedule")
+        if schedule:
+            wanted[_option_signature(entry.get("attributes", []))] = schedule
+    if not wanted:
+        return
+
+    current = _load_all_variations(product_id, lang=lang)
+    for variation in current:
+        schedule = wanted.get(_option_signature(variation.get("attributes", [])))
+        if not schedule:
+            continue
+        variation_id = variation.get("id")
+        endpoint = f"products/{product_id}/variations/{variation_id}"
+        if lang:
+            endpoint += f"?lang={lang}"
+        resp = _wcapi_request_with_retry(
+            "PUT", endpoint, {"miss_events": {"price_schedule": schedule}}
+        )
+        resp.raise_for_status()
+        logging.info(
+            "🗓 price_schedule (final) применён: product=%s variation=%s (%d записей)",
+            product_id, variation_id, len(schedule)
+        )
+
+
 def create_variations(product_id, variation_data_list):
     """
     Создаёт вариации для variable-продукта.

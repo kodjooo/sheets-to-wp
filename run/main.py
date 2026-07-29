@@ -92,7 +92,7 @@ from _3_create_product import (
 )
 from _4_create_translation import create_or_update_product_pt as create_product_pt
 from _5_taxonomy_and_attributes import assign_attributes_to_product
-from _6_create_variations import sync_variations_by_ids
+from _6_create_variations import sync_variations_by_ids, reapply_price_schedules
 from utils import (
     normalize_attribute_payload,
     normalize_category_pairs,
@@ -733,6 +733,12 @@ def run_automation():
 
                 pt_row_to_variation_id = sync_variations_by_ids(pt_product_id, variation_entries_pt, lang="pt")
                 _write_variation_ids_to_sheet(pt_row_to_variation_id, "WP VARIATION ID PT", headers)
+
+                # Финальное проставление scheduled price changes на УЖЕ стабильные
+                # наборы вариаций (по атрибутам): переживает пересоздание вариаций
+                # WPML на EN-переводе, из-за которого расписание иначе теряется.
+                reapply_price_schedules(pt_product_id, variation_entries_pt, lang="pt")
+                reapply_price_schedules(en_product_id, variation_entries_en, lang="en")
 
                 snapshot_hash = ""
                 if is_incomplete:

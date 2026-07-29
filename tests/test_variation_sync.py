@@ -34,7 +34,7 @@ sys.modules["_1_google_loader"] = google_loader_stub
 
 sys.modules.pop("_6_create_variations", None)
 
-from _6_create_variations import sync_variations_by_ids
+from _6_create_variations import sync_variations_by_ids, reapply_price_schedules
 
 
 class _FakeResponse:
@@ -247,6 +247,45 @@ class VariationSyncTests(unittest.TestCase):
             ("PUT", "products/100/variations/11", {"miss_events": {"price_schedule": schedule}}),
             calls,
         )
+
+
+    @patch("_6_create_variations._wcapi_request_with_retry")
+    def test_reapply_price_schedules_matches_current_variations_by_attributes(self, mock_wcapi):
+        calls = []
+        schedule = [{"datetime": "2026-07-20 18:00", "price": "15.00"}]
+
+        def side_effect(method, endpoint, payload=None):
+            calls.append((method, endpoint, payload))
+            if method == "GET" and endpoint == "products/200/variations?per_page=100&page=1&lang=en":
+                # текущие (стабильные после WPML) вариации с ДРУГИМИ ID, чем во время прохода
+                return _FakeResponse(json_data=[
+                    {"id": 900, "regular_price": "10", "attributes": [{"id": 9, "option": "5 km"}]},
+                    {"id": 901, "regular_price": "10", "attributes": [{"id": 9, "option": "10 km"}]},
+                ])
+            if method == "GET" and endpoint == "products/200/variations?per_page=100&page=2&lang=en":
+                return _FakeResponse(json_data=[])
+            if method == "PUT" and endpoint == "products/200/variations/900?lang=en":
+                return _FakeResponse(json_data={"id": 900})
+            raise AssertionError(f"Unexpected call: {method} {endpoint} {payload}")
+
+        mock_wcapi.side_effect = side_effect
+
+        # запись с расписанием только для «5 km»; ID вариации из прохода (999) уже неактуален
+        entries = [
+            {"existing_variation_id": "999", "attributes": [{"name": "Distance", "option": "5 km"}],
+             "price_schedule": schedule},
+            {"existing_variation_id": "998", "attributes": [{"name": "Distance", "option": "10 km"}],
+             "price_schedule": []},
+        ]
+        reapply_price_schedules(200, entries, lang="en")
+
+        # PUT ушёл на ТЕКУЩУЮ вариацию 900 (сматчилась по option «5 km»), не на устаревший 999
+        self.assertIn(
+            ("PUT", "products/200/variations/900?lang=en", {"miss_events": {"price_schedule": schedule}}),
+            calls,
+        )
+        # для «10 km» расписания нет → PUT не делаем
+        self.assertFalse(any(c[0] == "PUT" and "901" in c[1] for c in calls))
 
 
 if __name__ == "__main__":
