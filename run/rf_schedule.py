@@ -4,7 +4,8 @@
 `miss_events` (registration_deadline — на товаре, price_schedule — на вариации).
 
 - Дата/время принимаем: `YYYY-MM-DD HH:MM(:SS)`, `DD/MM/YYYY HH:MM`, ISO
-  (`YYYY-MM-DDTHH:MM`). Если время не указано — по умолчанию 18:00.
+  (`YYYY-MM-DDTHH:MM`). Для registration deadline без времени используется
+  18:00; для price changes — 00:00.
 - Нормализуем к `YYYY-MM-DD HH:MM` (плагин это принимает).
 - Price changes — одна ячейка, записи через `;` или перенос строки,
   каждая: `<дата время> = <цена>`.
@@ -14,6 +15,7 @@ import re
 from datetime import datetime
 
 DEFAULT_TIME = "18:00"
+PRICE_CHANGE_DEFAULT_TIME = "00:00"
 
 _DT_FORMATS = [
     "%Y-%m-%d %H:%M:%S",
@@ -69,7 +71,7 @@ def parse_price_changes(cell: str):
             errors.append(f"missing '=' in entry: '{entry}'")
             continue
         dt_part, price_part = entry.split("=", 1)
-        dt, err = parse_datetime(dt_part)
+        dt, err = parse_datetime(dt_part, default_time=PRICE_CHANGE_DEFAULT_TIME)
         price = parse_price(price_part)
         if err or not dt:
             errors.append(err or f"invalid date in '{entry}'")

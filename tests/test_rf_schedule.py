@@ -66,8 +66,13 @@ class ParsePriceChangesTests(unittest.TestCase):
         self.assertEqual(result, [
             {"datetime": "2026-07-20 18:00", "price": "15.00"},
             {"datetime": "2026-07-25 18:00", "price": "20.00"},
-            {"datetime": "2026-07-30 18:00", "price": "25.00"},
+            {"datetime": "2026-07-30 00:00", "price": "25.00"},
         ])
+
+    def test_date_only_defaults_to_midnight(self):
+        result, errors = parse_price_changes("2026-08-01 = 20")
+        self.assertEqual(errors, [])
+        self.assertEqual(result, [{"datetime": "2026-08-01 00:00", "price": "20.00"}])
 
     def test_multiple_newline(self):
         result, errors = parse_price_changes("2026-07-20 18:00 = 15\n2026-07-25 = 20")
