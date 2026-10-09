@@ -60,9 +60,10 @@ class OrganizerContactsBackfillTests(unittest.TestCase):
         )
 
     def test_only_main_rows_with_blank_email_are_candidates(self):
-        self.assertTrue(contacts.is_candidate_row({"ID": "42", "ORGANIZER EMAIL": ""}))
-        self.assertFalse(contacts.is_candidate_row({"ID": "", "ORGANIZER EMAIL": ""}))
-        self.assertFalse(contacts.is_candidate_row({"ID": "42", "ORGANIZER EMAIL": "info@example.pt"}))
+        self.assertTrue(contacts.is_candidate_row({"ID": "42", "RACE NAME (PT)": "Race", "ORGANIZER EMAIL": ""}))
+        self.assertFalse(contacts.is_candidate_row({"ID": "", "RACE NAME (PT)": "Race", "ORGANIZER EMAIL": ""}))
+        self.assertFalse(contacts.is_candidate_row({"ID": "42", "RACE NAME (PT)": "", "ORGANIZER EMAIL": ""}))
+        self.assertFalse(contacts.is_candidate_row({"ID": "42", "RACE NAME (PT)": "Race", "ORGANIZER EMAIL": "info@example.pt"}))
 
     def test_build_updates_validates_email_and_preserves_existing_values(self):
         result = {"organizer_name": "Race Org", "organizer_email": "Info@Race.pt, invalid"}
@@ -140,18 +141,23 @@ class OrganizerContactsBackfillTests(unittest.TestCase):
             "WEBSITE": "https://example.test", "REGULATIONS": "",
         }
         report_rows = []
-        with patch.object(contacts, "load_all_rows", return_value=([(2, row)], list(row))):
-            with patch.object(
-                contacts, "collect_sources",
-                return_value=("https://example.test", "Corrida de Teste website source", "", "", None),
-            ):
+        with tempfile.NamedTemporaryFile(delete=False) as checkpoint_file:
+            checkpoint_path = checkpoint_file.name
+        try:
+            with patch.object(contacts, "load_all_rows", return_value=([(2, row)], list(row))):
                 with patch.object(
-                    contacts, "call_organizer_contacts_assistant",
-                    return_value={"organizer_name": "Race Org", "organizer_email": "info@race.pt"},
+                    contacts, "collect_sources",
+                    return_value=("https://example.test", "Corrida de Teste website source", "", "", None),
                 ):
-                    with patch.object(contacts, "update_only_blank_cells") as write:
-                        with patch.object(contacts, "write_report", side_effect=lambda _path, rows: report_rows.extend(rows)):
-                            summary = contacts.run("apply", report="report.csv")
+                    with patch.object(
+                        contacts, "call_organizer_contacts_assistant",
+                        return_value={"organizer_name": "Race Org", "organizer_email": "info@race.pt"},
+                    ):
+                        with patch.object(contacts, "update_only_blank_cells") as write:
+                            with patch.object(contacts, "write_report", side_effect=lambda _path, rows: report_rows.extend(rows)):
+                                summary = contacts.run("apply", report="report.csv", checkpoint=checkpoint_path)
+        finally:
+            os.unlink(checkpoint_path)
 
         self.assertEqual(summary, {"selected": 1, "proposed": 0, "written": 0, "skipped": 1})
         write.assert_not_called()
@@ -190,6 +196,31 @@ class OrganizerContactsBackfillTests(unittest.TestCase):
             )
         finally:
             os.unlink(report_path)
+
+    def test_direct_apply_journals_before_and_after_the_sheet_write(self):
+        row = {
+            "ID": "45", "STATUS": "Published", "RACE NAME (PT)": "Corrida de Teste",
+            "ORGANIZER NAME": "", "ORGANIZER EMAIL": "", "WEBSITE": "https://example.test",
+            "REGULATIONS": "",
+        }
+        with tempfile.NamedTemporaryFile(delete=False) as checkpoint_file:
+            checkpoint_path = checkpoint_file.name
+        try:
+            with patch.object(contacts, "load_all_rows", return_value=([(7, row)], list(row))):
+                with patch.object(contacts, "collect_sources", return_value=(
+                    "https://example.test", "Corrida de Teste info@race.pt", "", "", None,
+                )):
+                    with patch.object(contacts, "call_organizer_contacts_assistant", return_value={
+                        "organizer_name": "Race Org", "organizer_email": "info@race.pt",
+                    }):
+                        with patch.object(contacts, "update_only_blank_cells", return_value={"ORGANIZER EMAIL": "info@race.pt"}):
+                            summary = contacts.run("apply", checkpoint=checkpoint_path)
+            self.assertEqual(summary, {"selected": 1, "proposed": 1, "written": 1, "skipped": 0})
+            with open(checkpoint_path, encoding="utf-8", newline="") as file:
+                states = [record["checkpoint_state"] for record in contacts.csv.DictReader(file)]
+            self.assertEqual(states, ["pending", "applied"])
+        finally:
+            os.unlink(checkpoint_path)
 
 
 if __name__ == "__main__":

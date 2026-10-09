@@ -38,6 +38,12 @@ EVENT_TITLE_STOP_WORDS = {
     "campeonatos", "maratona", "meia", "nacional", "regionais", "regional",
 }
 
+REPORT_FIELDS = [
+    "row", "id", "race", "status", "website", "regulations",
+    "source_emails", "event_matched_emails", "proposed_name", "proposed_email",
+    "updated_fields", "note", "checkpoint_state",
+]
+
 logging.basicConfig(
     level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
     format="%(asctime)s [%(levelname)s] %(message)s",
@@ -135,7 +141,11 @@ def extract_source_emails(website_text: str, regulations_text: str, pdf_path: st
 
 def is_candidate_row(row: dict) -> bool:
     """Only event main rows with an unfilled organizer-email field are eligible."""
-    return bool(_clean(row.get("ID"))) and not _clean(row.get("ORGANIZER EMAIL"))
+    return (
+        bool(_clean(row.get("ID")))
+        and bool(_clean(row.get("RACE NAME (PT)")) or _clean(row.get("RACE NAME")))
+        and not _clean(row.get("ORGANIZER EMAIL"))
+    )
 
 
 def build_updates(row: dict, result: dict | None) -> dict:
@@ -177,14 +187,37 @@ def upload_pdf(pdf_path: str | None) -> list[str]:
 def write_report(path: str, rows: list[dict]) -> None:
     report_path = Path(path)
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    fields = [
-        "row", "id", "race", "status", "website", "regulations",
-        "source_emails", "event_matched_emails", "proposed_name", "proposed_email", "updated_fields", "note",
-    ]
     with report_path.open("w", encoding="utf-8", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=fields)
+        writer = csv.DictWriter(file, fieldnames=REPORT_FIELDS)
         writer.writeheader()
         writer.writerows(rows)
+
+
+class CheckpointWriter:
+    """Durably journal every direct-apply decision before its sheet write."""
+
+    def __init__(self, path: str):
+        checkpoint_path = Path(path)
+        checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+        new_file = not checkpoint_path.exists() or checkpoint_path.stat().st_size == 0
+        self.file = checkpoint_path.open("a", encoding="utf-8", newline="")
+        self.writer = csv.DictWriter(self.file, fieldnames=REPORT_FIELDS)
+        if new_file:
+            self.writer.writeheader()
+            self._sync()
+
+    def _sync(self) -> None:
+        self.file.flush()
+        os.fsync(self.file.fileno())
+
+    def append(self, entry: dict, state: str) -> None:
+        saved = dict(entry)
+        saved["checkpoint_state"] = state
+        self.writer.writerow(saved)
+        self._sync()
+
+    def close(self) -> None:
+        self.file.close()
 
 
 def _is_at_or_below_id_cutoff(value, max_id: int | None) -> bool:
@@ -214,7 +247,18 @@ def apply_saved_report(path: str, max_id: int | None = None) -> dict:
     event ID, and the regular write helper still writes only blank cells.
     """
     with open(path, encoding="utf-8-sig", newline="") as report_file:
-        report_rows = list(csv.DictReader(report_file))
+        all_report_rows = list(csv.DictReader(report_file))
+
+    # A checkpoint can contain a durable `pending` record followed by `applied`.
+    # Use only the final record for every event; a pending record left by a crash
+    # is intentionally eligible for a no-model resume.
+    report_rows_by_key = {}
+    for report_row in all_report_rows:
+        key = (
+            _clean(report_row.get("row")), _clean(report_row.get("id")),
+            _clean(report_row.get("race")), _clean(report_row.get("website")),
+        )
+        report_rows_by_key[key] = report_row
 
     rows, headers = load_all_rows()
     required_headers = {"ID", "ORGANIZER NAME", "ORGANIZER EMAIL"}
@@ -227,7 +271,10 @@ def apply_saved_report(path: str, max_id: int | None = None) -> dict:
         rows_by_sheet_row[row_index] = row
 
     summary = {"accepted": 0, "written": 0, "skipped": 0}
-    for report_row in report_rows:
+    for report_row in report_rows_by_key.values():
+        checkpoint_state = _clean(report_row.get("checkpoint_state"))
+        if checkpoint_state and checkpoint_state not in {"pending", "accepted"}:
+            continue
         event_id = _clean(report_row.get("id"))
         # Only a successful dry-run candidate has update fields and no review
         # note. A hand-edited or incomplete report therefore cannot add rows.
@@ -261,10 +308,12 @@ def apply_saved_report(path: str, max_id: int | None = None) -> dict:
 
 def run(
     mode: str, limit: int = 0, only_ids: set[str] | None = None,
-    report: str = "", max_id: int | None = None,
+    report: str = "", max_id: int | None = None, checkpoint: str = "",
 ) -> dict:
     if mode not in {"dry-run", "apply"}:
         raise ValueError("mode must be 'dry-run' or 'apply'")
+    if mode == "apply" and not checkpoint:
+        raise ValueError("--mode apply requires a durable --checkpoint path")
 
     rows, headers = load_all_rows()
     required_headers = {"ID", "ORGANIZER NAME", "ORGANIZER EMAIL", "WEBSITE", "REGULATIONS"}
@@ -282,8 +331,17 @@ def run(
         selected = selected[:limit]
 
     report_rows = []
+    checkpoint_writer = CheckpointWriter(checkpoint) if checkpoint else None
+
+    def record(entry: dict, state: str) -> None:
+        entry["checkpoint_state"] = state
+        report_rows.append(entry)
+        if checkpoint_writer:
+            checkpoint_writer.append(entry, state)
+
     summary = {"selected": len(selected), "proposed": 0, "written": 0, "skipped": 0}
-    for row_index, row in selected:
+    try:
+      for row_index, row in selected:
         event_id = _clean(row.get("ID"))
         entry = {
             "row": row_index,
@@ -298,13 +356,14 @@ def run(
             "proposed_email": "",
             "updated_fields": "",
             "note": "",
+            "checkpoint_state": "",
         }
         try:
             website_url, website_text, regulations_url, regulations_text, pdf_path = collect_sources(row)
             if not website_text and not regulations_text and not pdf_path:
                 entry["note"] = "No readable website or regulations source"
                 summary["skipped"] += 1
-                report_rows.append(entry)
+                record(entry, "skipped")
                 continue
 
             source_text = build_first_assistant_prompt(regulations_url, regulations_text, website_text)
@@ -329,7 +388,7 @@ def run(
                 else:
                     entry["note"] = "No verified organizer email returned"
                 summary["skipped"] += 1
-                report_rows.append(entry)
+                record(entry, "skipped")
                 continue
 
             source_emails = set(_email_list(entry["source_emails"]))
@@ -338,7 +397,7 @@ def run(
                 entry["note"] = "Review: AI email was not found by literal source-email scan"
                 entry["updated_fields"] = ""
                 summary["skipped"] += 1
-                report_rows.append(entry)
+                record(entry, "skipped")
                 continue
 
             event_matched_emails = set(_email_list(entry["event_matched_emails"]))
@@ -346,12 +405,15 @@ def run(
                 entry["note"] = "Review: email was not found in a source that identifies this event"
                 entry["updated_fields"] = ""
                 summary["skipped"] += 1
-                report_rows.append(entry)
+                record(entry, "skipped")
                 continue
 
             summary["proposed"] += 1
             entry["updated_fields"] = ", ".join(sorted(updates))
             if mode == "apply":
+                # The proposal is durable before writing. If the process dies
+                # here, --apply-report can resume it without another model call.
+                checkpoint_writer.append(entry, "pending")
                 # Re-check the cells immediately before writing. This preserves a
                 # contact added manually while the backfill was running.
                 written = update_only_blank_cells(row_index, updates, headers)
@@ -359,12 +421,19 @@ def run(
                 summary["written"] += bool(written)
                 if not written:
                     entry["note"] = "Skipped: contact field was filled during run"
-            report_rows.append(entry)
+                    record(entry, "not_written")
+                else:
+                    record(entry, "applied")
+            else:
+                record(entry, "accepted")
         except Exception as exc:  # Continue with remaining independent events.
             logging.exception("Contacts backfill failed for event ID=%s", event_id)
             entry["note"] = f"Error: {exc}"
             summary["skipped"] += 1
-            report_rows.append(entry)
+            record(entry, "error")
+    finally:
+        if checkpoint_writer:
+            checkpoint_writer.close()
 
     if report:
         write_report(report, report_rows)
@@ -378,6 +447,10 @@ def parse_args():
     parser.add_argument("--limit", type=int, default=0, help="Max events to inspect; 0 means all")
     parser.add_argument("--id", dest="ids", action="append", default=[], help="Process one event ID; repeatable")
     parser.add_argument("--report", default="", help="Optional CSV report path")
+    parser.add_argument(
+        "--checkpoint", default="",
+        help="Append-only durable checkpoint required for --mode apply",
+    )
     parser.add_argument(
         "--max-id", type=int, default=None,
         help="Only process/apply historical rows with ID at or below this value",
@@ -396,5 +469,5 @@ if __name__ == "__main__":
     else:
         run(
             args.mode, limit=args.limit, only_ids=set(args.ids),
-            report=args.report, max_id=args.max_id,
+            report=args.report, max_id=args.max_id, checkpoint=args.checkpoint,
         )
