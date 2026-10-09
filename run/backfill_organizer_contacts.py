@@ -240,6 +240,22 @@ def _matches_report_identity(row: dict, report_row: dict) -> bool:
     return all(_clean(row.get(sheet_key)) == _clean(report_row.get(report_key)) for sheet_key, report_key in checks)
 
 
+def row_identity(row: dict) -> dict:
+    return {key: _clean(row.get(key)) for key in (
+        "ID", "RACE NAME (PT)", "RACE NAME", "WEBSITE", "REGULATIONS",
+        "WP PRODUCT ID PT", "WP PRODUCT ID EN",
+    ) if key in row}
+
+
+def checkpoint_records(path: str) -> dict:
+    latest = {}
+    if path and Path(path).exists():
+        with open(path, encoding="utf-8-sig", newline="") as file:
+            for entry in csv.DictReader(file):
+                latest[(entry.get("row"), entry.get("id"), entry.get("race"), entry.get("website"))] = entry
+    return latest
+
+
 def apply_saved_report(path: str, max_id: int | None = None) -> dict:
     """Apply only accepted rows from a previous dry-run report.
 
@@ -298,7 +314,7 @@ def apply_saved_report(path: str, max_id: int | None = None) -> dict:
         if proposed_name:
             updates["ORGANIZER NAME"] = proposed_name
         summary["accepted"] += 1
-        written = update_only_blank_cells(row_index, updates, headers)
+        written = update_only_blank_cells(row_index, updates, headers, expected_identity=row_identity(row))
         summary["written"] += bool(written)
         if not written:
             summary["skipped"] += 1
@@ -327,8 +343,18 @@ def run(
         and _is_at_or_below_id_cutoff(row.get("ID"), max_id)
         and (not only_ids or _clean(row.get("ID")) in only_ids)
     ]
-    if limit:
-        selected = selected[:limit]
+    previous = checkpoint_records(checkpoint)
+    fresh = []
+    for row_index, row in selected:
+        key = (str(row_index), _clean(row.get("ID")),
+               _clean(row.get("RACE NAME (PT)")) or _clean(row.get("RACE NAME")),
+               _clean(row.get("WEBSITE")))
+        if key not in previous:
+            fresh.append((row_index, row))
+    # Recover durable pending proposals before selecting any fresh model work.
+    if mode == "apply" and any(r.get("checkpoint_state") == "pending" for r in previous.values()):
+        apply_saved_report(checkpoint, max_id=max_id)
+    selected = fresh[:limit] if limit else fresh
 
     report_rows = []
     checkpoint_writer = CheckpointWriter(checkpoint) if checkpoint else None
@@ -416,7 +442,7 @@ def run(
                 checkpoint_writer.append(entry, "pending")
                 # Re-check the cells immediately before writing. This preserves a
                 # contact added manually while the backfill was running.
-                written = update_only_blank_cells(row_index, updates, headers)
+                written = update_only_blank_cells(row_index, updates, headers, expected_identity=row_identity(row))
                 entry["updated_fields"] = ", ".join(sorted(written))
                 summary["written"] += bool(written)
                 if not written:

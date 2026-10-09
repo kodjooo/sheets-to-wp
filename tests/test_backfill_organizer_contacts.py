@@ -193,6 +193,7 @@ class OrganizerContactsBackfillTests(unittest.TestCase):
                 5,
                 {"ORGANIZER EMAIL": "info@race.pt", "ORGANIZER NAME": "Race Org"},
                 list(row),
+                expected_identity=contacts.row_identity(row),
             )
         finally:
             os.unlink(report_path)
@@ -219,6 +220,13 @@ class OrganizerContactsBackfillTests(unittest.TestCase):
             with open(checkpoint_path, encoding="utf-8", newline="") as file:
                 states = [record["checkpoint_state"] for record in contacts.csv.DictReader(file)]
             self.assertEqual(states, ["pending", "applied"])
+            # Re-running with the old (still blank) snapshot must not call the
+            # model again: the durable checkpoint already completed this row.
+            with patch.object(contacts, "load_all_rows", return_value=([(7, row)], list(row))):
+                with patch.object(contacts, "call_organizer_contacts_assistant") as model:
+                    resumed = contacts.run("apply", checkpoint=checkpoint_path)
+            self.assertEqual(resumed["selected"], 0)
+            model.assert_not_called()
         finally:
             os.unlink(checkpoint_path)
 

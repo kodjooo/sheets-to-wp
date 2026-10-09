@@ -208,7 +208,7 @@ def batch_update_cells(row_index, updates: dict, headers):
         update_cell(row_index, key, value, headers)
 
 
-def update_only_blank_cells(row_index, updates: dict, headers) -> dict:
+def update_only_blank_cells(row_index, updates: dict, headers, expected_identity=None) -> dict:
     """Write only cells that are still blank at write time.
 
     Used by manual backfills so a value entered after the initial sheet read is
@@ -221,6 +221,18 @@ def update_only_blank_cells(row_index, updates: dict, headers) -> dict:
             continue
         try:
             sheet = _get_sheet_with_retry()
+            if expected_identity:
+                live_headers = sheet.row_values(1)
+                live_row = sheet.row_values(row_index)
+                for field, expected in expected_identity.items():
+                    if field not in live_headers:
+                        raise ValueError("Identity column missing: " + field)
+                    position = live_headers.index(field)
+                    actual = live_row[position] if position < len(live_row) else ""
+                    if str(actual or "").strip() != str(expected or "").strip():
+                        raise ValueError("Event identity changed at row " + str(row_index))
+                if live_headers != headers:
+                    raise ValueError("Sheet columns changed during backfill")
             col_index = headers.index(key) + 1
             current = sheet.cell(row_index, col_index).value
             if str(current or "").strip():

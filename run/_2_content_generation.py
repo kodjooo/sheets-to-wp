@@ -402,6 +402,9 @@ def call_organizer_contacts_assistant(text, file_ids=None):
                 logging.info("🧠 Contacts backfill reasoning effort: %s", reasoning_effort)
                 request_kwargs["reasoning"] = {"effort": reasoning_effort}
             response = _OPENAI_CLIENT.responses.create(**request_kwargs)
+            usage = getattr(response, "usage", None)
+            if usage is not None:
+                logging.info("Contacts response id=%s usage=%s", getattr(response, "id", ""), usage)
             reply = response.output_text or ""
             result = json.loads(reply)
             if not isinstance(result, dict):
