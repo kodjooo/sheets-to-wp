@@ -104,6 +104,11 @@ class OrganizerContactsBackfillTests(unittest.TestCase):
     def test_event_match_does_not_accept_a_generic_event_type(self):
         self.assertFalse(contacts.source_matches_event("Corrida", "Corrida da cidade"))
 
+    def test_id_cutoff_only_keeps_historical_rows(self):
+        self.assertTrue(contacts._is_at_or_below_id_cutoff("2534", 2534))
+        self.assertFalse(contacts._is_at_or_below_id_cutoff("2535", 2534))
+        self.assertFalse(contacts._is_at_or_below_id_cutoff("not-an-id", 2534))
+
     def test_dry_run_never_writes_and_reports_proposal(self):
         row = {
             "ID": "42", "STATUS": "Published", "RACE NAME (PT)": "Corrida de Teste",
@@ -154,20 +159,22 @@ class OrganizerContactsBackfillTests(unittest.TestCase):
 
     def test_apply_saved_report_reuses_dry_run_results_without_model_call(self):
         row = {
-            "ID": "44", "ORGANIZER NAME": "", "ORGANIZER EMAIL": "",
+            "ID": "44", "RACE NAME (PT)": "Race 44", "WEBSITE": "https://race.test",
+            "ORGANIZER NAME": "", "ORGANIZER EMAIL": "",
         }
         with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="", delete=False) as report_file:
             writer = contacts.csv.DictWriter(
                 report_file,
-                fieldnames=["id", "proposed_name", "proposed_email", "updated_fields", "note"],
+                fieldnames=["row", "id", "race", "website", "proposed_name", "proposed_email", "updated_fields", "note"],
             )
             writer.writeheader()
             writer.writerow({
-                "id": "44", "proposed_name": "Race Org", "proposed_email": "info@race.pt",
+                "row": "5", "id": "44", "race": "Race 44", "website": "https://race.test",
+                "proposed_name": "Race Org", "proposed_email": "info@race.pt",
                 "updated_fields": "ORGANIZER EMAIL", "note": "",
             })
             writer.writerow({
-                "id": "missing", "proposed_email": "nope@race.pt",
+                "row": "9", "id": "missing", "proposed_email": "nope@race.pt",
                 "updated_fields": "ORGANIZER EMAIL", "note": "Review: do not apply",
             })
             report_path = report_file.name

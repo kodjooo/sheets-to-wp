@@ -187,7 +187,27 @@ def write_report(path: str, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
-def apply_saved_report(path: str) -> dict:
+def _is_at_or_below_id_cutoff(value, max_id: int | None) -> bool:
+    """Whether an event belongs to the requested historical ID range."""
+    if max_id is None:
+        return True
+    try:
+        return int(_clean(value)) <= max_id
+    except ValueError:
+        return False
+
+
+def _matches_report_identity(row: dict, report_row: dict) -> bool:
+    """Confirm the row has not shifted to a different event since dry run."""
+    checks = (
+        ("ID", "id"),
+        ("RACE NAME (PT)", "race"),
+        ("WEBSITE", "website"),
+    )
+    return all(_clean(row.get(sheet_key)) == _clean(report_row.get(report_key)) for sheet_key, report_key in checks)
+
+
+def apply_saved_report(path: str, max_id: int | None = None) -> dict:
     """Apply only accepted rows from a previous dry-run report.
 
     This intentionally makes no web or OpenAI calls. Rows are located again by
@@ -202,12 +222,9 @@ def apply_saved_report(path: str) -> dict:
     if missing_headers:
         raise ValueError("Missing required columns: " + ", ".join(missing_headers))
 
-    rows_by_id: dict[str, tuple[int, dict] | None] = {}
+    rows_by_sheet_row = {}
     for row_index, row in rows:
-        event_id = _clean(row.get("ID"))
-        if not event_id:
-            continue
-        rows_by_id[event_id] = (row_index, row) if event_id not in rows_by_id else None
+        rows_by_sheet_row[row_index] = row
 
     summary = {"accepted": 0, "written": 0, "skipped": 0}
     for report_row in report_rows:
@@ -216,12 +233,19 @@ def apply_saved_report(path: str) -> dict:
         # note. A hand-edited or incomplete report therefore cannot add rows.
         if not _clean(report_row.get("updated_fields")) or _clean(report_row.get("note")):
             continue
-        target = rows_by_id.get(event_id)
-        proposed_email = extract_valid_emails(report_row.get("proposed_email", ""))
-        if not target or not proposed_email:
+        if not _is_at_or_below_id_cutoff(event_id, max_id):
+            continue
+        try:
+            sheet_row_index = int(_clean(report_row.get("row")))
+        except ValueError:
             summary["skipped"] += 1
             continue
-        row_index, row = target
+        target = rows_by_sheet_row.get(sheet_row_index)
+        proposed_email = extract_valid_emails(report_row.get("proposed_email", ""))
+        if not target or not proposed_email or not _matches_report_identity(target, report_row):
+            summary["skipped"] += 1
+            continue
+        row_index, row = sheet_row_index, target
         updates = {"ORGANIZER EMAIL": proposed_email}
         proposed_name = _clean(report_row.get("proposed_name"))
         if proposed_name:
@@ -235,7 +259,10 @@ def apply_saved_report(path: str) -> dict:
     return summary
 
 
-def run(mode: str, limit: int = 0, only_ids: set[str] | None = None, report: str = "") -> dict:
+def run(
+    mode: str, limit: int = 0, only_ids: set[str] | None = None,
+    report: str = "", max_id: int | None = None,
+) -> dict:
     if mode not in {"dry-run", "apply"}:
         raise ValueError("mode must be 'dry-run' or 'apply'")
 
@@ -247,7 +274,9 @@ def run(mode: str, limit: int = 0, only_ids: set[str] | None = None, report: str
 
     selected = [
         (row_index, row) for row_index, row in rows
-        if is_candidate_row(row) and (not only_ids or _clean(row.get("ID")) in only_ids)
+        if is_candidate_row(row)
+        and _is_at_or_below_id_cutoff(row.get("ID"), max_id)
+        and (not only_ids or _clean(row.get("ID")) in only_ids)
     ]
     if limit:
         selected = selected[:limit]
@@ -350,6 +379,10 @@ def parse_args():
     parser.add_argument("--id", dest="ids", action="append", default=[], help="Process one event ID; repeatable")
     parser.add_argument("--report", default="", help="Optional CSV report path")
     parser.add_argument(
+        "--max-id", type=int, default=None,
+        help="Only process/apply historical rows with ID at or below this value",
+    )
+    parser.add_argument(
         "--apply-report", default="",
         help="Apply accepted rows from an existing dry-run CSV; makes no OpenAI calls",
     )
@@ -359,6 +392,9 @@ def parse_args():
 if __name__ == "__main__":
     args = parse_args()
     if args.apply_report:
-        apply_saved_report(args.apply_report)
+        apply_saved_report(args.apply_report, max_id=args.max_id)
     else:
-        run(args.mode, limit=args.limit, only_ids=set(args.ids), report=args.report)
+        run(
+            args.mode, limit=args.limit, only_ids=set(args.ids),
+            report=args.report, max_id=args.max_id,
+        )
