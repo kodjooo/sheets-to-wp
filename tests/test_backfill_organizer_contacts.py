@@ -88,9 +88,24 @@ class OrganizerContactsBackfillTests(unittest.TestCase):
             "info@race.pt, team@example.org",
         )
 
+    def test_event_match_requires_a_distinctive_title_token_in_that_source(self):
+        self.assertTrue(
+            contacts.source_matches_event(
+                "7º BTT Rota das Laranjeiras", "Regulamento da Rota das Laranjeiras"
+            )
+        )
+        self.assertFalse(
+            contacts.source_matches_event(
+                "7º BTT Rota das Laranjeiras", "Regulamento Trail Trilhos da Mata"
+            )
+        )
+
+    def test_event_match_does_not_accept_a_generic_event_type(self):
+        self.assertFalse(contacts.source_matches_event("Corrida", "Corrida da cidade"))
+
     def test_dry_run_never_writes_and_reports_proposal(self):
         row = {
-            "ID": "42", "STATUS": "Published", "RACE NAME (PT)": "Corrida",
+            "ID": "42", "STATUS": "Published", "RACE NAME (PT)": "Corrida de Teste",
             "ORGANIZER NAME": "", "ORGANIZER EMAIL": "",
             "WEBSITE": "https://example.test", "REGULATIONS": "",
         }
@@ -98,7 +113,7 @@ class OrganizerContactsBackfillTests(unittest.TestCase):
         with patch.object(contacts, "load_all_rows", return_value=([(2, row)], list(row))):
             with patch.object(
                 contacts, "collect_sources",
-                return_value=("https://example.test", "website source info@race.pt", "", "", None),
+                return_value=("https://example.test", "Corrida de Teste info@race.pt", "", "", None),
             ):
                 with patch.object(
                     contacts, "call_organizer_contacts_assistant",
@@ -114,7 +129,7 @@ class OrganizerContactsBackfillTests(unittest.TestCase):
 
     def test_unconfirmed_ai_email_is_marked_for_review(self):
         row = {
-            "ID": "43", "STATUS": "Published", "RACE NAME (PT)": "Corrida",
+            "ID": "43", "STATUS": "Published", "RACE NAME (PT)": "Corrida de Teste",
             "ORGANIZER NAME": "", "ORGANIZER EMAIL": "",
             "WEBSITE": "https://example.test", "REGULATIONS": "",
         }
@@ -122,7 +137,7 @@ class OrganizerContactsBackfillTests(unittest.TestCase):
         with patch.object(contacts, "load_all_rows", return_value=([(2, row)], list(row))):
             with patch.object(
                 contacts, "collect_sources",
-                return_value=("https://example.test", "website source", "", "", None),
+                return_value=("https://example.test", "Corrida de Teste website source", "", "", None),
             ):
                 with patch.object(
                     contacts, "call_organizer_contacts_assistant",

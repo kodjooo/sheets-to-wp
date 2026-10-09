@@ -10,6 +10,7 @@ import csv
 import logging
 import os
 import re
+import unicodedata
 from pathlib import Path
 
 import openai
@@ -25,6 +26,17 @@ from url_utils import unwrap_google_viewer_url
 
 
 EMAIL_RE = re.compile(r"[^@\s,;<>()]+@[^@\s,;<>()]+\.[^@\s,;<>()]+")
+
+# Common event-type words do not identify one particular race.  Requiring a
+# remaining title token prevents a contact found only in an unrelated linked
+# regulation (for example, a different race hosted on the same platform) from
+# being written automatically.
+EVENT_TITLE_STOP_WORDS = {
+    "a", "ao", "as", "da", "das", "de", "do", "dos", "e", "em", "o", "os",
+    "the", "and", "for", "with", "corrida", "caminhada", "trail", "trilho",
+    "passeio", "prova", "evento", "edicao", "edicao", "taca", "campeonato",
+    "campeonatos", "maratona", "meia", "nacional", "regionais", "regional",
+}
 
 logging.basicConfig(
     level=getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO),
@@ -60,6 +72,48 @@ def extract_valid_emails(raw: str) -> str:
 def _email_list(raw: str) -> list[str]:
     normalized = extract_valid_emails(raw)
     return [email.strip() for email in normalized.split(",") if email.strip()]
+
+
+def event_identity_tokens(race_name: str) -> set[str]:
+    """Return distinctive, normalized title tokens suitable for source checks."""
+    normalized = unicodedata.normalize("NFKD", _clean(race_name)).encode("ascii", "ignore").decode()
+    words = re.findall(r"[a-z0-9]+", normalized.lower())
+    return {
+        word for word in words
+        if len(word) >= 4 and not word.isdigit() and word not in EVENT_TITLE_STOP_WORDS
+    }
+
+
+def source_matches_event(race_name: str, source_text: str) -> bool:
+    """Whether a particular source itself names this event.
+
+    This deliberately requires a distinctive event-name token. A missing match
+    is a manual-review case rather than an error or a reason to guess.
+    """
+    tokens = event_identity_tokens(race_name)
+    if not tokens:
+        return False
+    normalized_source = unicodedata.normalize("NFKD", _clean(source_text)).encode(
+        "ascii", "ignore"
+    ).decode().lower()
+    source_words = set(re.findall(r"[a-z0-9]+", normalized_source))
+    return bool(tokens.intersection(source_words))
+
+
+def event_matched_source_emails(
+    race_name: str, website_text: str, regulations_text: str, pdf_path: str | None
+) -> str:
+    """Literal emails only from individual sources that identify the same event."""
+    sources = [website_text or "", regulations_text or ""]
+    if pdf_path:
+        try:
+            with open(pdf_path, "rb") as pdf_file:
+                sources.append("\n".join(page.extract_text() or "" for page in PdfReader(pdf_file).pages))
+        except Exception as exc:
+            logging.warning("Could not extract PDF text for event-match audit: %s", exc)
+    return extract_valid_emails("\n".join(
+        source for source in sources if source_matches_event(race_name, source)
+    ))
 
 
 def extract_source_emails(website_text: str, regulations_text: str, pdf_path: str | None) -> str:
@@ -125,7 +179,7 @@ def write_report(path: str, rows: list[dict]) -> None:
     report_path.parent.mkdir(parents=True, exist_ok=True)
     fields = [
         "row", "id", "race", "status", "website", "regulations",
-        "source_emails", "proposed_name", "proposed_email", "updated_fields", "note",
+        "source_emails", "event_matched_emails", "proposed_name", "proposed_email", "updated_fields", "note",
     ]
     with report_path.open("w", encoding="utf-8", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=fields)
@@ -162,6 +216,7 @@ def run(mode: str, limit: int = 0, only_ids: set[str] | None = None, report: str
             "website": _clean(row.get("WEBSITE")),
             "regulations": _clean(row.get("REGULATIONS")),
             "source_emails": "",
+            "event_matched_emails": "",
             "proposed_name": "",
             "proposed_email": "",
             "updated_fields": "",
@@ -178,6 +233,9 @@ def run(mode: str, limit: int = 0, only_ids: set[str] | None = None, report: str
             source_text = build_first_assistant_prompt(regulations_url, regulations_text, website_text)
             entry["source_emails"] = extract_source_emails(
                 website_text, regulations_text, pdf_path
+            )
+            entry["event_matched_emails"] = event_matched_source_emails(
+                entry["race"], website_text, regulations_text, pdf_path
             )
             source_text = (
                 f"EVENT ID: {event_id}\n"
@@ -201,6 +259,14 @@ def run(mode: str, limit: int = 0, only_ids: set[str] | None = None, report: str
             proposed_emails = set(_email_list(entry["proposed_email"]))
             if not proposed_emails.issubset(source_emails):
                 entry["note"] = "Review: AI email was not found by literal source-email scan"
+                entry["updated_fields"] = ""
+                summary["skipped"] += 1
+                report_rows.append(entry)
+                continue
+
+            event_matched_emails = set(_email_list(entry["event_matched_emails"]))
+            if not proposed_emails.issubset(event_matched_emails):
+                entry["note"] = "Review: email was not found in a source that identifies this event"
                 entry["updated_fields"] = ""
                 summary["skipped"] += 1
                 report_rows.append(entry)
