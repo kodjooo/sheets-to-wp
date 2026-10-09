@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import sys
+import tempfile
 import types
 import unittest
 from unittest.mock import patch
@@ -150,6 +151,38 @@ class OrganizerContactsBackfillTests(unittest.TestCase):
         self.assertEqual(summary, {"selected": 1, "proposed": 0, "written": 0, "skipped": 1})
         write.assert_not_called()
         self.assertIn("Review", report_rows[0]["note"])
+
+    def test_apply_saved_report_reuses_dry_run_results_without_model_call(self):
+        row = {
+            "ID": "44", "ORGANIZER NAME": "", "ORGANIZER EMAIL": "",
+        }
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", newline="", delete=False) as report_file:
+            writer = contacts.csv.DictWriter(
+                report_file,
+                fieldnames=["id", "proposed_name", "proposed_email", "updated_fields", "note"],
+            )
+            writer.writeheader()
+            writer.writerow({
+                "id": "44", "proposed_name": "Race Org", "proposed_email": "info@race.pt",
+                "updated_fields": "ORGANIZER EMAIL", "note": "",
+            })
+            writer.writerow({
+                "id": "missing", "proposed_email": "nope@race.pt",
+                "updated_fields": "ORGANIZER EMAIL", "note": "Review: do not apply",
+            })
+            report_path = report_file.name
+        try:
+            with patch.object(contacts, "load_all_rows", return_value=([(5, row)], list(row))):
+                with patch.object(contacts, "update_only_blank_cells", return_value={"ORGANIZER EMAIL": "info@race.pt"}) as write:
+                    summary = contacts.apply_saved_report(report_path)
+            self.assertEqual(summary, {"accepted": 1, "written": 1, "skipped": 0})
+            write.assert_called_once_with(
+                5,
+                {"ORGANIZER EMAIL": "info@race.pt", "ORGANIZER NAME": "Race Org"},
+                list(row),
+            )
+        finally:
+            os.unlink(report_path)
 
 
 if __name__ == "__main__":

@@ -187,6 +187,54 @@ def write_report(path: str, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
+def apply_saved_report(path: str) -> dict:
+    """Apply only accepted rows from a previous dry-run report.
+
+    This intentionally makes no web or OpenAI calls. Rows are located again by
+    event ID, and the regular write helper still writes only blank cells.
+    """
+    with open(path, encoding="utf-8-sig", newline="") as report_file:
+        report_rows = list(csv.DictReader(report_file))
+
+    rows, headers = load_all_rows()
+    required_headers = {"ID", "ORGANIZER NAME", "ORGANIZER EMAIL"}
+    missing_headers = sorted(required_headers.difference(headers))
+    if missing_headers:
+        raise ValueError("Missing required columns: " + ", ".join(missing_headers))
+
+    rows_by_id: dict[str, tuple[int, dict] | None] = {}
+    for row_index, row in rows:
+        event_id = _clean(row.get("ID"))
+        if not event_id:
+            continue
+        rows_by_id[event_id] = (row_index, row) if event_id not in rows_by_id else None
+
+    summary = {"accepted": 0, "written": 0, "skipped": 0}
+    for report_row in report_rows:
+        event_id = _clean(report_row.get("id"))
+        # Only a successful dry-run candidate has update fields and no review
+        # note. A hand-edited or incomplete report therefore cannot add rows.
+        if not _clean(report_row.get("updated_fields")) or _clean(report_row.get("note")):
+            continue
+        target = rows_by_id.get(event_id)
+        proposed_email = extract_valid_emails(report_row.get("proposed_email", ""))
+        if not target or not proposed_email:
+            summary["skipped"] += 1
+            continue
+        row_index, row = target
+        updates = {"ORGANIZER EMAIL": proposed_email}
+        proposed_name = _clean(report_row.get("proposed_name"))
+        if proposed_name:
+            updates["ORGANIZER NAME"] = proposed_name
+        summary["accepted"] += 1
+        written = update_only_blank_cells(row_index, updates, headers)
+        summary["written"] += bool(written)
+        if not written:
+            summary["skipped"] += 1
+    logging.info("Contacts backfill apply saved report: %s", summary)
+    return summary
+
+
 def run(mode: str, limit: int = 0, only_ids: set[str] | None = None, report: str = "") -> dict:
     if mode not in {"dry-run", "apply"}:
         raise ValueError("mode must be 'dry-run' or 'apply'")
@@ -301,9 +349,16 @@ def parse_args():
     parser.add_argument("--limit", type=int, default=0, help="Max events to inspect; 0 means all")
     parser.add_argument("--id", dest="ids", action="append", default=[], help="Process one event ID; repeatable")
     parser.add_argument("--report", default="", help="Optional CSV report path")
+    parser.add_argument(
+        "--apply-report", default="",
+        help="Apply accepted rows from an existing dry-run CSV; makes no OpenAI calls",
+    )
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = parse_args()
-    run(args.mode, limit=args.limit, only_ids=set(args.ids), report=args.report)
+    if args.apply_report:
+        apply_saved_report(args.apply_report)
+    else:
+        run(args.mode, limit=args.limit, only_ids=set(args.ids), report=args.report)
