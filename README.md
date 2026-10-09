@@ -163,6 +163,33 @@ docker compose logs -f
 - файл в контейнере: `/app/logs/automation.log`
 - на хосте (по `docker-compose.yml`): `/var/log/racefinder/automation.log`
 
+## Backfill контактов организаторов
+
+`backfill_organizer_contacts.py` — отдельная ручная команда для исторических
+мероприятий без `ORGANIZER EMAIL`. Она читает сайт и регламент, вызывает AI
+только для извлечения организатора и подтверждённого email и не запускает
+генерацию контента, изображений или обновление WordPress.
+
+Модель и reasoning для этой команды независимы от ежедневного pipeline:
+`OPENAI_CONTACTS_MODEL=gpt-6.1-sol` и
+`OPENAI_CONTACTS_REASONING_EFFORT=low`.
+
+Сначала всегда запускается проверка без записи:
+
+```bash
+docker compose run --rm racefinder python backfill_organizer_contacts.py --mode dry-run --limit 20 --report /app/logs/organizer_contacts_dry_run.csv
+```
+
+После ручной проверки CSV-отчёта можно применить результат. Скрипт пишет только
+пустые `ORGANIZER EMAIL` и `ORGANIZER NAME`, повторно проверяя ячейку прямо перед
+записью, поэтому существующие и добавленные вручную значения не перезаписываются:
+
+```bash
+docker compose run --rm racefinder python backfill_organizer_contacts.py --mode apply --report /app/logs/organizer_contacts_apply.csv
+```
+
+Для проверки одного мероприятия используйте повторяемый параметр `--id`.
+
 ## Тесты
 Запуск из контейнера:
 ```bash

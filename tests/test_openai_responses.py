@@ -74,6 +74,12 @@ class OpenAIResponsesTests(unittest.TestCase):
             openai_stub.api_key = None
             sys.modules["openai"] = openai_stub
 
+        if "_3_create_product" not in sys.modules:
+            product_stub = types.ModuleType("_3_create_product")
+            product_stub.get_jwt_token = lambda: ""
+            sys.modules["_3_create_product"] = product_stub
+            self.addCleanup(lambda: sys.modules.pop("_3_create_product", None))
+
         if "gspread" not in sys.modules:
             sys.modules["gspread"] = types.ModuleType("gspread")
 
@@ -101,6 +107,11 @@ class OpenAIResponsesTests(unittest.TestCase):
     def test_load_prompt_file_missing_returns_empty(self):
         value = self.content._load_prompt_file("/missing/prompt.txt")
         self.assertEqual(value, "")
+
+    def test_decodes_cloudflare_protected_email(self):
+        # First byte is the XOR key (0x12); remaining bytes encode a@b.pt.
+        self.assertEqual(self.content.decode_cloudflare_email("127352703c6266"), "a@b.pt")
+        self.assertEqual(self.content.decode_cloudflare_email("not-hex"), "")
 
     def test_call_openai_assistant_builds_payload_with_files(self):
         with NamedTemporaryFile("w", delete=False) as system_file:
@@ -130,6 +141,55 @@ class OpenAIResponsesTests(unittest.TestCase):
         self.assertEqual(content_items[0]["text"], "hello")
         self.assertEqual(content_items[1]["type"], "input_file")
         self.assertEqual(content_items[1]["file_id"], "file_1")
+
+    def test_contacts_backfill_uses_contacts_prompt_and_single_response(self):
+        with NamedTemporaryFile("w", delete=False) as prompt_file:
+            prompt_file.write("CONTACTS ONLY")
+        self.addCleanup(lambda: os.unlink(prompt_file.name))
+        dummy_client = _DummyClient()
+        dummy_client.responses.create = lambda **kwargs: (
+            setattr(dummy_client.responses, "last_kwargs", kwargs)
+            or types.SimpleNamespace(output_text=json.dumps({"organizer_email": "info@race.pt"}))
+        )
+        self.content._OPENAI_CLIENT = dummy_client
+
+        with unittest.mock.patch.dict(
+            os.environ,
+            {
+                "OPENAI_CONTACTS_MODEL": "contacts-model",
+                "OPENAI_CONTACTS_REASONING_EFFORT": "high",
+                "OPENAI_CONTACTS_PROMPT_FILE": prompt_file.name,
+            },
+        ):
+            result = self.content.call_organizer_contacts_assistant("source", file_ids=["pdf_1"])
+
+        self.assertEqual(result, {"organizer_email": "info@race.pt"})
+        kwargs = dummy_client.responses.last_kwargs
+        self.assertEqual(kwargs["model"], "contacts-model")
+        self.assertEqual(kwargs["reasoning"], {"effort": "high"})
+        self.assertEqual(kwargs["input"][0]["content"][0]["text"], "CONTACTS ONLY")
+        self.assertEqual(kwargs["input"][1]["content"][1]["file_id"], "pdf_1")
+
+    def test_contacts_backfill_defaults_to_standard_model_when_override_is_blank(self):
+        with NamedTemporaryFile("w", delete=False) as prompt_file:
+            prompt_file.write("CONTACTS ONLY")
+        self.addCleanup(lambda: os.unlink(prompt_file.name))
+        self.content.config["openai_text_model"] = "standard-model"
+        dummy_client = _DummyClient()
+        self.content._OPENAI_CLIENT = dummy_client
+
+        with unittest.mock.patch.dict(
+            os.environ,
+            {
+                "OPENAI_CONTACTS_MODEL": "",
+                "OPENAI_CONTACTS_REASONING_EFFORT": "",
+                "OPENAI_CONTACTS_PROMPT_FILE": prompt_file.name,
+            },
+        ):
+            self.content.call_organizer_contacts_assistant("source")
+
+        self.assertEqual(dummy_client.responses.last_kwargs["model"], "standard-model")
+        self.assertNotIn("reasoning", dummy_client.responses.last_kwargs)
 
     def test_call_second_openai_assistant_uses_model(self):
         with NamedTemporaryFile("w", delete=False) as system_file:

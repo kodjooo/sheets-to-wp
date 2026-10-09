@@ -185,7 +185,7 @@ def update_cell(row_index, column_name, value, headers):
         try:
             sheet = _get_sheet_with_retry()
             sheet.update_cell(row_index, col_index, value)
-            return
+            return True
         except Exception as err:
             last_err = err
             _reset_sheet_cache()
@@ -198,6 +198,7 @@ def update_cell(row_index, column_name, value, headers):
                 time.sleep(delay)
 
     logging.error(f"Ошибка при обновлении ячейки {column_name} в строке {row_index}: {last_err}")
+    return False
 
 def update_status_to_published(row_index, headers):
     update_cell(row_index, "STATUS", "Published", headers)
@@ -205,6 +206,37 @@ def update_status_to_published(row_index, headers):
 def batch_update_cells(row_index, updates: dict, headers):
     for key, value in updates.items():
         update_cell(row_index, key, value, headers)
+
+
+def update_only_blank_cells(row_index, updates: dict, headers) -> dict:
+    """Write only cells that are still blank at write time.
+
+    Used by manual backfills so a value entered after the initial sheet read is
+    never overwritten. Returns the subset that was actually written.
+    """
+    written = {}
+    for key, value in updates.items():
+        if key not in headers:
+            logging.error("Column '%s' not found; skipped safe update", key)
+            continue
+        try:
+            sheet = _get_sheet_with_retry()
+            col_index = headers.index(key) + 1
+            current = sheet.cell(row_index, col_index).value
+            if str(current or "").strip():
+                logging.info(
+                    "⏭ Safe update skipped %s at row %s: cell is no longer blank",
+                    key,
+                    row_index,
+                )
+                continue
+            if update_cell(row_index, key, value, headers):
+                written[key] = value
+        except Exception as exc:
+            logging.error(
+                "Could not safely update %s at row %s: %s", key, row_index, exc
+            )
+    return written
 
 def get_logger():
     logging.basicConfig(level=_LOG_LEVEL, format="%(asctime)s [%(levelname)s] %(message)s")

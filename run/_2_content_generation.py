@@ -68,6 +68,11 @@ def _resolve_requests_verify(url: str):
 def _fetch_with_retries(url: str):
     delays = _parse_retry_delays(config.get("fetch_retry_delays_sec"))
     attempts = [0.0] + delays
+    try:
+        max_attempts = max(1, int(os.getenv("HTTP_FETCH_MAX_ATTEMPTS", str(len(attempts)))))
+    except ValueError:
+        max_attempts = len(attempts)
+    attempts = attempts[:max_attempts]
     last_err = None
     for attempt_index, delay in enumerate(attempts, start=1):
         if delay:
@@ -132,6 +137,19 @@ def convert_google_drive_url(url):
     # Если это не Google Drive ссылка, возвращаем исходную
     return url
 
+
+def decode_cloudflare_email(encoded: str) -> str:
+    """Decode Cloudflare's browser-side email obfuscation when present."""
+    try:
+        raw = bytes.fromhex((encoded or "").strip())
+        if len(raw) < 2:
+            return ""
+        key = raw[0]
+        decoded = bytes(value ^ key for value in raw[1:]).decode("utf-8")
+        return decoded if "@" in decoded else ""
+    except (TypeError, ValueError, UnicodeDecodeError):
+        return ""
+
 def extract_text_from_url(url):
     try:
         # Преобразуем Google Drive ссылку в прямую ссылку, если необходимо
@@ -170,6 +188,14 @@ def extract_text_from_url(url):
             response = _fetch_with_retries(direct_url)
             soup = BeautifulSoup(response.text, 'html.parser')
             text = soup.get_text(separator=' ', strip=True)
+            protected_nodes = getattr(soup, "select", lambda _selector: [])("[data-cfemail]")
+            protected_emails = {
+                decode_cloudflare_email(tag.get("data-cfemail", ""))
+                for tag in protected_nodes
+            }
+            protected_emails.discard("")
+            if protected_emails:
+                text = f"{text} Contact email: {', '.join(sorted(protected_emails))}"
             logger.info("🌐 Обработан сайт: %s", url)
             logger.debug(
                 "🌐 Метаданные сайта: status=%s, content-type=%s, text_len=%s",
@@ -322,6 +348,72 @@ def call_openai_assistant(text, file_ids=None):
 
         except Exception as e:
             logger.error("❌ Ошибка OpenAI Responses API (попытка %s/%s): %s", attempt, max_attempts, e)
+            if attempt == max_attempts:
+                return None
+
+
+def call_organizer_contacts_assistant(text, file_ids=None):
+    """Extract only verified organizer contacts for the backfill workflow.
+
+    This deliberately bypasses the normal two-stage content-generation flow:
+    no descriptions, translations or images are requested.
+    """
+    max_attempts = 3
+    prompt_path = os.getenv(
+        "OPENAI_CONTACTS_PROMPT_FILE", "prompts/organizer_contacts_system.txt"
+    )
+    # The contacts backfill may use a stronger reasoning model than the
+    # publishing pipeline. A separate model remains optional for deployments
+    # that deliberately inherit the standard model.
+    model = os.getenv("OPENAI_CONTACTS_MODEL", "").strip() or config["openai_text_model"]
+    reasoning_effort = os.getenv("OPENAI_CONTACTS_REASONING_EFFORT", "").strip()
+    try:
+        timeout_seconds = max(1, float(os.getenv("OPENAI_CONTACTS_TIMEOUT_SECONDS", "90")))
+    except ValueError:
+        timeout_seconds = 90
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            system_prompt = _load_prompt_file(prompt_path)
+            user_content = [{"type": "input_text", "text": text[:40000]}]
+            for file_id in file_ids or []:
+                user_content.append({"type": "input_file", "file_id": file_id})
+
+            input_payload = []
+            if system_prompt:
+                retry_note = ""
+                if attempt > 1:
+                    retry_note = "\n\nReturn only complete, valid JSON."
+                input_payload.append(
+                    {
+                        "role": "system",
+                        "content": [{"type": "input_text", "text": system_prompt + retry_note}],
+                    }
+                )
+            input_payload.append({"role": "user", "content": user_content})
+
+            logging.info("🤖 Contacts backfill: OpenAI model %s", model)
+            request_kwargs = {
+                "model": model,
+                "input": input_payload,
+                "timeout": timeout_seconds,
+            }
+            if reasoning_effort:
+                logging.info("🧠 Contacts backfill reasoning effort: %s", reasoning_effort)
+                request_kwargs["reasoning"] = {"effort": reasoning_effort}
+            response = _OPENAI_CLIENT.responses.create(**request_kwargs)
+            reply = response.output_text or ""
+            result = json.loads(reply)
+            if not isinstance(result, dict):
+                raise ValueError("Contacts response is not a JSON object")
+            return result
+        except Exception as exc:
+            logging.error(
+                "❌ Contacts backfill OpenAI error (attempt %s/%s): %s",
+                attempt,
+                max_attempts,
+                exc,
+            )
             if attempt == max_attempts:
                 return None
 

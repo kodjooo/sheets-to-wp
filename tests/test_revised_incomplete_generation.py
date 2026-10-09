@@ -81,6 +81,7 @@ if "_5_taxonomy_and_attributes" not in sys.modules:
 if "_6_create_variations" not in sys.modules:
     v_stub = types.ModuleType("_6_create_variations")
     v_stub.sync_variations_by_ids = lambda *args, **kwargs: {}
+    v_stub.reapply_price_schedules = lambda *args, **kwargs: None
     sys.modules["_6_create_variations"] = v_stub
 
 if "utils" not in sys.modules:
