@@ -1,3 +1,4 @@
+from country_profile import active_profile, primary_metadata
 import json
 import requests
 import base64
@@ -27,7 +28,7 @@ headers = {
 _OPENAI_CLIENT = OpenAI(api_key=config.get("openai_api_key"))
 
 
-def _translate_category_name_to_pt(name: str) -> str:
+def _translate_category_name_to_pt(name: str, target_lang="pt") -> str:
     text = str(name or "").strip()
     if not text:
         return ""
@@ -37,8 +38,9 @@ def _translate_category_name_to_pt(name: str) -> str:
             input=[
                 {
                     "role": "system",
-                    "content": "Translate taxonomy labels from English to European Portuguese. "
-                    "Return only translated label text, no quotes or explanation.",
+                    "content": ("Translate taxonomy labels from English to "
+                                + ("Spanish" if target_lang == "es" else "European Portuguese")
+                                + ". Return only translated label text, no quotes or explanation."),
                 },
                 {"role": "user", "content": text},
             ],
@@ -222,8 +224,9 @@ def ensure_category_translation(category_id: int, source_lang: str, target_lang:
         return None
 
     target_name = source_name
-    if source_lang == "en" and target_lang == "pt":
-        target_name = _translate_category_name_to_pt(source_name)
+    if source_lang == "en" and target_lang in ("pt", "es"):
+        target_name = (_translate_category_name_to_pt(source_name, "es") if target_lang == "es"
+                       else _translate_category_name_to_pt(source_name))
 
     target_id = get_category_id_by_name(target_name, parent_id=target_parent_id, lang=target_lang)
     if not target_id:
@@ -314,15 +317,14 @@ def create_product(data):
         "name": data.get("RACE NAME (PT)", "") or data.get("RACE NAME", ""),
         "type": "variable",
         "status": "draft",
-        "lang": "pt",
+        "lang": active_profile().language,
     }
 
     # Структурная локация: имя муниципалитета → mu-plugin rf-auto-location
     # достроит district+region, термы и EN-синк.
-    if data.get("RF_MUNICIPALITY_NAME"):
-        product_data["meta_data"] = [
-            {"key": "_rf_location_municipality_name", "value": data["RF_MUNICIPALITY_NAME"]}
-        ]
+    metadata = primary_metadata(data)
+    if metadata:
+        product_data["meta_data"] = metadata
 
     # Registration deadline (плагин miss-events, уровень товара) через штатный
     # WC REST param `miss_events`. Время по умолчанию 18:00 подставляется в rf_schedule.
@@ -371,13 +373,13 @@ def create_product(data):
         category_ids_seen = set()
         for parent_name, child_name in categories_normalized:
             try:
-                parent_id = get_category_id_by_name(parent_name, lang="pt")
+                parent_id = get_category_id_by_name(parent_name, lang=active_profile().language)
                 if parent_id:
                     if parent_id not in category_ids_seen:
                         category_ids.append({"id": parent_id})
                         category_ids_seen.add(parent_id)
                     if child_name:
-                        child_id = get_category_id_by_name(child_name, parent_id=parent_id, lang="pt")
+                        child_id = get_category_id_by_name(child_name, parent_id=parent_id, lang=active_profile().language)
                         if child_id:
                             if child_id not in category_ids_seen:
                                 category_ids.append({"id": child_id})
@@ -450,7 +452,7 @@ def create_product(data):
         "fields": {
             "event_date_start": data["EVENT START DATE"],
             "event_location_text": location_city,
-            "event_ticket_url": data["WEBSITE"],
+            "event_ticket_url": data.get("BOOK URL") or data["WEBSITE"],
             "event_latitude": format_coord(data["LAT"]) if data.get("LAT") else "",
             "event_longitude": format_coord(data["LON"]) if data.get("LON") else "",
             "event_short_description": data.get("SUMMARY (PT)", ""),
@@ -458,7 +460,7 @@ def create_product(data):
             "race_benefits": benefits,
             "event_faq_headline": "FAQ",
             "event_faq_items": faq_items,
-            "event_country": "portugal",
+            "event_country": active_profile().country,
             "event_start_time": data.get("EVENT START TIME", ""),
             "event_date_end": data["EVENT END DATE"]
         }
@@ -497,12 +499,12 @@ def _collect_category_ids(data):
     category_ids = []
     category_ids_seen = set()
     for parent_name, child_name in categories_normalized:
-        parent_id = get_category_id_by_name(parent_name, lang="pt")
+        parent_id = get_category_id_by_name(parent_name, lang=active_profile().language)
         if parent_id and parent_id not in category_ids_seen:
             category_ids.append({"id": parent_id})
             category_ids_seen.add(parent_id)
         if parent_id and child_name:
-            child_id = get_category_id_by_name(child_name, parent_id=parent_id, lang="pt")
+            child_id = get_category_id_by_name(child_name, parent_id=parent_id, lang=active_profile().language)
             if child_id and child_id not in category_ids_seen:
                 category_ids.append({"id": child_id})
                 category_ids_seen.add(child_id)
@@ -526,7 +528,7 @@ def _build_acf_fields_partial(data):
     fields = {
         "event_date_start": event_start_date,
         "event_location_text": (data.get("LOCATION (CITY)") or "").strip(),
-        "event_ticket_url": data.get("WEBSITE", ""),
+        "event_ticket_url": data.get("BOOK URL") or data.get("WEBSITE", ""),
         "event_latitude": format_coord(data["LAT"]) if data.get("LAT") else "",
         "event_longitude": format_coord(data["LON"]) if data.get("LON") else "",
         "event_short_description": data.get("SUMMARY (PT)", ""),
@@ -536,6 +538,7 @@ def _build_acf_fields_partial(data):
         "event_faq_items": faq_items,
         "event_start_time": data.get("EVENT START TIME", ""),
         "event_date_end": event_end_date,
+        "event_country": active_profile().country,
     }
 
     # При обновлении передаём только непустые поля, чтобы не затирать данные в WP.
@@ -565,14 +568,13 @@ def create_or_update_product(data, existing_product_id=None):
         return create_product(data)
 
     # Не передаём status при обновлении, чтобы сохранить текущее состояние публикации в WP.
-    payload = {"name": data.get("RACE NAME (PT)", "") or data.get("RACE NAME", ""), "lang": "pt"}
+    payload = {"name": data.get("RACE NAME (PT)", "") or data.get("RACE NAME", ""), "lang": active_profile().language}
     category_ids = _collect_category_ids(data)
     if category_ids:
         payload["categories"] = category_ids
-    if data.get("RF_MUNICIPALITY_NAME"):
-        payload["meta_data"] = [
-            {"key": "_rf_location_municipality_name", "value": data["RF_MUNICIPALITY_NAME"]}
-        ]
+    metadata = primary_metadata(data)
+    if metadata:
+        payload["meta_data"] = metadata
     if data.get("RF_REGISTRATION_DEADLINE"):
         payload["miss_events"] = {
             "registration_deadline": data["RF_REGISTRATION_DEADLINE"]

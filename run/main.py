@@ -66,7 +66,7 @@ if LOG_FILE:
 from _1_google_loader import (
     load_config,
     load_all_rows,
-    batch_update_cells
+    batch_update_cells as _batch_update_cells
 )
 
 from _2_content_generation import (
@@ -80,6 +80,15 @@ from _2_content_generation import (
     get_coordinates_with_city_fallback,
     translate_title_to_en
 )
+from country_profile import (ES, active_profile, profile_for_row, activate_profile,
+                             reset_profile, validate_spanish_row)
+
+
+def batch_update_cells(row_index, updates, headers):
+    updates = {active_profile().column(key): value for key, value in updates.items()}
+    return _batch_update_cells(row_index, updates, headers)
+
+
 from url_utils import unwrap_google_viewer_url
 from rf_location import resolve_municipality
 from rf_schedule import parse_datetime, parse_price_changes
@@ -148,6 +157,7 @@ def _cell_value_as_str(value) -> str:
 
 
 def _write_variation_ids_to_sheet(row_to_variation_id: dict, column_name: str, headers: dict):
+    column_name = active_profile().column(column_name)
     if column_name not in headers:
         logging.warning("⚠️ Колонка '%s' не найдена в Google Sheets, ID вариаций не будут сохранены.", column_name)
         return
@@ -161,6 +171,7 @@ CANCELLATION_FALLBACK_PT = "As políticas de cancelamento e reembolso são defin
 _CANCELLATION_HEADER = {
     "en": "Cancellation &amp; refund policy:",
     "pt": "Política de cancelamento e reembolso:",
+    "es": "Política de cancelación y reembolso:",
 }
 _EMAIL_RE = re.compile(r"[^@\s,;<>()]+@[^@\s,;<>()]+\.[^@\s,;<>()]+")
 
@@ -168,7 +179,8 @@ _EMAIL_RE = re.compile(r"[^@\s,;<>()]+@[^@\s,;<>()]+\.[^@\s,;<>()]+")
 def _append_cancellation_block(org_info: str, text: str, lang: str) -> str:
     """Добавляет блок политики отмены/возврата в конец org_info (Race Info).
     Если text пуст — подставляется фолбэк-текст на нужном языке."""
-    fallback = CANCELLATION_FALLBACK_PT if lang == "pt" else CANCELLATION_FALLBACK_EN
+    fallback = ("Las políticas de cancelación y reembolso las establece la organización del evento."
+                if lang == "es" else CANCELLATION_FALLBACK_PT if lang == "pt" else CANCELLATION_FALLBACK_EN)
     text = (text or "").strip() or fallback
     header = _CANCELLATION_HEADER.get(lang, _CANCELLATION_HEADER["en"])
     block = f"<strong>{header}</strong> {text}"
@@ -204,7 +216,7 @@ def _load_category_root_map() -> dict[str, dict[str, int]]:
         if not isinstance(value, dict):
             continue
         en_id = int(value.get("en_parent_id") or 0)
-        pt_id = int(value.get("pt_parent_id") or 0)
+        pt_id = int(value.get(f"{active_profile().language}_parent_id") or 0)
         if en_id and pt_id:
             result[_norm_category_key(key)] = {"en_parent_id": en_id, "pt_parent_id": pt_id}
     return result
@@ -260,7 +272,7 @@ def _build_pt_category_ids_from_en(row: dict) -> list[dict]:
                 "🧭 CATEGORY EN child resolved (row_id=%s): '%s' under parent_id=%s -> child_id=%s",
                 row.get("ID"), child_name, en_parent_id, en_child_id
             )
-            pt_child_id = get_category_translation_id(en_child_id, "pt")
+            pt_child_id = get_category_translation_id(en_child_id, active_profile().language)
             logging.debug(
                 "🧭 CATEGORY PT child translation (row_id=%s): en_child_id=%s -> pt_child_id=%s",
                 row.get("ID"), en_child_id, pt_child_id
@@ -270,7 +282,7 @@ def _build_pt_category_ids_from_en(row: dict) -> list[dict]:
                     pt_child_id = ensure_category_translation(
                         en_child_id,
                         source_lang="en",
-                        target_lang="pt",
+                        target_lang=active_profile().language,
                         target_parent_id=pt_parent_id,
                     )
                     logging.info(
@@ -365,7 +377,13 @@ def run_automation():
             is_incomplete = status == STATUS_REVISED_INCOMPLETE.lower()
             logging.info(f"📌 Обработка {row.get('STATUS')} (ID={row.get('ID')})")
 
+            token = None
             try:
+                profile = profile_for_row(row)
+                token = activate_profile(profile)
+                if profile == ES:
+                    validate_spanish_row(row, headers, config['wp_url'])
+                row = profile.prepare_row(row)
                 # --- 1. Подготовка данных ---
                 lat, lon = get_coordinates_with_city_fallback(
                     row.get("LOCATION", ""),
@@ -390,11 +408,11 @@ def run_automation():
                     # mu-plugin rf-auto-location на стороне WP.
                     # Единая колонка-флаг NOTE (текст — на английском для клиента):
                     # копит проблемы локации + дедлайна + scheduled price changes.
-                    municipality_name = resolve_municipality(row.get("LOCATION (CITY)", ""))
+                    municipality_name = resolve_municipality(row.get("LOCATION (CITY)", "")) if profile.code == "pt" else ""
                     row["RF_MUNICIPALITY_NAME"] = municipality_name or ""
 
                     notes = []
-                    if not municipality_name:
+                    if profile.code == "pt" and not municipality_name:
                         notes.append("Location not matched")
 
                     # miss-events: registration deadline (товар) + scheduled price
@@ -505,7 +523,7 @@ def run_automation():
                         result.get("org_info", ""), result.get("cancellation", ""), "en"
                     )
                     org_info_pt = _append_cancellation_block(
-                        result.get("org_info_pt", ""), result.get("cancellation_pt", ""), "pt"
+                        result.get("org_info_pt", ""), result.get("cancellation_pt", ""), active_profile().language
                     )
 
                     row.update({
@@ -593,6 +611,7 @@ def run_automation():
                 # --- 3. Собираем подвариации ---
                 for j in range(i + 1, len(rows)):
                     sub_row_index, sub_row = rows[j]
+                    sub_row = profile.prepare_row(sub_row)
                     sub_status = sub_row.get("STATUS", "").strip().lower()
                     if sub_status in (
                         STATUS_REVISED_INCOMPLETE.lower(),
@@ -672,11 +691,16 @@ def run_automation():
                     if cat
                 ]
 
-                existing_pt_product_id = _cell_value_as_str(row.get("WP PRODUCT ID PT", "")) if not is_incomplete else ""
+                existing_pt_product_id = _cell_value_as_str(row.get("WP PRODUCT ID PT", "")) if (not is_incomplete or profile == ES) else ""
                 pt_product_id = create_product_pt_primary(
                     last_main_row,
                     existing_product_id=existing_pt_product_id or None
                 )
+                if profile == ES:
+                    if not pt_product_id:
+                        raise RuntimeError("Не получен ID испанской карточки")
+                    # Сохраняем ID до создания перевода: повтор продолжит эту карточку.
+                    batch_update_cells(row_index, {"WP PRODUCT ID PT": pt_product_id}, headers)
                 last_main_row["pt_product_id"] = pt_product_id
 
                 # Получаем slug
@@ -690,7 +714,7 @@ def run_automation():
                     if permalink:
                         last_main_row["LINK RACEFINDER"] = permalink
                     elif slug:
-                        last_main_row["LINK RACEFINDER"] = f"https://dev.racefinder.pt/event/{slug}"
+                        last_main_row["LINK RACEFINDER"] = f"{config['wp_url'].rstrip('/')}/event/{slug}"
                     else:
                         last_main_row["LINK RACEFINDER"] = ""
                 except Exception as e:
@@ -711,10 +735,10 @@ def run_automation():
                         if attr_option not in attr_payload[attr_name]:
                             attr_payload[attr_name].append(attr_option)
 
-                assign_attributes_to_product(pt_product_id, attr_payload, lang="pt")
-                pt_row_to_variation_id = sync_variations_by_ids(pt_product_id, variation_entries_pt, lang="pt")
+                assign_attributes_to_product(pt_product_id, attr_payload, lang=active_profile().language)
+                pt_row_to_variation_id = sync_variations_by_ids(pt_product_id, variation_entries_pt, lang=active_profile().language)
 
-                existing_en_product_id = _cell_value_as_str(row.get("WP PRODUCT ID EN", "")) if not is_incomplete else ""
+                existing_en_product_id = _cell_value_as_str(row.get("WP PRODUCT ID EN", "")) if (not is_incomplete or profile == ES) else ""
                 en_product_id = create_product_pt(
                     last_main_row,
                     pt_product_id,
@@ -723,6 +747,10 @@ def run_automation():
                     config=config,
                     existing_pt_product_id=existing_en_product_id or None
                 )
+                if profile == ES:
+                    if not en_product_id:
+                        raise RuntimeError("Не получен ID английского перевода")
+                    batch_update_cells(row_index, {"WP PRODUCT ID EN": en_product_id}, headers)
                 last_main_row["en_product_id"] = en_product_id
                 en_row_to_variation_id = sync_variations_by_ids(en_product_id, variation_entries_en, lang="en")
 
@@ -731,13 +759,13 @@ def run_automation():
                 en_row_to_variation_id = sync_variations_by_ids(en_product_id, variation_entries_en, lang="en")
                 _write_variation_ids_to_sheet(en_row_to_variation_id, "WP VARIATION ID EN", headers)
 
-                pt_row_to_variation_id = sync_variations_by_ids(pt_product_id, variation_entries_pt, lang="pt")
+                pt_row_to_variation_id = sync_variations_by_ids(pt_product_id, variation_entries_pt, lang=active_profile().language)
                 _write_variation_ids_to_sheet(pt_row_to_variation_id, "WP VARIATION ID PT", headers)
 
                 # Финальное проставление scheduled price changes на УЖЕ стабильные
                 # наборы вариаций (по атрибутам): переживает пересоздание вариаций
                 # WPML на EN-переводе, из-за которого расписание иначе теряется.
-                reapply_price_schedules(pt_product_id, variation_entries_pt, lang="pt")
+                reapply_price_schedules(pt_product_id, variation_entries_pt, lang=active_profile().language)
                 reapply_price_schedules(en_product_id, variation_entries_en, lang="en")
 
                 snapshot_hash = ""
@@ -764,6 +792,9 @@ def run_automation():
             except Exception as e:
                 logging.exception(f"❌ Ошибка при обработке Revised ID={row.get('ID')}")
                 continue
+            finally:
+                if token is not None:
+                    reset_profile(token)
 
         elif status == STATUS_PUBLISHED_INCOMPLETE.lower():
             website_url = (row.get("WEBSITE", "") or "").strip()

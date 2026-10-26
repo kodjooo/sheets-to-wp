@@ -46,6 +46,27 @@ services:
       retries: 3
       start_period: 40s
 
+  racefinder-dev:
+    profiles: [dev]
+    build: .
+    env_file:
+      - path: .env.dev
+        required: false
+    environment:
+      WP_URL: https://dev.racefinder.pt
+      SPAIN_WP_HOST: dev.racefinder.pt
+      GOOGLE_SPREADSHEET_ID: ${RF_DEV_SPREADSHEET_ID:-}
+      GOOGLE_CREDENTIALS_FILE: /app/google-credentials.json
+      RUN_ON_STARTUP: "false"
+      TELEGRAM_NOTIFICATIONS_ENABLED: "false"
+    working_dir: /app/run
+    volumes:
+      - ./run:/app/run:ro
+      - ./run/google-credentials.json:/app/google-credentials.json:ro
+      - ./dev-input:/app/input:ro
+      - ./logs/dev:/app/logs
+    command: [python, preview_country_import.py, --input, /app/input/events.csv, --report, /app/logs/preview.json, --wp-url, https://dev.racefinder.pt]
+
 volumes:
   temp_volume:
     driver: local

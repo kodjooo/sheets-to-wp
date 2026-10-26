@@ -291,5 +291,60 @@ class RevisedIncompleteGenerationTests(unittest.TestCase):
         self.assertNotIn(("Cycling", "Walking"), extra)
 
 
+class SpanishPipelineTests(unittest.TestCase):
+    def run_spanish(self, enabled="true"):
+        from contextlib import ExitStack
+        row = {"ID": "ES-1", "COUNTRY": "Spain", "STATUS": "Revised (incomplete)",
+               "RACE NAME (ES)": "Carrera", "RACE NAME (PT)": "Do not use",
+               "WP PRODUCT ID ES": "901", "WP PRODUCT ID PT": "101",
+               "WP PRODUCT ID EN": "902", "WP VARIATION ID ES": "903",
+               "WP VARIATION ID EN": "904", "LOCATION (CITY)": "Badalona, Barcelona",
+               "WEBSITE": "https://event.example.test", "CATEGORY": "Running"}
+        required = ["SUMMARY (ES)", "ORG INFO (ES)", "BENEFITS (ES)", "FAQ (ES)"]
+        headers = {key: i for i, key in enumerate(list(row) + required, 1)}
+        updates = []
+        with ExitStack() as stack:
+            stack.enter_context(patch.dict(os.environ, {
+                "ENABLE_SPAIN": enabled, "SPAIN_WP_HOST": "dev.example.test",
+                "CATEGORY_ROOT_MAP_JSON": '{"Running":{"en_parent_id":1,"es_parent_id":2}}'}))
+            mocks = {}
+            values = {"load_config": {"wp_url": "https://dev.example.test", "consumer_key": "x", "consumer_secret": "y"},
+                      "load_all_rows": ([(2, row)], headers), "log_network_diagnostics": None,
+                      "get_coordinates_with_city_fallback": (41.0, 2.0), "translate_title_to_en": "Race",
+                      "extract_text_from_url": ("source", None), "build_first_assistant_prompt": "source",
+                      "validate_source_texts": [], "_build_pt_category_ids_from_en": [],
+                      "create_product_pt_primary": 901, "create_product_pt": 902,
+                      "assign_attributes_to_product": None, "sync_variations_by_ids": {2: 903},
+                      "reapply_price_schedules": None, "compute_website_hash": ("hash", "")}
+            for name, value in values.items():
+                mocks[name] = stack.enter_context(patch.object(main, name, return_value=value))
+            stack.enter_context(patch.object(main, "_batch_update_cells", side_effect=lambda n, u, h: updates.append(dict(u))))
+            stack.enter_context(patch.object(main.requests, "get", return_value=_FakeResponse({"permalink": "https://dev.example.test/event/race"})))
+            stack.enter_context(patch.object(main, "SKIP_AI", True))
+            stack.enter_context(patch.object(main, "SKIP_IMAGE", True))
+            main.run_automation()
+        return updates, mocks
+
+    def test_es_columns_and_existing_ids_are_preserved(self):
+        from country_profile import active_profile, PT
+        updates, mocks = self.run_spanish()
+        self.assertTrue(any("SUMMARY (ES)" in update for update in updates))
+        self.assertFalse(any("SUMMARY (PT)" in update or "WP PRODUCT ID PT" in update for update in updates))
+        final = next(update for update in updates if "WP PRODUCT ID ES" in update)
+        self.assertEqual(final["WP PRODUCT ID ES"], 901)
+        self.assertEqual(mocks["create_product_pt_primary"].call_args.kwargs["existing_product_id"], "901")
+        self.assertTrue(all(call.kwargs.get("lang") in ("es", "en")
+                            for call in mocks["sync_variations_by_ids"].call_args_list))
+        self.assertEqual(active_profile(), PT)
+
+    def test_disabled_es_has_no_sheet_or_product_writes(self):
+        from country_profile import active_profile, PT
+        updates, mocks = self.run_spanish("false")
+        self.assertEqual(updates, [])
+        mocks["create_product_pt_primary"].assert_not_called()
+        mocks["translate_title_to_en"].assert_not_called()
+        self.assertEqual(active_profile(), PT)
+
+
 if __name__ == "__main__":
     unittest.main()

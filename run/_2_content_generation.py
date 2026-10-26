@@ -1,3 +1,4 @@
+from country_profile import active_profile, localized_prompt
 import json
 import logging
 import os
@@ -241,7 +242,7 @@ def normalize_regulations_link_block(payload: dict, regulations_url: str) -> dic
     )
     link_html_pt = (
         f'<strong><a class="" href="{regulations_url}" target="_new" rel="noopener">'
-        "Regulamento ↗</a></strong>"
+        + ("Reglamento ↗</a></strong>" if active_profile().code == "es" else "Regulamento ↗</a></strong>")
     )
     org_info = payload.get("org_info", "")
     if isinstance(org_info, str) and "Regulation link ↗" in org_info:
@@ -252,10 +253,11 @@ def normalize_regulations_link_block(payload: dict, regulations_url: str) -> dic
                 break
         payload["org_info"] = "\n".join(lines)
     org_info_pt = payload.get("org_info_pt", "")
-    if isinstance(org_info_pt, str) and "Regulamento ↗" in org_info_pt:
+    primary_label = "Reglamento ↗" if active_profile().code == "es" else "Regulamento ↗"
+    if isinstance(org_info_pt, str) and primary_label in org_info_pt:
         lines = org_info_pt.splitlines()
         for i, line in enumerate(lines):
-            if "Regulamento ↗" in line:
+            if primary_label in line:
                 lines[i] = link_html_pt
                 break
         payload["org_info_pt"] = "\n".join(lines)
@@ -270,7 +272,7 @@ def translate_title_to_en(title: str) -> str:
     try:
         response = openai.chat.completions.create(
             model="gpt-4o-mini",
-            messages=build_translation_messages(title),
+            messages=[dict(m, content=localized_prompt(m["content"])) for m in build_translation_messages(title)],
             temperature=0.3
         )
         en_title = response.choices[0].message.content.strip()
@@ -285,7 +287,7 @@ def call_openai_assistant(text, file_ids=None):
     for attempt in range(1, max_attempts + 1):
         try:
             model = config["openai_text_model"]
-            system_prompt = _load_prompt_file(config["openai_system_prompt_file"])
+            system_prompt = localized_prompt(_load_prompt_file(config["openai_system_prompt_file"]))
             user_prompt = text
 
             logger.info("🤖 Отправка в OpenAI Responses API, модель: %s", model)
@@ -428,7 +430,7 @@ def call_second_openai_assistant(first_result, regulations_hint: str | None = No
     for attempt in range(1, max_attempts + 1):
         try:
             model = config["openai_second_model"]
-            system_prompt = _load_prompt_file(config["openai_second_system_prompt_file"])
+            system_prompt = localized_prompt(_load_prompt_file(config["openai_second_system_prompt_file"]))
             if isinstance(first_result, dict):
                 text_content = json.dumps(first_result, ensure_ascii=False, indent=2)
             else:
@@ -499,7 +501,7 @@ def get_coordinates_from_location(location: str):
         "key": OPENCAGE_API_KEY,
         "language": "en",
         "limit": 5,
-        "countrycode": "pt",
+        "countrycode": active_profile().code,
         "no_annotations": 1,
     }
 
@@ -514,7 +516,7 @@ def get_coordinates_from_location(location: str):
     results = data.get("results", [])
     for result in results:
         components = result.get("components", {})
-        if components.get("country_code") != "pt":
+        if components.get("country_code") != active_profile().code:
             continue
         geometry = result.get("geometry", {})
         lat = geometry.get("lat")

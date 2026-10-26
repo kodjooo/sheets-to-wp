@@ -1,3 +1,4 @@
+from country_profile import active_profile, primary_metadata
 import requests
 from requests.auth import HTTPBasicAuth
 from _5_taxonomy_and_attributes import assign_attributes_to_product
@@ -44,15 +45,14 @@ def create_product_translation_en(row, pt_product_id, attributes=None, last_vari
         "lang": "en",
         "slug": original_slug if original_slug else "",
         "translations": {
-            "pt": pt_product_id
+            active_profile().language: pt_product_id
         }
     }
     # Структурная локация на EN-переводе: PT создаётся раньше EN, поэтому WPML-синк
     # при создании PT не находит EN. Ставим мету и на EN — mu-plugin достроит её сам.
-    if row.get("RF_MUNICIPALITY_NAME"):
-        data["meta_data"] = [
-            {"key": "_rf_location_municipality_name", "value": row["RF_MUNICIPALITY_NAME"]}
-        ]
+    metadata = primary_metadata(row)
+    if metadata:
+        data["meta_data"] = metadata
     # Registration deadline — по той же причине (PT раньше EN) дублируем на EN.
     if row.get("RF_REGISTRATION_DEADLINE"):
         data["miss_events"] = {
@@ -169,6 +169,10 @@ def create_product_translation_en(row, pt_product_id, attributes=None, last_vari
         acf_update_payload = {
             "fields": {
                 "event_location_text": location_city,
+                "event_country": active_profile().country,
+                "event_ticket_url": row.get("BOOK URL") or row.get("WEBSITE", ""),
+                "event_latitude": row.get("LAT", ""),
+                "event_longitude": row.get("LON", ""),
                 "event_short_description": row.get("SUMMARY", ""),
                 "organizer_description": row.get("ORG INFO", ""),
                 "race_benefits": benefits_en,
@@ -269,10 +273,9 @@ def create_or_update_product_pt(
         "name": row.get("RACE NAME", "") or row.get("RACE NAME (PT)", ""),
         "lang": "en"
     }
-    if row.get("RF_MUNICIPALITY_NAME"):
-        update_payload["meta_data"] = [
-            {"key": "_rf_location_municipality_name", "value": row["RF_MUNICIPALITY_NAME"]}
-        ]
+    metadata = primary_metadata(row)
+    if metadata:
+        update_payload["meta_data"] = metadata
     if row.get("RF_REGISTRATION_DEADLINE"):
         update_payload["miss_events"] = {
             "registration_deadline": row["RF_REGISTRATION_DEADLINE"]
@@ -334,6 +337,10 @@ def create_or_update_product_pt(
 
     acf_fields = {
         "event_location_text": location_city,
+        "event_country": active_profile().country,
+        "event_ticket_url": row.get("BOOK URL") or row.get("WEBSITE", ""),
+        "event_latitude": row.get("LAT", ""),
+        "event_longitude": row.get("LON", ""),
         "event_short_description": row.get("SUMMARY", ""),
         "organizer_description": row.get("ORG INFO", ""),
         "race_benefits": benefits_en,

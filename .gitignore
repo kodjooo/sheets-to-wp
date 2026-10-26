@@ -48,3 +48,7 @@ google-credentials.json
 config.json
 *.key
 *.pem
+
+# Изолированные настройки DEV и клиентские экспорты
+.env.dev
+dev-input/
