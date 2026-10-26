@@ -125,4 +125,9 @@ def test_spanish_homonyms_require_province():
     name = candidates[0]['name']
     with pytest.raises(ValueError, match='Неоднозначный'):
         resolve_spanish_location({'MUNICIPALITY': name})
-    assert resolve_spanish_location({'MUNICIPALITY': name, 'PROVINCE': candidates[0]['prov']}) == (name, provinces[candidates[0]['prov']]['name'])
+    assert resolve_spanish_location({'MUNICIPALITY': name, 'PROVINCE': candidates[0]['prov']}) == (name, provinces[candidates[0]['prov']]['name'].split('/')[0].strip())
+
+
+def test_bilingual_province_is_sent_in_bridge_supported_form():
+    from rf_spain_location import resolve_spanish_location
+    assert resolve_spanish_location({'MUNICIPALITY': 'Amurrio', 'PROVINCE': 'Álava / Araba'}) == ('Amurrio', 'Álava')

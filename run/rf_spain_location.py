@@ -46,4 +46,6 @@ def resolve_spanish_location(row):
     if len(found) != 1:
         raise ValueError(f'Неоднозначный муниципалитет {location!r}: заполните PROVINCE')
     municipality = found[0]
-    return municipality['name'], provinces[municipality['prov']]['name']
+    # Мост WP принимает отдельное написание провинции, не строку «Álava / Araba».
+    province = provinces[municipality['prov']]['name'].split('/')[0].strip()
+    return municipality['name'], province
