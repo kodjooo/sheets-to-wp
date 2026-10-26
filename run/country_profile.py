@@ -51,6 +51,20 @@ def reset_profile(token):
     _ACTIVE.reset(token)
 
 
+def process_country():
+    value = os.getenv('PROCESS_COUNTRY', 'all').strip().lower()
+    if value not in ('all', 'pt', 'es'):
+        raise ValueError('PROCESS_COUNTRY должен быть all, pt или es')
+    return value
+
+
+def positive_limit(name):
+    value = int(os.getenv(name, '0'))
+    if value < 0:
+        raise ValueError(f'{name} не может быть отрицательным')
+    return value
+
+
 def localized_prompt(prompt):
     if active_profile() != ES:
         return prompt

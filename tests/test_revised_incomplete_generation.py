@@ -292,7 +292,7 @@ class RevisedIncompleteGenerationTests(unittest.TestCase):
 
 
 class SpanishPipelineTests(unittest.TestCase):
-    def run_spanish(self, enabled="true"):
+    def run_spanish(self, enabled="true", country="all"):
         from contextlib import ExitStack
         row = {"ID": "ES-1", "COUNTRY": "Spain", "STATUS": "Revised (incomplete)",
                "RACE NAME (ES)": "Carrera", "RACE NAME (PT)": "Do not use",
@@ -306,6 +306,7 @@ class SpanishPipelineTests(unittest.TestCase):
         with ExitStack() as stack:
             stack.enter_context(patch.dict(os.environ, {
                 "ENABLE_SPAIN": enabled, "SPAIN_WP_HOST": "dev.example.test",
+                "PROCESS_COUNTRY": country, "MAX_EVENTS_PER_RUN": "0", "MAX_WEBSITE_CHECKS_PER_RUN": "0",
                 "CATEGORY_ROOT_MAP_JSON": '{"Running":{"en_parent_id":1,"es_parent_id":2}}'}))
             mocks = {}
             values = {"load_config": {"wp_url": "https://dev.example.test", "consumer_key": "x", "consumer_secret": "y"},
@@ -337,6 +338,13 @@ class SpanishPipelineTests(unittest.TestCase):
                             for call in mocks["sync_variations_by_ids"].call_args_list))
         self.assertEqual(active_profile(), PT)
 
+    def test_pt_run_does_not_process_es_row(self):
+        updates, mocks = self.run_spanish(country="pt")
+        self.assertEqual(updates, [])
+        mocks["create_product_pt_primary"].assert_not_called()
+        mocks["get_coordinates_with_city_fallback"].assert_not_called()
+
+
     def test_disabled_es_has_no_sheet_or_product_writes(self):
         from country_profile import active_profile, PT
         updates, mocks = self.run_spanish("false")
@@ -344,6 +352,27 @@ class SpanishPipelineTests(unittest.TestCase):
         mocks["create_product_pt_primary"].assert_not_called()
         mocks["translate_title_to_en"].assert_not_called()
         self.assertEqual(active_profile(), PT)
+
+
+class CountryWebsiteMonitorTests(unittest.TestCase):
+    def test_es_checks_only_its_country_with_its_budget(self):
+        from contextlib import ExitStack
+        rows = [(i, {"ID": str(i), "COUNTRY": country, "STATUS": "Published (incomplete)",
+                     "WEBSITE": url, "WEBSITE SNAPSHOT HASH": "old"})
+                for i, country, url in [(2, "Portugal", "https://pt.example"),
+                                         (3, "Spain", "https://es-one.example"),
+                                         (4, "Spain", "https://es-two.example")]]
+        with ExitStack() as stack:
+            stack.enter_context(patch.dict(os.environ, {"PROCESS_COUNTRY": "es", "MAX_WEBSITE_CHECKS_PER_RUN": "1"}))
+            stack.enter_context(patch.object(main, "load_all_rows", return_value=(rows, {})))
+            stack.enter_context(patch.object(main, "load_config", return_value={}))
+            stack.enter_context(patch.object(main, "log_network_diagnostics"))
+            stack.enter_context(patch.object(main, "TELEGRAM_NOTIFICATIONS_ENABLED", False))
+            writes = stack.enter_context(patch.object(main, "_batch_update_cells"))
+            check = stack.enter_context(patch.object(main, "has_website_changed", return_value=(False, "old")))
+            main.run_automation()
+            check.assert_called_once_with("old", "https://es-one.example")
+            self.assertEqual(writes.call_args.args[0], 3)
 
 
 if __name__ == "__main__":

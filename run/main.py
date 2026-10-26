@@ -81,7 +81,7 @@ from _2_content_generation import (
     translate_title_to_en
 )
 from country_profile import (ES, active_profile, profile_for_row, activate_profile,
-                             reset_profile, validate_spanish_row)
+                             reset_profile, validate_spanish_row, process_country, positive_limit)
 
 
 def batch_update_cells(row_index, updates, headers):
@@ -362,11 +362,25 @@ def run_automation():
         raise last_error
 
     changed_websites = []
+    selected_country = process_country()
+    event_limit = positive_limit("MAX_EVENTS_PER_RUN")
+    website_limit = positive_limit("MAX_WEBSITE_CHECKS_PER_RUN")
+    event_attempts = website_attempts = 0
 
     for i, (row_index, row) in enumerate(rows):
         status_raw = row.get("STATUS", "").strip()
         status = status_raw.lower()
         row_id = row.get("ID", "unknown")
+
+        if status in (STATUS_REVISED_INCOMPLETE.lower(), STATUS_REVISED_COMPLETE.lower(),
+                      STATUS_PUBLISHED_INCOMPLETE.lower(), STATUS_PUBLISHED.lower()):
+            try:
+                row_country = profile_for_row(row).code
+            except ValueError as exc:
+                logging.error("Строка %s пропущена: %s", row_id, exc)
+                continue
+            if selected_country != "all" and row_country != selected_country:
+                continue
 
         logging.debug(f"Строка {row_index}: ID={row_id}, STATUS='{row.get('STATUS', '')}' -> '{status}'")
 
@@ -374,6 +388,9 @@ def run_automation():
             STATUS_REVISED_INCOMPLETE.lower(),
             STATUS_REVISED_COMPLETE.lower(),
         ):
+            if event_limit and event_attempts >= event_limit:
+                continue
+            event_attempts += 1
             is_incomplete = status == STATUS_REVISED_INCOMPLETE.lower()
             logging.info(f"📌 Обработка {row.get('STATUS')} (ID={row.get('ID')})")
 
@@ -797,6 +814,9 @@ def run_automation():
                     reset_profile(token)
 
         elif status == STATUS_PUBLISHED_INCOMPLETE.lower():
+            if website_limit and website_attempts >= website_limit:
+                continue
+            website_attempts += 1
             website_url = (row.get("WEBSITE", "") or "").strip()
             previous_hash = (row.get("WEBSITE SNAPSHOT HASH", "") or "").strip()
             if not previous_hash or not website_url:
@@ -887,4 +907,11 @@ def main():
                 logging.exception("❌ Быстрый повтор завершился ошибкой. Ожидаем следующего планового запуска.")
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description="Публикация и мониторинг общей таблицы RACES")
+    parser.add_argument("--once", action="store_true", help="Один проход без запуска планировщика")
+    args = parser.parse_args()
+    if args.once:
+        run_automation()
+    else:
+        main()

@@ -236,3 +236,13 @@ docker compose run --rm racefinder sh -lc "cd /app && python -m pytest -q"
 зафиксирован на DEV. Для реального обращения к таблице задайте ID её тестовой копии
 через `RF_DEV_SPREADSHEET_ID`; без него импорт не запустится. Реальную публикацию
 проводите только после установки ES-ветки и проверки DEV-доступов.
+
+Общая вкладка `RACES` остаётся источником данных для обеих стран. `PROCESS_COUNTRY=all`
+сохраняет общий проход; `pt`/`es` ограничивают и публикацию, и мониторинг изменений
+`Published (incomplete)` своей страной. Не запускайте общий и отдельные проходы
+одновременно: они записывают одни и те же строки. Для независимого расписания
+используйте последовательные одноразовые задания:
+`docker compose run --rm -e PROCESS_COUNTRY=pt racefinder python main.py --once` и
+`docker compose run --rm -e PROCESS_COUNTRY=es racefinder python main.py --once`.
+`MAX_EVENTS_PER_RUN` и `MAX_WEBSITE_CHECKS_PER_RUN` ограничивают работу за проход
+(0 — без лимита); расписание каждого задания задаётся отдельно на уровне запуска.

@@ -131,3 +131,17 @@ def test_spanish_homonyms_require_province():
 def test_bilingual_province_is_sent_in_bridge_supported_form():
     from rf_spain_location import resolve_spanish_location
     assert resolve_spanish_location({'MUNICIPALITY': 'Amurrio', 'PROVINCE': 'Álava / Araba'}) == ('Amurrio', 'Álava')
+
+
+def test_country_run_filters_are_explicit(monkeypatch):
+    from country_profile import process_country, positive_limit
+    monkeypatch.setenv('PROCESS_COUNTRY', 'es')
+    assert process_country() == 'es'
+    monkeypatch.setenv('MAX_EVENTS_PER_RUN', '25')
+    assert positive_limit('MAX_EVENTS_PER_RUN') == 25
+    monkeypatch.setenv('PROCESS_COUNTRY', 'unknown')
+    with pytest.raises(ValueError):
+        process_country()
+    monkeypatch.setenv('MAX_EVENTS_PER_RUN', '-1')
+    with pytest.raises(ValueError):
+        positive_limit('MAX_EVENTS_PER_RUN')
