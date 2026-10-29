@@ -1,0 +1,212 @@
+{
+  "date": "2026-10-29",
+  "import": {
+    "passed": true,
+    "database": "disposable clone",
+    "runs": [
+      [
+        [
+          {
+            "language": "es",
+            "id": 18848,
+            "status": "draft",
+            "variation_ids": [
+              18851,
+              18852
+            ],
+            "country": "spain",
+            "municipality": "Badalona",
+            "province": "Barcelona"
+          },
+          {
+            "language": "en",
+            "id": 18853,
+            "status": "draft",
+            "variation_ids": [
+              18857,
+              18858
+            ],
+            "country": "spain",
+            "municipality": "Badalona",
+            "province": "Barcelona"
+          }
+        ],
+        [
+          {
+            "language": "pt",
+            "id": 18859,
+            "status": "draft",
+            "variation_ids": [
+              18860,
+              18861
+            ],
+            "country": "portugal",
+            "municipality": "Lisboa",
+            "province": null
+          },
+          {
+            "language": "en",
+            "id": 18862,
+            "status": "draft",
+            "variation_ids": [
+              18864,
+              18865
+            ],
+            "country": "portugal",
+            "municipality": "Lisboa",
+            "province": null
+          }
+        ]
+      ],
+      [
+        [
+          {
+            "language": "es",
+            "id": 18848,
+            "status": "draft",
+            "variation_ids": [
+              18851,
+              18852
+            ],
+            "country": "spain",
+            "municipality": "Badalona",
+            "province": "Barcelona"
+          },
+          {
+            "language": "en",
+            "id": 18853,
+            "status": "draft",
+            "variation_ids": [
+              18857,
+              18858
+            ],
+            "country": "spain",
+            "municipality": "Badalona",
+            "province": "Barcelona"
+          }
+        ],
+        [
+          {
+            "language": "pt",
+            "id": 18859,
+            "status": "draft",
+            "variation_ids": [
+              18860,
+              18861
+            ],
+            "country": "portugal",
+            "municipality": "Lisboa",
+            "province": null
+          },
+          {
+            "language": "en",
+            "id": 18862,
+            "status": "draft",
+            "variation_ids": [
+              18864,
+              18865
+            ],
+            "country": "portugal",
+            "municipality": "Lisboa",
+            "province": null
+          }
+        ]
+      ]
+    ],
+    "scope": "Real WC/JWT/ACF/WPML and variations; local table and deterministic content fixtures",
+    "checks": [
+      "ES+EN",
+      "legacy blank-country PT+EN",
+      "two distances and prices",
+      "Book URL",
+      "country metadata",
+      "repeat without duplicate IDs",
+      "country context reset"
+    ]
+  },
+  "frontend": [
+    {
+      "language": "es",
+      "country": "spain",
+      "status": 200,
+      "fatal": false,
+      "book_link": true,
+      "bytes": 119304
+    },
+    {
+      "language": "en",
+      "country": "spain",
+      "status": 200,
+      "fatal": false,
+      "book_link": true,
+      "bytes": 114363
+    },
+    {
+      "language": "pt",
+      "country": "portugal",
+      "status": 200,
+      "fatal": false,
+      "book_link": true,
+      "bytes": 119118
+    },
+    {
+      "language": "en",
+      "country": "portugal",
+      "status": 200,
+      "fatal": false,
+      "book_link": true,
+      "bytes": 120005
+    }
+  ],
+  "es_taxonomies": {
+    "18848": {
+      "rf_es_community": [
+        "Cataluña"
+      ],
+      "rf_es_province": [
+        "Barcelona"
+      ],
+      "rf_es_municipality": [
+        "Badalona"
+      ]
+    },
+    "18853": {
+      "rf_es_community": [
+        "Cataluña"
+      ],
+      "rf_es_province": [
+        "Barcelona"
+      ],
+      "rf_es_municipality": [
+        "Badalona"
+      ]
+    }
+  },
+  "cleanup": {
+    "original_branch": "kt/60-cancellation-protection",
+    "original_head": "eef6025d7ebcd3e7d416a4a239635627dbdac1dc",
+    "public_site_not_switched_by_this_test": true,
+    "current_branch": "dev",
+    "current_head": "3f5a19f8dc6dd04b584d11624281b732c8f7335a",
+    "external_branch_change_observed": true,
+    "original_config_hash_matches": true,
+    "tracked_changes": false,
+    "clone_database_removed": true,
+    "temporary_grant_revoked": true,
+    "loopback_servers_stopped": true,
+    "public_http": {
+      "dev.racefinder.pt": 200,
+      "dev.racefinder.es": 200
+    }
+  },
+  "tests": {
+    "publisher_docker": 147,
+    "monitor_docker": 64,
+    "synthetic_geography_preflight": 25
+  },
+  "limitations": [
+    "Google Sheets writes and AI generation replaced with deterministic local fixtures in integration test",
+    "Created products retain existing draft behavior; frontend checked after publishing only inside disposable clone",
+    "No production deployment, payment, order, mail or Telegram send"
+  ]
+}

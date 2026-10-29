@@ -21,9 +21,20 @@ def send_acf_data_translation(base_url, product_id, acf_data, token):
     )
 
 
-def create_product_translation_en(row, pt_product_id, attributes=None, last_variations=None, config=None):
+def link_product_translation(base_url, primary_id, translated_id, token=None):
+    # Тот же JWT, что и для ACF; обычный пароль не является application password.
+    token = token or get_jwt_token()
+    response = requests.post(
+        f"{base_url}/wp-json/custom-api/v1/set-translation/",
+        json={"original_id": primary_id, "translated_id": translated_id, "lang_code": "en"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    response.raise_for_status()
+    logging.info("✅ Перевод связан: %s ⇄ EN=%s", primary_id, translated_id)
+
+
+def create_product_translation_en(row, pt_product_id, attributes=None, last_variations=None, config=None, on_created=None):
     auth = HTTPBasicAuth(config["consumer_key"], config["consumer_secret"])
-    wpml_auth = HTTPBasicAuth(config["wp_admin_user"], config["wp_admin_pass"])
     base_url = config["wp_url"]
 
     logging.info("🌍 Создаём перевод продукта на английский")
@@ -126,6 +137,8 @@ def create_product_translation_en(row, pt_product_id, attributes=None, last_vari
         logging.info(f"✅ Перевод создан: ID={en_id}")
         if not en_id:
             raise Exception("Перевод не был создан")
+        if on_created:
+            on_created(en_id)
 
         # # 🖼️ Присваиваем изображение через wp/v2
         # if image_id:
@@ -191,32 +204,7 @@ def create_product_translation_en(row, pt_product_id, attributes=None, last_vari
                 f"ответ={acf_update_response.text}"
             )
 
-        # 📡 Отправляем связку перевода на WPML
-        hook_payload = {
-            "original_id": pt_product_id,
-            "translated_id": en_id,
-            "lang_code": "en"
-        }
-
-        logging.info("🔗 Пытаемся связать перевод с оригиналом через WPML API")
-        logging.debug("📨 Данные для связывания: %s", json.dumps(hook_payload))
-
-        try:
-            hook_response = requests.post(
-                f"{base_url}/wp-json/custom-api/v1/set-translation/",
-                json=hook_payload,
-                auth=wpml_auth
-            )
-
-            logging.debug("📡 Ответ WPML API: %s", hook_response.text)
-
-            if not hook_response.ok:
-                logging.error(f"❌ Связь через WPML API не удалась: {hook_response.status_code} — {hook_response.text}")
-            else:
-                logging.info(f"✅ Перевод успешно связан: PT={pt_product_id} ⇄ EN={en_id}")
-
-        except Exception as hook_error:
-            logging.exception(f"❌ Ошибка при связывании перевода через WPML API: {hook_error}")
+        link_product_translation(base_url, pt_product_id, en_id, token)
 
         # Присваиваем атрибуты и создаём вариации
         if attributes:
@@ -254,7 +242,8 @@ def create_or_update_product_pt(
     attributes=None,
     last_variations=None,
     config=None,
-    existing_pt_product_id=None
+    existing_pt_product_id=None,
+    on_created=None
 ):
     if not existing_pt_product_id:
         return create_product_translation_en(
@@ -262,7 +251,7 @@ def create_or_update_product_pt(
             pt_product_id,
             attributes=attributes,
             last_variations=last_variations,
-            config=config
+            config=config, on_created=on_created
         )
 
     auth = HTTPBasicAuth(config["consumer_key"], config["consumer_secret"])
@@ -321,7 +310,7 @@ def create_or_update_product_pt(
             logging.warning("♻️ EN-перевод %s не существует (устаревший ID) — создаём заново", en_id)
             return create_product_translation_en(
                 row, pt_product_id, attributes=attributes,
-                last_variations=last_variations, config=config,
+                last_variations=last_variations, config=config, on_created=on_created,
             )
         logging.error(
             "❌ Ошибка обновления EN-перевода %s: %s %s",
@@ -357,5 +346,6 @@ def create_or_update_product_pt(
     if last_variations:
         create_variations(en_id, last_variations)
 
+    link_product_translation(base_url, pt_product_id, en_id)
     logging.info(f"♻️ EN-перевод обновлён: ID={en_id}")
     return en_id

@@ -237,11 +237,9 @@ def ensure_category_translation(category_id: int, source_lang: str, target_lang:
         "translated_id": target_id,
         "lang_code": target_lang,
     }
-    wpml_auth = (config["wp_admin_user"], config["wp_admin_pass"])
     wpml_response = requests.post(
         f"{WC_API_URL}/wp-json/custom-api/v1/set-term-translation/",
-        auth=wpml_auth,
-        headers=headers,
+        headers={**headers, "Authorization": f"Bearer {get_jwt_token()}"},
         data=json.dumps({**payload, "taxonomy": "product_cat"}),
     )
     if wpml_response.status_code >= 400:

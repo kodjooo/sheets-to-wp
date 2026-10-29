@@ -762,7 +762,9 @@ def run_automation():
                     attributes=attr_payload,
                     last_variations=variation_entries_en,
                     config=config,
-                    existing_pt_product_id=existing_en_product_id or None
+                    existing_pt_product_id=existing_en_product_id or None,
+                    on_created=(lambda product_id: batch_update_cells(
+                        row_index, {"WP PRODUCT ID EN": product_id}, headers)) if profile == ES else None
                 )
                 if profile == ES:
                     if not en_product_id:
