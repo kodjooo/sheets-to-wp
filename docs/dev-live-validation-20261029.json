@@ -1,0 +1,522 @@
+{
+  "date": "2026-10-29",
+  "passed": true,
+  "mode": "existing DEV, temporary branch switch, original database",
+  "wordpress_tested_commit": "881cf4e1119713bff4feca53f05b280f6b15647a",
+  "publisher_tested_commit": "1d82d703a0147ca2985f0c8776634e147c002c28",
+  "import": {
+    "test_sheet": "https://docs.google.com/spreadsheets/d/19OyjSoUn_jSY_mvCplbq5gktJZuWTOMhvno8peOkduc#gid=16978646",
+    "phases": [
+      {
+        "name": "initial_real_import",
+        "products": [
+          {
+            "row": 2,
+            "input_id": "RF-ACCEPT-ES-MURALLAS-20261029",
+            "products": [
+              {
+                "language": "es",
+                "id": 18826,
+                "status": "draft",
+                "variation_ids": [
+                  18829,
+                  18830
+                ],
+                "prices": [
+                  "29",
+                  "39"
+                ],
+                "country": "spain",
+                "generated_description_chars": 856,
+                "permalink": "https://dev.racefinder.pt/es/?post_type=product&p=18826"
+              },
+              {
+                "language": "en",
+                "id": 18831,
+                "status": "draft",
+                "variation_ids": [
+                  18835,
+                  18836
+                ],
+                "prices": [
+                  "29",
+                  "39"
+                ],
+                "country": "spain",
+                "generated_description_chars": 884,
+                "permalink": "https://dev.racefinder.pt/en/?post_type=product&p=18831"
+              }
+            ]
+          },
+          {
+            "row": 4,
+            "input_id": "RF-ACCEPT-ES-BARCELONA-20261029",
+            "products": [
+              {
+                "language": "es",
+                "id": 18839,
+                "status": "draft",
+                "variation_ids": [
+                  18842
+                ],
+                "prices": [
+                  "100"
+                ],
+                "country": "spain",
+                "generated_description_chars": 538,
+                "permalink": "https://dev.racefinder.pt/es/?post_type=product&p=18839"
+              },
+              {
+                "language": "en",
+                "id": 18843,
+                "status": "draft",
+                "variation_ids": [
+                  18846
+                ],
+                "prices": [
+                  "100"
+                ],
+                "country": "spain",
+                "generated_description_chars": 480,
+                "permalink": "https://dev.racefinder.pt/en/?post_type=product&p=18843"
+              }
+            ]
+          },
+          {
+            "row": 5,
+            "input_id": "RF-ACCEPT-PT-20261029",
+            "products": [
+              {
+                "language": "pt",
+                "id": 18848,
+                "status": "draft",
+                "variation_ids": [
+                  18849
+                ],
+                "prices": [
+                  "18"
+                ],
+                "country": "portugal",
+                "generated_description_chars": 388,
+                "permalink": "https://dev.racefinder.pt/?post_type=product&p=18848"
+              },
+              {
+                "language": "en",
+                "id": 18850,
+                "status": "draft",
+                "variation_ids": [
+                  18852
+                ],
+                "prices": [
+                  "18"
+                ],
+                "country": "portugal",
+                "generated_description_chars": 417,
+                "permalink": "https://dev.racefinder.pt/en/?post_type=product&p=18850"
+              }
+            ]
+          }
+        ],
+        "openai_calls": 6
+      },
+      {
+        "name": "repeat_without_changes",
+        "ids_stable": true,
+        "openai_calls": 6
+      },
+      {
+        "name": "explicit_es_update",
+        "ids_stable": true,
+        "products": [
+          {
+            "row": 2,
+            "input_id": "RF-ACCEPT-ES-MURALLAS-20261029",
+            "products": [
+              {
+                "language": "es",
+                "id": 18826,
+                "status": "draft",
+                "variation_ids": [
+                  18829,
+                  18830
+                ],
+                "prices": [
+                  "29",
+                  "39"
+                ],
+                "country": "spain",
+                "generated_description_chars": 888,
+                "permalink": "https://dev.racefinder.pt/es/?post_type=product&p=18826"
+              },
+              {
+                "language": "en",
+                "id": 18831,
+                "status": "draft",
+                "variation_ids": [
+                  18835,
+                  18836
+                ],
+                "prices": [
+                  "29",
+                  "39"
+                ],
+                "country": "spain",
+                "generated_description_chars": 922,
+                "permalink": "https://dev.racefinder.pt/en/?post_type=product&p=18831"
+              }
+            ]
+          },
+          {
+            "row": 4,
+            "input_id": "RF-ACCEPT-ES-BARCELONA-20261029",
+            "products": [
+              {
+                "language": "es",
+                "id": 18839,
+                "status": "draft",
+                "variation_ids": [
+                  18842
+                ],
+                "prices": [
+                  "100"
+                ],
+                "country": "spain",
+                "generated_description_chars": 538,
+                "permalink": "https://dev.racefinder.pt/es/?post_type=product&p=18839"
+              },
+              {
+                "language": "en",
+                "id": 18843,
+                "status": "draft",
+                "variation_ids": [
+                  18846
+                ],
+                "prices": [
+                  "100"
+                ],
+                "country": "spain",
+                "generated_description_chars": 480,
+                "permalink": "https://dev.racefinder.pt/en/?post_type=product&p=18843"
+              }
+            ]
+          },
+          {
+            "row": 5,
+            "input_id": "RF-ACCEPT-PT-20261029",
+            "products": [
+              {
+                "language": "pt",
+                "id": 18848,
+                "status": "draft",
+                "variation_ids": [
+                  18849
+                ],
+                "prices": [
+                  "18"
+                ],
+                "country": "portugal",
+                "generated_description_chars": 388,
+                "permalink": "https://dev.racefinder.pt/?post_type=product&p=18848"
+              },
+              {
+                "language": "en",
+                "id": 18850,
+                "status": "draft",
+                "variation_ids": [
+                  18852
+                ],
+                "prices": [
+                  "18"
+                ],
+                "country": "portugal",
+                "generated_description_chars": 417,
+                "permalink": "https://dev.racefinder.pt/en/?post_type=product&p=18850"
+              }
+            ]
+          }
+        ],
+        "openai_calls": 8
+      }
+    ],
+    "passed": true,
+    "openai_usage": [
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 10472,
+        "output_tokens": 1760,
+        "pdf_attached": false
+      },
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 2958,
+        "output_tokens": 1714,
+        "pdf_attached": false
+      },
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 6650,
+        "output_tokens": 752,
+        "pdf_attached": false
+      },
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 1937,
+        "output_tokens": 548,
+        "pdf_attached": false
+      },
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 6883,
+        "output_tokens": 712,
+        "pdf_attached": false
+      },
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 1821,
+        "output_tokens": 490,
+        "pdf_attached": false
+      },
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 10472,
+        "output_tokens": 1831,
+        "pdf_attached": false
+      },
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 3029,
+        "output_tokens": 1837,
+        "pdf_attached": false
+      }
+    ],
+    "models": [
+      "gpt-4.1-mini"
+    ],
+    "checks": [
+      "Real Google read/write",
+      "Real source download",
+      "Real OpenAI ES EN and PT EN generation",
+      "Real WC JWT ACF WPML",
+      "Country and Book",
+      "Variation prices and counts",
+      "Repeat and explicit ES update without duplicate IDs",
+      "PT profile restored"
+    ]
+  },
+  "frontend": {
+    "passed": true,
+    "checks": [
+      {
+        "id": 18826,
+        "language": "es",
+        "country": "spain",
+        "url": "https://dev.racefinder.pt/es/event/test-las-murallas-de-pamplona-2026/",
+        "http": 200,
+        "book_link": true,
+        "fatal": false,
+        "html_language": [
+          "es-ES"
+        ],
+        "summary_sample": "Las Murallas de Pamplona es una carrera que se celebrará el sábado 31 de octubre de 2026 en Pamplona, España. La prueba ofrece varias distancias: 5K, 10K, 15K y 21K, además de una "
+      },
+      {
+        "id": 18831,
+        "language": "en",
+        "country": "spain",
+        "url": "https://dev.racefinder.pt/en/event/test-the-walls-of-pamplona-2026/",
+        "http": 200,
+        "book_link": true,
+        "fatal": false,
+        "html_language": [
+          "en-US"
+        ],
+        "summary_sample": "Las Murallas de Pamplona is a running event taking place on Saturday, October 31, 2026, in Pamplona, Spain. The race offers multiple distances including 5K, 10K, 15K, and 21K, as w"
+      },
+      {
+        "id": 18839,
+        "language": "es",
+        "country": "spain",
+        "url": "https://dev.racefinder.pt/es/event/test-zurich-marato-barcelona-2027/",
+        "http": 200,
+        "book_link": true,
+        "fatal": false,
+        "html_language": [
+          "es-ES"
+        ],
+        "summary_sample": "La Zurich Marató Barcelona 2027 es una carrera de maratón que se celebrará el domingo 14 de marzo de 2027 en Barcelona, España. Este evento ofrece la distancia completa de maratón,"
+      },
+      {
+        "id": 18843,
+        "language": "en",
+        "country": "spain",
+        "url": "https://dev.racefinder.pt/en/event/test-zurich-marathon-barcelona-2027/",
+        "http": 200,
+        "book_link": true,
+        "fatal": false,
+        "html_language": [
+          "en-US"
+        ],
+        "summary_sample": "The Zurich Marató Barcelona 2027 is a marathon running event scheduled for Sunday, March 14, 2027, in Barcelona, Spain. This event offers a full marathon distance, attracting runne"
+      },
+      {
+        "id": 18848,
+        "language": "pt",
+        "country": "portugal",
+        "url": "https://dev.racefinder.pt/event/test-sao-silvestre-de-lisboa/",
+        "http": 200,
+        "book_link": true,
+        "fatal": false,
+        "html_language": [
+          "pt-PT"
+        ],
+        "summary_sample": "A 19ª edição da LIDL São Silvestre de Lisboa realiza-se a 26 de dezembro de 2026, em Lisboa. Trata-se de uma corrida de 10 km com partida e chegada na Avenida da Liberdade.O evento"
+      },
+      {
+        "id": 18850,
+        "language": "en",
+        "country": "portugal",
+        "url": "https://dev.racefinder.pt/en/event/test-sao-silvestre-de-lisbon/",
+        "http": 200,
+        "book_link": true,
+        "fatal": false,
+        "html_language": [
+          "en-US"
+        ],
+        "summary_sample": "The 19th edition of the LIDL São Silvestre de Lisboa will take place on December 26, 2026, in Lisbon. This is a 10 km road race starting and finishing at Avenida da Liberdade.The e"
+      }
+    ]
+  },
+  "geography": {
+    "passed": true,
+    "checks": [
+      {
+        "id": 18826,
+        "language": "es",
+        "terms": {
+          "rf_es_community": [
+            "Comunidad Foral de Navarra"
+          ],
+          "rf_es_province": [
+            "Navarra"
+          ],
+          "rf_es_municipality": [
+            "Pamplona"
+          ]
+        }
+      },
+      {
+        "id": 18831,
+        "language": "en",
+        "terms": {
+          "rf_es_community": [
+            "Comunidad Foral de Navarra"
+          ],
+          "rf_es_province": [
+            "Navarra"
+          ],
+          "rf_es_municipality": [
+            "Pamplona"
+          ]
+        }
+      },
+      {
+        "id": 18839,
+        "language": "es",
+        "terms": {
+          "rf_es_community": [
+            "Cataluña"
+          ],
+          "rf_es_province": [
+            "Barcelona"
+          ],
+          "rf_es_municipality": [
+            "Barcelona"
+          ]
+        }
+      },
+      {
+        "id": 18843,
+        "language": "en",
+        "terms": {
+          "rf_es_community": [
+            "Cataluña"
+          ],
+          "rf_es_province": [
+            "Barcelona"
+          ],
+          "rf_es_municipality": [
+            "Barcelona"
+          ]
+        }
+      }
+    ]
+  },
+  "wpml_default_language_copies": {
+    "passed": true,
+    "total_target_language_products": 6,
+    "additional_pt_fallback_copies": [
+      {
+        "id": "18827",
+        "language": "pt",
+        "duplicate_of": "18826"
+      },
+      {
+        "id": "18840",
+        "language": "pt",
+        "duplicate_of": "18839"
+      }
+    ],
+    "origin": "Kirill RF_Domains_Duplicates, intentional PT default-language fallback; Spanish content, no extra generated translation"
+  },
+  "cleanup": {
+    "deleted_test_user": 121,
+    "deleted_test_products": [
+      "18826",
+      "18827",
+      "18831",
+      "18839",
+      "18840",
+      "18843",
+      "18848",
+      "18850",
+      "18829",
+      "18833",
+      "18835",
+      "18830",
+      "18834",
+      "18836",
+      "18842",
+      "18845",
+      "18846",
+      "18849",
+      "18852"
+    ],
+    "restored_branch": "kt/60-cancellation-protection",
+    "restored_head": "eef6025d7ebcd3e7d416a4a239635627dbdac1dc",
+    "config_unchanged": true,
+    "tracked_files_clean": true,
+    "temporary_guard_removed": true,
+    "deleted_records_absent": true,
+    "temporary_credentials_http": 401,
+    "public_http": {
+      "dev.racefinder.pt": 200,
+      "dev.racefinder.es": 200
+    }
+  },
+  "scope": {
+    "real_google_sheets_read_write": true,
+    "real_source_download": true,
+    "real_openai_generation": true,
+    "real_WC_JWT_ACF_WPML": true,
+    "separate_wordpress_instance_created": false,
+    "production_sheet_written": false,
+    "production_deployed": false,
+    "languages_confirmed": [
+      "es",
+      "en"
+    ],
+    "images_generated": false,
+    "pdf_used_in_this_run": false,
+    "generation_usage_excludes_title_translation": true
+  }
+}
