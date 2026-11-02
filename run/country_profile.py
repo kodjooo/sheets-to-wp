@@ -13,11 +13,11 @@ class CountryProfile:
     language: str
 
     def column(self, name):
-        return name.replace('(PT)', '(ES)').replace(' ID PT', ' ID ES') if self.code == 'es' else name
+        return name.replace('(PT)', '(ES)').replace(' ID PT', ' ID ES') if self.language == 'es' else name
 
     def prepare_row(self, row):
         result = dict(row)
-        if self.code == 'es':
+        if self.language == 'es':
             # Совместимость внутренних ключей; в таблицу пишем только ES-колонки.
             for name in ('RACE NAME (PT)', 'SUMMARY (PT)', 'ORG INFO (PT)', 'BENEFITS (PT)',
                          'FAQ (PT)', 'WP PRODUCT ID PT', 'WP VARIATION ID PT'):
@@ -81,7 +81,7 @@ def localized_prompt(prompt):
 
 
 def primary_metadata(row):
-    if active_profile() == PT:
+    if active_profile().code == 'pt':
         value = row.get('RF_MUNICIPALITY_NAME')
         return [{'key': '_rf_location_municipality_name', 'value': value}] if value else []
     from rf_spain_location import resolve_spanish_location

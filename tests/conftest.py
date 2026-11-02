@@ -19,6 +19,9 @@ for _var in ("SSL_CERT_FILE", "REQUESTS_CA_BUNDLE"):
 # Обязательные переменные окружения (значения-заглушки; сеть в тестах мокается).
 # setdefault — чтобы не затирать значения, если они уже заданы намеренно.
 _ENV_DEFAULTS = {
+    # Проверки статической нормализации не зависят от рабочего словаря WPML в /app/run.
+    "TRANSLATION_ALIASES_PATH": "/dev/null",
+    "NEW_EVENT_LANGUAGES": "legacy",
     "GOOGLE_SPREADSHEET_ID": "test-spreadsheet-id",
     "OPENAI_API_KEY": "test-openai-key",
     "OPENCAGE_API_KEY": "test-opencage-key",

@@ -5,6 +5,7 @@ import logging
 import time
 import json
 import re
+import sys
 import socket
 import openai
 import requests
@@ -398,6 +399,10 @@ def run_automation():
             try:
                 profile = profile_for_row(row)
                 token = activate_profile(profile)
+                from trilingual_import import language_scheme, process_trilingual
+                if language_scheme(row) == 'PT_ES_EN':
+                    process_trilingual(sys.modules[__name__], row_index, row, rows[i + 1:], headers)
+                    continue
                 if profile == ES:
                     validate_spanish_row(row, headers, config['wp_url'])
                 row = profile.prepare_row(row)

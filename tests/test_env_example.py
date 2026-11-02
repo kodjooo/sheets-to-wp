@@ -17,6 +17,7 @@ class EnvExampleTests(unittest.TestCase):
                 keys.append(stripped.split("=", 1)[0].strip())
 
         required = {
+            "NEW_EVENT_LANGUAGES",
             "OPENAI_API_KEY",
             "OPENAI_TEXT_MODEL",
             "OPENAI_SECOND_MODEL",

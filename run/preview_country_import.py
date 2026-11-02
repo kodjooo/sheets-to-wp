@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 from country_profile import ES, profile_for_row, validate_spanish_row, activate_profile, reset_profile, primary_metadata
+from trilingual_import import language_scheme, required_headers, validate_roots, SCHEME, LANGUAGES
 
 
 def preview(rows, headers, wp_url):
@@ -19,8 +20,12 @@ def preview(rows, headers, wp_url):
             token = activate_profile(profile)
             if profile == ES:
                 validate_spanish_row(row, headers, wp_url, require_enabled=False)
+            scheme = language_scheme(row)
+            if scheme == SCHEME:
+                required_headers(headers)
+                validate_roots()
             adapted = profile.prepare_row(row)
-            item.update(country=profile.country, languages=[profile.language, 'en'],
+            item.update(country=profile.country, languages=list(LANGUAGES) if scheme == SCHEME else [profile.language, 'en'], scheme=scheme,
                         title=adapted.get('RACE NAME (PT)', ''),
                         primary_id=adapted.get('WP PRODUCT ID PT', ''),
                         metadata=primary_metadata(row),

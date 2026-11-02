@@ -1,0 +1,495 @@
+{
+  "date": "2026-11-02",
+  "passed": true,
+  "wordpress_tested_commit": "ceda7b3c84f2d951be740965543df1ac2a5f2483",
+  "publisher_source_hashes": {
+    "trilingual_import.py": "ecd41ba50b92f6aa110daf10169c0002b8ee2d897dc78d2fd9180b262435556c",
+    "prepare_trilingual_sheet.py": "5c184a1c266307cb90496f4cf80b03a2fd6a85e8ec605ebfb72b8005813b2e24",
+    "main.py": "905fc66389aa47b66f342b9a2f2478b0b331dc940d30be278be106a9995174a8",
+    "country_profile.py": "689add7837a3c632a3dfa4a985d2b36b43af5ab7bbf5066facdcd9da50deb965",
+    "_3_create_product.py": "f081f9b671edf2f8cd8b9cca29a001d8b3d8ffd349240a4982ed2b800302b3ce",
+    "preview_country_import.py": "6d0d55283d505644c7a06055f58188f5f08e2026df6f047392743adee87bed5a"
+  },
+  "wordpress_bridge_sha256": "757f496c04392a316a5c0fe0401f0ecb27687776058449df855c0add5631ea84",
+  "tests": {
+    "docker_pytest": 170
+  },
+  "integration": {
+    "passed": true,
+    "date": "2026-11-02",
+    "sheet": "https://docs.google.com/spreadsheets/d/19OyjSoUn_jSY_mvCplbq5gktJZuWTOMhvno8peOkduc#gid=16978646",
+    "phases": [
+      {
+        "name": "intentional_partial_failure",
+        "primary_id": 18955,
+        "en_id": 18958,
+        "automatic_pt_copy_id": 18956,
+        "openai_calls": 6
+      },
+      {
+        "name": "recovery_without_extra_generation",
+        "products": [
+          {
+            "input_id": "RF-TRI-ES-20261102",
+            "row": 6,
+            "products": [
+              {
+                "id": 18956,
+                "language": "pt",
+                "country": "spain",
+                "variation_ids": [
+                  18969
+                ],
+                "price": "100",
+                "summary_chars": 389,
+                "summary_sample": "<p>O Zurich Marató Barcelona 2027 é um evento de corrida de maratona agendado para domingo, 14 de março de 2027, em Barcelona, Espanha. Este evento oferece uma distância completa de maratona para os c",
+                "status": "draft"
+              },
+              {
+                "id": 18955,
+                "language": "es",
+                "country": "spain",
+                "variation_ids": [
+                  18967
+                ],
+                "price": "100",
+                "summary_chars": 391,
+                "summary_sample": "<p>La Zurich Marató Barcelona 2027 es una carrera de maratón que se celebrará el domingo 14 de marzo de 2027 en Barcelona, España. Este evento ofrece la distancia completa de maratón para corredores.<",
+                "status": "draft"
+              },
+              {
+                "id": 18958,
+                "language": "en",
+                "country": "spain",
+                "variation_ids": [
+                  18968
+                ],
+                "price": "100",
+                "summary_chars": 339,
+                "summary_sample": "<p>The Zurich Marató Barcelona 2027 is a marathon running event scheduled for Sunday, March 14, 2027, in Barcelona, Spain. This event offers a full marathon distance for runners.</p><p>Registration op",
+                "status": "draft"
+              }
+            ]
+          },
+          {
+            "input_id": "RF-TRI-PT-20261102",
+            "row": 7,
+            "products": [
+              {
+                "id": 18960,
+                "language": "pt",
+                "country": "portugal",
+                "variation_ids": [
+                  18963
+                ],
+                "price": "18",
+                "summary_chars": 339,
+                "summary_sample": "<p>A 19ª edição da LIDL São Silvestre de Lisboa realiza-se a 26 de dezembro de 2026, em Lisboa. Esta prova apresenta uma corrida de 10 km com partida e chegada na Avenida da Liberdade.</p><p>É um even",
+                "status": "draft"
+              },
+              {
+                "id": 18962,
+                "language": "es",
+                "country": "portugal",
+                "variation_ids": [
+                  18965
+                ],
+                "price": "18",
+                "summary_chars": 399,
+                "summary_sample": "<p>La 19ª edición de la LIDL São Silvestre de Lisboa se celebrará el 26 de diciembre de 2026 en Lisboa. Este evento cuenta con una carrera de 10 km que comienza y termina en la Avenida da Liberdade.</",
+                "status": "draft"
+              },
+              {
+                "id": 18961,
+                "language": "en",
+                "country": "portugal",
+                "variation_ids": [
+                  18964
+                ],
+                "price": "18",
+                "summary_chars": 372,
+                "summary_sample": "<p>The 19th edition of the LIDL São Silvestre de Lisboa will take place on December 26, 2026, in Lisbon. This event features a 10 km race starting and finishing at Avenida da Liberdade.</p><p>The race",
+                "status": "draft"
+              }
+            ]
+          }
+        ],
+        "automatic_pt_id_reused": true,
+        "openai_calls": 6
+      },
+      {
+        "name": "published_repeat",
+        "ids_stable": true,
+        "no_generation": true
+      },
+      {
+        "name": "explicit_update",
+        "ids_stable": true,
+        "cached_text_reused": true,
+        "generation_calls_for_updated_source": 0
+      },
+      {
+        "name": "save_es_origin_after_detaching_pt",
+        "pt_text_unchanged": true
+      }
+    ],
+    "checks": [
+      "ES PT EN for Spain and Portugal",
+      "Country independent of language",
+      "Real Google sources OpenAI WC JWT ACF WPML",
+      "Shared prices and variations",
+      "Intentional interruption and cached recovery",
+      "Three records per WPML group",
+      "PT duplicate reused and detached",
+      "Save original does not overwrite translated PT",
+      "Repeat and explicit update keep IDs",
+      "Old products unchanged",
+      "Unauthorized endpoint rejected and wrong group blocked"
+    ],
+    "products": [
+      {
+        "input_id": "RF-TRI-ES-20261102",
+        "row": 6,
+        "products": [
+          {
+            "id": 18956,
+            "language": "pt",
+            "country": "spain",
+            "variation_ids": [
+              18969
+            ],
+            "price": "100",
+            "summary_chars": 389,
+            "summary_sample": "<p>O Zurich Marató Barcelona 2027 é um evento de corrida de maratona agendado para domingo, 14 de março de 2027, em Barcelona, Espanha. Este evento oferece uma distância completa de maratona para os c",
+            "status": "draft"
+          },
+          {
+            "id": 18955,
+            "language": "es",
+            "country": "spain",
+            "variation_ids": [
+              18967
+            ],
+            "price": "100",
+            "summary_chars": 391,
+            "summary_sample": "<p>La Zurich Marató Barcelona 2027 es una carrera de maratón que se celebrará el domingo 14 de marzo de 2027 en Barcelona, España. Este evento ofrece la distancia completa de maratón para corredores.<",
+            "status": "draft"
+          },
+          {
+            "id": 18958,
+            "language": "en",
+            "country": "spain",
+            "variation_ids": [
+              18968
+            ],
+            "price": "100",
+            "summary_chars": 339,
+            "summary_sample": "<p>The Zurich Marató Barcelona 2027 is a marathon running event scheduled for Sunday, March 14, 2027, in Barcelona, Spain. This event offers a full marathon distance for runners.</p><p>Registration op",
+            "status": "draft"
+          }
+        ]
+      },
+      {
+        "input_id": "RF-TRI-PT-20261102",
+        "row": 7,
+        "products": [
+          {
+            "id": 18960,
+            "language": "pt",
+            "country": "portugal",
+            "variation_ids": [
+              18963
+            ],
+            "price": "18",
+            "summary_chars": 339,
+            "summary_sample": "<p>A 19ª edição da LIDL São Silvestre de Lisboa realiza-se a 26 de dezembro de 2026, em Lisboa. Esta prova apresenta uma corrida de 10 km com partida e chegada na Avenida da Liberdade.</p><p>É um even",
+            "status": "draft"
+          },
+          {
+            "id": 18962,
+            "language": "es",
+            "country": "portugal",
+            "variation_ids": [
+              18965
+            ],
+            "price": "18",
+            "summary_chars": 399,
+            "summary_sample": "<p>La 19ª edición de la LIDL São Silvestre de Lisboa se celebrará el 26 de diciembre de 2026 en Lisboa. Este evento cuenta con una carrera de 10 km que comienza y termina en la Avenida da Liberdade.</",
+            "status": "draft"
+          },
+          {
+            "id": 18961,
+            "language": "en",
+            "country": "portugal",
+            "variation_ids": [
+              18964
+            ],
+            "price": "18",
+            "summary_chars": 372,
+            "summary_sample": "<p>The 19th edition of the LIDL São Silvestre de Lisboa will take place on December 26, 2026, in Lisbon. This event features a 10 km race starting and finishing at Avenida da Liberdade.</p><p>The race",
+            "status": "draft"
+          }
+        ]
+      }
+    ],
+    "old_products_unchanged": [
+      18860,
+      18865,
+      18874,
+      18878,
+      18884,
+      18886
+    ],
+    "security": {
+      "unauthenticated": 401,
+      "wrong_group": 409,
+      "wrong_variation_group": 409
+    },
+    "openai_usage": [
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 6651,
+        "output_tokens": 478
+      },
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 1663,
+        "output_tokens": 454
+      },
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 342,
+        "output_tokens": 230
+      },
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 6883,
+        "output_tokens": 652
+      },
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 1761,
+        "output_tokens": 479
+      },
+      {
+        "model": "gpt-4.1-mini",
+        "input_tokens": 351,
+        "output_tokens": 243
+      }
+    ]
+  },
+  "frontend": {
+    "passed": true,
+    "checks": [
+      {
+        "id": 18956,
+        "language": "pt",
+        "country": "spain",
+        "url": "https://dev.racefinder.pt/event/test-tri-zurich-marathon-barcelona-2027/",
+        "canonical_language_url": "https://dev.racefinder.es/pt/event/test-tri-zurich-marathon-barcelona-2027/",
+        "http": 200,
+        "canonical_http": 200,
+        "book_link": true,
+        "hreflang": {
+          "pt": "https://dev.racefinder.es/pt/event/test-tri-zurich-marathon-barcelona-2027/",
+          "en": "https://dev.racefinder.es/en/event/test-tri-zurich-marathon-barcelona-2027/",
+          "es": "https://dev.racefinder.es/event/test-tri-zurich-marato-barcelona-2027/"
+        },
+        "variation_ids": [
+          18969
+        ]
+      },
+      {
+        "id": 18955,
+        "language": "es",
+        "country": "spain",
+        "url": "https://dev.racefinder.pt/es/event/test-tri-zurich-marato-barcelona-2027/",
+        "canonical_language_url": "https://dev.racefinder.es/event/test-tri-zurich-marato-barcelona-2027/",
+        "http": 200,
+        "canonical_http": 200,
+        "book_link": true,
+        "hreflang": {
+          "pt": "https://dev.racefinder.es/pt/event/test-tri-zurich-marathon-barcelona-2027/",
+          "en": "https://dev.racefinder.es/en/event/test-tri-zurich-marathon-barcelona-2027/",
+          "es": "https://dev.racefinder.es/event/test-tri-zurich-marato-barcelona-2027/"
+        },
+        "variation_ids": [
+          18967
+        ]
+      },
+      {
+        "id": 18958,
+        "language": "en",
+        "country": "spain",
+        "url": "https://dev.racefinder.pt/en/event/test-tri-zurich-marathon-barcelona-2027/",
+        "canonical_language_url": "https://dev.racefinder.es/en/event/test-tri-zurich-marathon-barcelona-2027/",
+        "http": 200,
+        "canonical_http": 200,
+        "book_link": true,
+        "hreflang": {
+          "pt": "https://dev.racefinder.es/pt/event/test-tri-zurich-marathon-barcelona-2027/",
+          "en": "https://dev.racefinder.es/en/event/test-tri-zurich-marathon-barcelona-2027/",
+          "es": "https://dev.racefinder.es/event/test-tri-zurich-marato-barcelona-2027/"
+        },
+        "variation_ids": [
+          18968
+        ]
+      },
+      {
+        "id": 18960,
+        "language": "pt",
+        "country": "portugal",
+        "url": "https://dev.racefinder.pt/event/test-tri-sao-silvestre-de-lisboa/",
+        "canonical_language_url": "https://dev.racefinder.pt/event/test-tri-sao-silvestre-de-lisboa/",
+        "http": 200,
+        "canonical_http": 200,
+        "book_link": true,
+        "hreflang": {
+          "pt": "https://dev.racefinder.pt/event/test-tri-sao-silvestre-de-lisboa/",
+          "en": "https://dev.racefinder.pt/en/event/test-tri-sao-silvestre-de-lisboa/",
+          "es": "https://dev.racefinder.pt/es/event/test-tri-sao-silvestre-de-lisboa/"
+        },
+        "variation_ids": [
+          18963
+        ]
+      },
+      {
+        "id": 18962,
+        "language": "es",
+        "country": "portugal",
+        "url": "https://dev.racefinder.pt/es/event/test-tri-sao-silvestre-de-lisboa/",
+        "canonical_language_url": "https://dev.racefinder.pt/es/event/test-tri-sao-silvestre-de-lisboa/",
+        "http": 200,
+        "canonical_http": 200,
+        "book_link": true,
+        "hreflang": {
+          "pt": "https://dev.racefinder.pt/event/test-tri-sao-silvestre-de-lisboa/",
+          "en": "https://dev.racefinder.pt/en/event/test-tri-sao-silvestre-de-lisboa/",
+          "es": "https://dev.racefinder.pt/es/event/test-tri-sao-silvestre-de-lisboa/"
+        },
+        "variation_ids": [
+          18965
+        ]
+      },
+      {
+        "id": 18961,
+        "language": "en",
+        "country": "portugal",
+        "url": "https://dev.racefinder.pt/en/event/test-tri-sao-silvestre-de-lisboa/",
+        "canonical_language_url": "https://dev.racefinder.pt/en/event/test-tri-sao-silvestre-de-lisboa/",
+        "http": 200,
+        "canonical_http": 200,
+        "book_link": true,
+        "hreflang": {
+          "pt": "https://dev.racefinder.pt/event/test-tri-sao-silvestre-de-lisboa/",
+          "en": "https://dev.racefinder.pt/en/event/test-tri-sao-silvestre-de-lisboa/",
+          "es": "https://dev.racefinder.pt/es/event/test-tri-sao-silvestre-de-lisboa/"
+        },
+        "variation_ids": [
+          18964
+        ]
+      }
+    ]
+  },
+  "retained_for_review": {
+    "user_removed": 123,
+    "owner_id": 1,
+    "published_products_retained": [
+      18956,
+      18955,
+      18958,
+      18960,
+      18962,
+      18961
+    ],
+    "spanish_geography": {
+      "18956": {
+        "rf_es_community": [
+          "Cataluña"
+        ],
+        "rf_es_province": [
+          "Barcelona"
+        ],
+        "rf_es_municipality": [
+          "Barcelona"
+        ]
+      },
+      "18955": {
+        "rf_es_community": [
+          "Cataluña"
+        ],
+        "rf_es_province": [
+          "Barcelona"
+        ],
+        "rf_es_municipality": [
+          "Barcelona"
+        ]
+      },
+      "18958": {
+        "rf_es_community": [
+          "Cataluña"
+        ],
+        "rf_es_province": [
+          "Barcelona"
+        ],
+        "rf_es_municipality": [
+          "Barcelona"
+        ]
+      }
+    },
+    "variation_groups": [
+      {
+        "id": 18969,
+        "language": "pt",
+        "trid": 81639
+      },
+      {
+        "id": 18967,
+        "language": "es",
+        "trid": 81639
+      },
+      {
+        "id": 18968,
+        "language": "en",
+        "trid": 81639
+      },
+      {
+        "id": 18963,
+        "language": "pt",
+        "trid": 81638
+      },
+      {
+        "id": 18965,
+        "language": "es",
+        "trid": 81638
+      },
+      {
+        "id": 18964,
+        "language": "en",
+        "trid": 81638
+      }
+    ]
+  },
+  "cleanup": {
+    "temporary_user_removed": true,
+    "temporary_key_http": 401,
+    "guard_removed": true,
+    "original_config_hash_matches": true,
+    "dev_branch": "ma/shared-country-import-20261026",
+    "public_http": {
+      "dev.racefinder.pt": 200,
+      "dev.racefinder.es": 200
+    }
+  },
+  "scope": {
+    "new_events_only": true,
+    "old_rows_legacy": true,
+    "old_products_unchanged": true,
+    "production_deployed": false,
+    "production_sheet_written": false,
+    "separate_wordpress_created": false,
+    "images_generated": false,
+    "pdf_used": false,
+    "generation_usage_excludes_title_translation": true
+  }
+}

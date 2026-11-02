@@ -303,7 +303,7 @@ def send_acf_data(product_id, acf_data, token):
 
     return acf_response
 
-def create_product(data):
+def create_product(data, on_created=None):
     print("👉 Данные перед созданием товара:")
     print(json.dumps(data, indent=2, ensure_ascii=False))
 
@@ -431,6 +431,8 @@ def create_product(data):
         return None  # или обработать ошибку иначе, например, пробросить
     else:
         product_id = response.json()["id"]
+        if on_created:
+            on_created(product_id)
         print("📦 Продукт создан:", product_id)
 
     from decimal import Decimal, ROUND_DOWN
@@ -561,9 +563,9 @@ def _product_exists(product_id) -> bool:
     return True
 
 
-def create_or_update_product(data, existing_product_id=None):
+def create_or_update_product(data, existing_product_id=None, on_created=None):
     if not existing_product_id:
-        return create_product(data)
+        return create_product(data, on_created=on_created) if on_created else create_product(data)
 
     # Не передаём status при обновлении, чтобы сохранить текущее состояние публикации в WP.
     payload = {"name": data.get("RACE NAME (PT)", "") or data.get("RACE NAME", ""), "lang": active_profile().language}
@@ -592,7 +594,7 @@ def create_or_update_product(data, existing_product_id=None):
                 "♻️ PT продукт %s не существует (устаревший ID) — создаём заново",
                 existing_product_id,
             )
-            return create_product(data)
+            return create_product(data, on_created=on_created) if on_created else create_product(data)
         logging.error(
             "❌ Ошибка обновления PT продукта %s: %s %s",
             existing_product_id, response.status_code, (response.text or "")[:300],
