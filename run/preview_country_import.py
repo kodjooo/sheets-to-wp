@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 from country_profile import ES, profile_for_row, validate_spanish_row, activate_profile, reset_profile, primary_metadata
 from trilingual_import import language_scheme, required_headers, validate_roots, SCHEME, LANGUAGES
+from publication_contract import validate_block
 
 
 def preview(rows, headers, wp_url):
@@ -24,6 +25,13 @@ def preview(rows, headers, wp_url):
             if scheme == SCHEME:
                 required_headers(headers)
                 validate_roots()
+                block = [(number, dict(row))]
+                for child_number, child in enumerate(rows[number - 1:], number + 1):
+                    if any(str(child.get(key) or '').strip() for key in ('STATUS', 'ID', 'RACE NAME', 'RACE NAME (PT)', 'RACE NAME (ES)')):
+                        break
+                    if child.get('DISTANCE') or child.get('ATTRIBUTE'):
+                        block.append((child_number, dict(child)))
+                validate_block(block)
             adapted = profile.prepare_row(row)
             item.update(country=profile.country, languages=list(LANGUAGES) if scheme == SCHEME else [profile.language, 'en'], scheme=scheme,
                         title=adapted.get('RACE NAME (PT)', ''),

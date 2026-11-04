@@ -1,0 +1,568 @@
+{
+  "date": "2026-11-04",
+  "tests_passed": 198,
+  "dev_branch": "ma/shared-country-import-20261026",
+  "scope": "Prepared-row publication only; no source discovery or fallback. Original source worksheet and production untouched. Existing public review products kept public; new imports remain drafts.",
+  "events": [
+    {
+      "id": 18977,
+      "language": "es",
+      "slug": "test-antonio-trail-torres-del-foc-2026",
+      "title": "TEST ANTONIO Trail Torres del Foc 2026",
+      "country": "spain",
+      "summary": "<p>El Ultra Trail Torres del Foc es un evento competitivo de trail running que se celebrará el 7 de noviembre de 2026 en Calella, España. Ofrece varias distancias: 12 km, 21 km, 42 km y 60 km, para que los participantes elijan según su nivel y preferencia.</p><p>La carrera transcurre por el Parc del Montnegre i Corredor, recorriendo senderos que pasan por antiguas torres de vigilancia contra incendios que aún protegen los bosques desde puntos elevados. Este entorno único combina belleza natural con patrimonio cultural, ofreciendo una experiencia inolvidable para los corredores de trail.</p>",
+      "book": "https://www.b3sportevents.com/es/trailtorresdelfoc",
+      "variations": [
+        {
+          "id": 18981,
+          "price": "82",
+          "labels": {
+            "pa_distance": "60 km",
+            "pa_race-start-date": "07/11/2026",
+            "pa_race-start-time": "7:00",
+            "pa_running": "Carrera de montaña"
+          },
+          "term_ids": {
+            "pa_distance": "12103",
+            "pa_race-start-date": "12106",
+            "pa_race-start-time": "12107",
+            "pa_running": "12110"
+          }
+        },
+        {
+          "id": 18982,
+          "price": "59",
+          "labels": {
+            "pa_distance": "42 km",
+            "pa_race-start-date": "07/11/2026",
+            "pa_race-start-time": "8:00",
+            "pa_running": "Carrera de montaña"
+          },
+          "term_ids": {
+            "pa_distance": "12111",
+            "pa_race-start-date": "12106",
+            "pa_race-start-time": "12112",
+            "pa_running": "12110"
+          }
+        },
+        {
+          "id": 18983,
+          "price": "40",
+          "labels": {
+            "pa_distance": "21 km",
+            "pa_race-start-date": "07/11/2026",
+            "pa_race-start-time": "9:00",
+            "pa_running": "Carrera de montaña"
+          },
+          "term_ids": {
+            "pa_distance": "12113",
+            "pa_race-start-date": "12106",
+            "pa_race-start-time": "12114",
+            "pa_running": "12110"
+          }
+        },
+        {
+          "id": 18984,
+          "price": "32",
+          "labels": {
+            "pa_distance": "12 km",
+            "pa_race-start-date": "07/11/2026",
+            "pa_race-start-time": "9:00",
+            "pa_running": "Carrera de montaña"
+          },
+          "term_ids": {
+            "pa_distance": "12115",
+            "pa_race-start-date": "12106",
+            "pa_race-start-time": "12114",
+            "pa_running": "12110"
+          }
+        }
+      ]
+    },
+    {
+      "id": 18980,
+      "language": "en",
+      "slug": "test-antonio-trail-torres-del-foc-2026",
+      "title": "TEST ANTONIO Trail Torres del Foc 2026",
+      "country": "spain",
+      "summary": "<p>The Ultra Trail Torres del Foc is a competitive trail running event held on November 7, 2026, in Calella, Spain. It offers multiple distances including 12 km, 21 km, 42 km, and 60 km, allowing participants to choose according to their level and preference.</p><p>The race takes place in the Parc del Montnegre i Corredor, featuring trails that pass by historic fire watchtowers which still stand guard over the forests from elevated points. This unique setting combines natural beauty with cultural heritage, providing a memorable experience for trail runners.</p>",
+      "book": "https://www.b3sportevents.com/es/trailtorresdelfoc",
+      "variations": [
+        {
+          "id": 18985,
+          "price": "82",
+          "labels": {
+            "pa_distance": "60 km",
+            "pa_race-start-date": "07/11/2026",
+            "pa_race-start-time": "7:00",
+            "pa_running": "Trail running"
+          },
+          "term_ids": {
+            "pa_distance": "184",
+            "pa_race-start-date": "12104",
+            "pa_race-start-time": "11402",
+            "pa_running": "12108"
+          }
+        },
+        {
+          "id": 18986,
+          "price": "59",
+          "labels": {
+            "pa_distance": "42 km",
+            "pa_race-start-date": "07/11/2026",
+            "pa_race-start-time": "8:00",
+            "pa_running": "Trail running"
+          },
+          "term_ids": {
+            "pa_distance": "293",
+            "pa_race-start-date": "12104",
+            "pa_race-start-time": "1377",
+            "pa_running": "12108"
+          }
+        },
+        {
+          "id": 18987,
+          "price": "40",
+          "labels": {
+            "pa_distance": "21 km",
+            "pa_race-start-date": "07/11/2026",
+            "pa_race-start-time": "9:00",
+            "pa_running": "Trail running"
+          },
+          "term_ids": {
+            "pa_distance": "58",
+            "pa_race-start-date": "12104",
+            "pa_race-start-time": "1256",
+            "pa_running": "12108"
+          }
+        },
+        {
+          "id": 18988,
+          "price": "32",
+          "labels": {
+            "pa_distance": "12 km",
+            "pa_race-start-date": "07/11/2026",
+            "pa_race-start-time": "9:00",
+            "pa_running": "Trail running"
+          },
+          "term_ids": {
+            "pa_distance": "106",
+            "pa_race-start-date": "12104",
+            "pa_race-start-time": "1256",
+            "pa_running": "12108"
+          }
+        }
+      ]
+    },
+    {
+      "id": 18978,
+      "language": "pt",
+      "slug": "test-antonio-trail-torres-del-foc-2026",
+      "title": "TEST ANTONIO Trail Torres del Foc 2026",
+      "country": "spain",
+      "summary": "<p>O Ultra Trail Torres del Foc é um evento competitivo de corrida em trilhos realizado a 7 de novembro de 2026, em Calella, Espanha. Oferece múltiplas distâncias incluindo 12 km, 21 km, 42 km e 60 km, permitindo que os participantes escolham conforme o seu nível e preferência.</p><p>A corrida realiza-se no Parc del Montnegre i Corredor, apresentando trilhos que passam por antigas torres de vigia de incêndios que ainda vigiam as florestas a partir de pontos elevados. Este cenário único combina beleza natural com património cultural, proporcionando uma experiência memorável para os corredores de trilhos.</p>",
+      "book": "https://www.b3sportevents.com/es/trailtorresdelfoc",
+      "variations": [
+        {
+          "id": 18989,
+          "price": "82",
+          "labels": {
+            "pa_distance": "60 km",
+            "pa_race-start-date": "07/11/2026",
+            "pa_race-start-time": "7:00",
+            "pa_running": "Corrida de montanha"
+          },
+          "term_ids": {
+            "pa_distance": "187",
+            "pa_race-start-date": "12105",
+            "pa_race-start-time": "11396",
+            "pa_running": "12109"
+          }
+        },
+        {
+          "id": 18990,
+          "price": "59",
+          "labels": {
+            "pa_distance": "42 km",
+            "pa_race-start-date": "07/11/2026",
+            "pa_race-start-time": "8:00",
+            "pa_running": "Corrida de montanha"
+          },
+          "term_ids": {
+            "pa_distance": "294",
+            "pa_race-start-date": "12105",
+            "pa_race-start-time": "1395",
+            "pa_running": "12109"
+          }
+        },
+        {
+          "id": 18991,
+          "price": "40",
+          "labels": {
+            "pa_distance": "21 km",
+            "pa_race-start-date": "07/11/2026",
+            "pa_race-start-time": "9:00",
+            "pa_running": "Corrida de montanha"
+          },
+          "term_ids": {
+            "pa_distance": "268",
+            "pa_race-start-date": "12105",
+            "pa_race-start-time": "1262",
+            "pa_running": "12109"
+          }
+        },
+        {
+          "id": 18992,
+          "price": "32",
+          "labels": {
+            "pa_distance": "12 km",
+            "pa_race-start-date": "07/11/2026",
+            "pa_race-start-time": "9:00",
+            "pa_running": "Corrida de montanha"
+          },
+          "term_ids": {
+            "pa_distance": "302",
+            "pa_race-start-date": "12105",
+            "pa_race-start-time": "1262",
+            "pa_running": "12109"
+          }
+        }
+      ]
+    },
+    {
+      "id": 18995,
+      "language": "es",
+      "slug": "test-antonio-maraton-alcarria-2026",
+      "title": "TEST ANTONIO Maratón Alcarria 2026",
+      "country": "spain",
+      "summary": "<p>El Maratón Alcarria se celebra el sábado 14 de noviembre de 2026 en Alovera, Guadalajara, España. Ofrece maratón individual y relevos en un circuito urbano rápido y llano de 5,3 km.</p><p>Las modalidades incluyen maratón completo (42,195 km, 8 vueltas), relevos por parejas (21,1 km por corredor, 4 vueltas cada uno) y relevos por equipos de 4 (10,6 km por corredor, 2 vueltas cada uno). La participación está abierta a mayores de 18 años.</p><p>El evento tiene un ambiente festivo con música, food trucks y animación en la zona central, ideal para corredores y acompañantes. Los relevos fomentan la participación en equipo de clubes, empresas, familias y otros grupos.</p>",
+      "book": "https://web.rockthesport.com/es/event/maraton-alcarria",
+      "variations": [
+        {
+          "id": 19001,
+          "price": "50",
+          "labels": {
+            "pa_distance": "42 km",
+            "pa_race-start-date": "14/11/2026",
+            "pa_race-start-time": "8:30",
+            "pa_running": "Carrera en carretera",
+            "pa_team": "Individual"
+          },
+          "term_ids": {
+            "pa_distance": "12111",
+            "pa_race-start-date": "12119",
+            "pa_race-start-time": "12120",
+            "pa_running": "12121",
+            "pa_team": "12116"
+          }
+        },
+        {
+          "id": 19002,
+          "price": "50",
+          "labels": {
+            "pa_distance": "42 km",
+            "pa_race-start-date": "14/11/2026",
+            "pa_race-start-time": "8:30",
+            "pa_running": "Carrera en carretera",
+            "pa_team": "Parejas"
+          },
+          "term_ids": {
+            "pa_distance": "12111",
+            "pa_race-start-date": "12119",
+            "pa_race-start-time": "12120",
+            "pa_running": "12121",
+            "pa_team": "12122"
+          }
+        },
+        {
+          "id": 19003,
+          "price": "50",
+          "labels": {
+            "pa_distance": "42 km",
+            "pa_race-start-date": "14/11/2026",
+            "pa_race-start-time": "8:30",
+            "pa_running": "Carrera en carretera",
+            "pa_team": "Equipos de 4"
+          },
+          "term_ids": {
+            "pa_distance": "12111",
+            "pa_race-start-date": "12119",
+            "pa_race-start-time": "12120",
+            "pa_running": "12121",
+            "pa_team": "12125"
+          }
+        }
+      ]
+    },
+    {
+      "id": 18998,
+      "language": "en",
+      "slug": "test-antonio-alcarria-marathon-2026",
+      "title": "TEST Antonio Marathon Alcarria 2026",
+      "country": "spain",
+      "summary": "<p>The Maratón Alcarria is a marathon race held on Saturday, November 14, 2026, in Alovera, Guadalajara, Spain. It features an individual marathon and relay options on a fast, flat 5.3 km urban circuit.</p><p>Participants can choose from the full marathon (42.195 km, 8 laps), a two-person relay (21.1 km per runner, 4 laps each), or a four-person relay (10.6 km per runner, 2 laps each). The event is open to runners aged 18 and over.</p><p>The race offers a festive atmosphere with music, food trucks, and live entertainment in the central zone, making it a celebration for runners and their supporters. The relay format encourages team participation from clubs, companies, families, and other groups.</p>",
+      "book": "https://web.rockthesport.com/es/event/maraton-alcarria",
+      "variations": [
+        {
+          "id": 19004,
+          "price": "50",
+          "labels": {
+            "pa_distance": "42 km",
+            "pa_race-start-date": "14/11/2026",
+            "pa_race-start-time": "8:30",
+            "pa_running": "Road Running",
+            "pa_team": "Individual"
+          },
+          "term_ids": {
+            "pa_distance": "293",
+            "pa_race-start-date": "12117",
+            "pa_race-start-time": "1343",
+            "pa_running": "218",
+            "pa_team": "599"
+          }
+        },
+        {
+          "id": 19005,
+          "price": "50",
+          "labels": {
+            "pa_distance": "42 km",
+            "pa_race-start-date": "14/11/2026",
+            "pa_race-start-time": "8:30",
+            "pa_running": "Road Running",
+            "pa_team": "Pairs"
+          },
+          "term_ids": {
+            "pa_distance": "293",
+            "pa_race-start-date": "12117",
+            "pa_race-start-time": "1343",
+            "pa_running": "218",
+            "pa_team": "11637"
+          }
+        },
+        {
+          "id": 19006,
+          "price": "50",
+          "labels": {
+            "pa_distance": "42 km",
+            "pa_race-start-date": "14/11/2026",
+            "pa_race-start-time": "8:30",
+            "pa_running": "Road Running",
+            "pa_team": "Teams of 4"
+          },
+          "term_ids": {
+            "pa_distance": "293",
+            "pa_race-start-date": "12117",
+            "pa_race-start-time": "1343",
+            "pa_running": "218",
+            "pa_team": "12123"
+          }
+        }
+      ]
+    },
+    {
+      "id": 18996,
+      "language": "pt",
+      "slug": "test-antonio-alcarria-marathon-2026",
+      "title": "TEST Antonio Marathon Alcarria 2026",
+      "country": "spain",
+      "summary": "<p>A Maratón Alcarria é uma corrida de maratona realizada no sábado, 14 de novembro de 2026, em Alovera, Guadalajara, Espanha. Inclui uma maratona individual e opções de estafetas num circuito urbano rápido e plano de 5,3 km.</p><p>Os participantes podem escolher entre a maratona completa (42,195 km, 8 voltas), estafeta de duas pessoas (21,1 km por corredor, 4 voltas cada) ou estafeta de quatro pessoas (10,6 km por corredor, 2 voltas cada). O evento está aberto a corredores com 18 anos ou mais.</p><p>A corrida oferece um ambiente festivo com música, food trucks e animação ao vivo na zona central, tornando-se uma celebração para corredores e seus apoiantes. O formato de estafeta incentiva a participação em equipa de clubes, empresas, famílias e outros grupos.</p>",
+      "book": "https://web.rockthesport.com/es/event/maraton-alcarria",
+      "variations": [
+        {
+          "id": 19007,
+          "price": "50",
+          "labels": {
+            "pa_distance": "42 km",
+            "pa_race-start-date": "14/11/2026",
+            "pa_race-start-time": "8:30",
+            "pa_running": "Corrida de Estrada",
+            "pa_team": "Individual"
+          },
+          "term_ids": {
+            "pa_distance": "294",
+            "pa_race-start-date": "12118",
+            "pa_race-start-time": "1351",
+            "pa_running": "223",
+            "pa_team": "602"
+          }
+        },
+        {
+          "id": 19008,
+          "price": "50",
+          "labels": {
+            "pa_distance": "42 km",
+            "pa_race-start-date": "14/11/2026",
+            "pa_race-start-time": "8:30",
+            "pa_running": "Corrida de Estrada",
+            "pa_team": "Duplas"
+          },
+          "term_ids": {
+            "pa_distance": "294",
+            "pa_race-start-date": "12118",
+            "pa_race-start-time": "1351",
+            "pa_running": "223",
+            "pa_team": "11639"
+          }
+        },
+        {
+          "id": 19009,
+          "price": "50",
+          "labels": {
+            "pa_distance": "42 km",
+            "pa_race-start-date": "14/11/2026",
+            "pa_race-start-time": "8:30",
+            "pa_running": "Corrida de Estrada",
+            "pa_team": "Equipas de 4"
+          },
+          "term_ids": {
+            "pa_distance": "294",
+            "pa_race-start-date": "12118",
+            "pa_race-start-time": "1351",
+            "pa_running": "223",
+            "pa_team": "12124"
+          }
+        }
+      ]
+    }
+  ],
+  "frontend": [
+    {
+      "id": 18977,
+      "language": "es",
+      "url": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/",
+      "http": 200,
+      "correct_description": true,
+      "book": true,
+      "language_links": {
+        "pt": "https://dev.racefinder.es/pt/event/test-antonio-trail-torres-del-foc-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-antonio-trail-torres-del-foc-2026/",
+        "es": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/"
+      },
+      "participation_options_visible": true
+    },
+    {
+      "id": 18980,
+      "language": "en",
+      "url": "https://dev.racefinder.es/en/event/test-antonio-trail-torres-del-foc-2026/",
+      "http": 200,
+      "correct_description": true,
+      "book": true,
+      "language_links": {
+        "pt": "https://dev.racefinder.es/pt/event/test-antonio-trail-torres-del-foc-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-antonio-trail-torres-del-foc-2026/",
+        "es": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/"
+      },
+      "participation_options_visible": true
+    },
+    {
+      "id": 18978,
+      "language": "pt",
+      "url": "https://dev.racefinder.es/pt/event/test-antonio-trail-torres-del-foc-2026/",
+      "http": 200,
+      "correct_description": true,
+      "book": true,
+      "language_links": {
+        "pt": "https://dev.racefinder.es/pt/event/test-antonio-trail-torres-del-foc-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-antonio-trail-torres-del-foc-2026/",
+        "es": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/"
+      },
+      "participation_options_visible": true
+    },
+    {
+      "id": 18995,
+      "language": "es",
+      "url": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/",
+      "http": 200,
+      "correct_description": true,
+      "book": true,
+      "language_links": {
+        "pt": "https://dev.racefinder.es/pt/event/test-antonio-alcarria-marathon-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-antonio-alcarria-marathon-2026/",
+        "es": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/"
+      },
+      "participation_options_visible": true
+    },
+    {
+      "id": 18998,
+      "language": "en",
+      "url": "https://dev.racefinder.es/en/event/test-antonio-alcarria-marathon-2026/",
+      "http": 200,
+      "correct_description": true,
+      "book": true,
+      "language_links": {
+        "pt": "https://dev.racefinder.es/pt/event/test-antonio-alcarria-marathon-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-antonio-alcarria-marathon-2026/",
+        "es": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/"
+      },
+      "participation_options_visible": true
+    },
+    {
+      "id": 18996,
+      "language": "pt",
+      "url": "https://dev.racefinder.es/pt/event/test-antonio-alcarria-marathon-2026/",
+      "http": 200,
+      "correct_description": true,
+      "book": true,
+      "language_links": {
+        "pt": "https://dev.racefinder.es/pt/event/test-antonio-alcarria-marathon-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-antonio-alcarria-marathon-2026/",
+        "es": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/"
+      },
+      "participation_options_visible": true
+    }
+  ],
+  "all_product_and_variation_ids_stable": true,
+  "source_sheet_unchanged": true,
+  "normal_publisher_run": true,
+  "direct_product_fixes_during_this_acceptance": false,
+  "individual_is_explicit": true,
+  "all_option_terms_have_correct_wpml_language": true,
+  "test_sheet": "https://docs.google.com/spreadsheets/d/19OyjSoUn_jSY_mvCplbq5gktJZuWTOMhvno8peOkduc#gid=460509162",
+  "readback_checks": [
+    "country",
+    "descriptions",
+    "event dates",
+    "Book",
+    "registration deadline",
+    "variation count",
+    "prices",
+    "localized attributes",
+    "price schedules"
+  ],
+  "prior_input_preparation": "Existing test copies have direct organizer URLs and registration deadlines in correct columns, as agreed for prepared inputs.",
+  "final_readback_includes_benefits_and_faq": true,
+  "security": {
+    "ensure-import-terms/unauthenticated": 401,
+    "apply-import-options/unauthenticated": 401,
+    "wrong_term_language": 409
+  },
+  "published_repeat_skipped_generation_and_wp_updates": true,
+  "source_sha256": {
+    "run/publication_contract.py": "b007f7936a150020007a3316866067378d35a5a81fd85a9183bde02aba8ef3aa",
+    "run/trilingual_import.py": "63d62a64cd2a118ab2a32b7a862cae7ce72e9ee3257e5ce2b8b9731d3d593d04",
+    "run/_5_taxonomy_and_attributes.py": "6888d1d00108bd1e619fcc92927bd68c0f60bc3deebc6c815c031fe1a7e417a4",
+    "run/_6_create_variations.py": "537a819690e57dbfcf6f7b23f7d8825979f13bf60f2af4d4bdaf5cdc2367e37b",
+    "run/preview_country_import.py": "93b5382bd1a6a80a6862910f4cded43998d37aedf71c5ce3052c90c23a610495",
+    "wordpress/rf-import-languages.php": "c60e5107ae8def4b29e58c88fd0239d16bc5393c42d38cf3c764d606f4fb7097"
+  },
+  "cleanup": {
+    "temporary_user_removed": true,
+    "temporary_key_http": 401,
+    "public_review_products_retained": [
+      18977,
+      18980,
+      18978,
+      18995,
+      18998,
+      18996
+    ],
+    "temporary_private_files_removed": true
+  },
+  "wordpress_code_commit": "36c256757568eee2fb7d73cd9da6443eed5bbe1a"
+}

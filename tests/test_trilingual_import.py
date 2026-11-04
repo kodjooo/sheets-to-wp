@@ -48,7 +48,7 @@ def workflow(monkeypatch):
     for lang in tri.LANGUAGES:
         for key in ('title', *tri.FIELDS):row.setdefault(tri.column(key,lang),'')
         row['WP PRODUCT ID '+lang.upper()]='';row['WP VARIATION ID '+lang.upper()]=''
-    row.update({'LANGUAGE SCHEME':'','LANGUAGE STATE':'','INPUT FINGERPRINT':'','CONTENT FINGERPRINT':'','THIRD LANGUAGE FINGERPRINT':'','NOTE':''})
+    row.update({'LANGUAGE SCHEME':'','LANGUAGE STATE':'','INPUT FINGERPRINT':'','CONTENT FINGERPRINT':'','THIRD LANGUAGE FINGERPRINT':'','ATTRIBUTE TRANSLATIONS':'','NOTE':''})
     headers={key:i+1 for i,key in enumerate(row)}
     saved={2:row,3:child};writes=[];created=[];targets={};contexts=[];payloads=[]
     def write(index,updates,columns):saved[index].update(updates);writes.append((index,dict(updates)))
@@ -83,6 +83,10 @@ def workflow(monkeypatch):
     monkeypatch.setattr(tri,'write_content',Mock())
     monkeypatch.setattr(tri,'link_variations',Mock())
     monkeypatch.setattr(tri,'auth_token',Mock(return_value='test-jwt'))
+    monkeypatch.setattr(tri,'attribute_id',lambda name: {'Distance':1,'Team':2,'Running':3}.get(name,4))
+    monkeypatch.setattr(tri,'ensure_terms',lambda cfg,specs,ids:{(name,value):{lang:{'id':1,'name':labels[lang]} for lang in tri.LANGUAGES} for name,value,labels in specs})
+    monkeypatch.setattr(tri,'verify_publication',Mock())
+    monkeypatch.setattr(tri,'apply_options',Mock())
     monkeypatch.setattr(tri,'ensure_translation',Mock(side_effect=ensure))
     response=Mock();response.json.return_value={'permalink':'https://example.test/event/test'}
     monkeypatch.setattr(tri.requests,'get',Mock(return_value=response))

@@ -256,7 +256,8 @@ def assign_attributes_to_product(product_id, attributes_dict, lang=None):
         product_endpoint = f"products/{product_id}"
         if lang:
             product_endpoint += f"?lang={lang}"
-        _safe_wc_request("put", product_endpoint, data={"attributes": attr_payload})
+        response = _safe_wc_request("put", product_endpoint, data={"attributes": attr_payload})
+        response.raise_for_status()
     else:
         logging.info(f"⚠️ Ни одного атрибута не собрано для продукта ID={product_id} — пропуск wcapi.put")
 

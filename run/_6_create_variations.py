@@ -138,6 +138,8 @@ def _build_payload(entry, attr_name_to_id):
         if not name or not option:
             continue
         attr_id = attr_name_to_id.get(name) or attr_name_to_id.get(_norm_key(name))
+        if attr.get('id') and int(attr['id']) != attr_id:
+            raise ValueError('Атрибут варианта не назначен родителю: ' + name)
         if not attr_id:
             logging.warning("⚠️ Атрибут '%s' не найден у продукта, пропускаем в вариации.", name)
             continue
@@ -261,7 +263,8 @@ def sync_variations_by_ids(product_id, variation_entries, lang: str | None = Non
         # когда вариация не менялась по цене/атрибутам (базовая цена та же, а
         # расписание клиент отредактировал) и dedup выше пропустил бы запись.
         price_schedule = entry.get("price_schedule")
-        if price_schedule:
+        # Новый трёхъязычный режим также удаляет расписание, очищенное в таблице.
+        if price_schedule or entry.get('strict_schedule'):
             endpoint = f"products/{product_id}/variations/{final_id}"
             if lang:
                 endpoint += f"?lang={lang}"
