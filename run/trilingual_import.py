@@ -12,7 +12,7 @@ from rf_schedule import parse_datetime
 from category_catalog import resolve_categories, verify_categories
 from utils import parse_faq_items
 from country_profile import (CountryProfile, active_profile, activate_profile,
-                             reset_profile, validate_spanish_row)
+                             reset_profile, validate_spanish_row, normalize_native_headings)
 
 SCHEME = 'PT_ES_EN'
 FIELDS = {'summary': 'SUMMARY', 'org_info': 'ORG INFO', 'benefits': 'BENEFITS', 'faq': 'FAQ'}
@@ -371,6 +371,7 @@ def _process(m, config, country, third, index, row, block, headers, write):
                 break
         if not result or m.get_missing_pt_fields(result):
             raise ValueError('Не получены полные основные переводы')
+        result = normalize_native_headings(result)
         updates = {'RACE NAME': title}
         for lang, suffix in [('en', ''), (native, '_pt')]:
             for key in FIELDS:
@@ -384,6 +385,8 @@ def _process(m, config, country, third, index, row, block, headers, write):
             raise ValueError('Пустое обязательное описание')
         if not m.SKIP_IMAGE:
             image = m.generate_image(result['image_prompt'])
+            if not image:
+                raise ValueError('Не удалось сгенерировать обложку; проверьте доступ модели изображений или SKIP_IMAGE')
             updates.update({'IMAGE URL': image.get('url', ''), 'IMAGE ID': image.get('id') or ''})
         updates.update({k: v for k, v in {'ORGANIZER NAME': result.get('organizer_name', ''),
             'ORGANIZER EMAIL': m._extract_valid_emails(result.get('organizer_email', ''))}.items() if k in headers})

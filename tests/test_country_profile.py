@@ -145,3 +145,31 @@ def test_country_run_filters_are_explicit(monkeypatch):
     monkeypatch.setenv('MAX_EVENTS_PER_RUN', '-1')
     with pytest.raises(ValueError):
         positive_limit('MAX_EVENTS_PER_RUN')
+
+
+def test_spanish_prompt_translates_its_allowed_heading_examples():
+    from pathlib import Path
+    from country_profile import SPANISH_HEADINGS
+    token = activate_profile(ES)
+    try:
+        root = Path(__file__).resolve().parents[1] / 'run/prompts'
+        for name in ('assistant_system.txt', 'second_system.txt'):
+            prompt = localized_prompt((root / name).read_text())
+            assert all(label not in prompt for label in SPANISH_HEADINGS)
+        assert 'Испанские эквиваленты' in localized_prompt('Португальские эквиваленты')
+    finally:
+        reset_profile(token)
+
+
+def test_native_heading_normalization_preserves_facts_and_other_languages():
+    from country_profile import normalize_native_headings
+    source = {'org_info_pt':'<strong>Locais de partida/chegada:</strong> Calella <strong>Horários de partida por categoria/distância:</strong> 08:30', 'org_info':'Start/finish: Calella'}
+    assert normalize_native_headings(source) == source
+    token = activate_profile(ES)
+    try:
+        result = normalize_native_headings(source)
+        assert result['org_info_pt'] == '<strong>Lugares de salida/llegada:</strong> Calella <strong>Horarios de salida por categoría/distancia:</strong> 08:30'
+        assert result['org_info'] == source['org_info']
+        assert source['org_info_pt'].startswith('<strong>Locais')
+    finally:
+        reset_profile(token)

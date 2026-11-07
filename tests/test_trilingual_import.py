@@ -256,3 +256,13 @@ def test_variation_link_failure_stays_incomplete_and_resumes_before_parent_save(
     assert w.row['STATUS']=='Published' and len(w.created)==1
     assert linked.call_args_list[0].kwargs=={'allow_missing':True}
     assert m.call_openai_assistant.call_count==1
+
+
+def test_unavailable_cover_reports_clear_error_before_product_creation(workflow, monkeypatch):
+    monkeypatch.setattr(m, 'SKIP_IMAGE', False)
+    monkeypatch.setattr(m, 'generate_image', Mock(return_value=None))
+    m.call_second_openai_assistant.return_value['image_prompt'] = 'Race cover'
+    with pytest.raises(ValueError, match='обложку'):
+        workflow.run()
+    assert not workflow.created
+    assert 'обложку' in workflow.row['NOTE']

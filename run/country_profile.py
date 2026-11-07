@@ -29,6 +29,26 @@ PT = CountryProfile('pt', 'portugal', 'pt')
 ES = CountryProfile('es', 'spain', 'es')
 _ACTIVE = ContextVar('race_country', default=PT)
 
+# Заголовки шаблона тоже переводятся: иначе второй запрос сохраняет PT-подписи.
+SPANISH_HEADINGS = {
+    'Escalões/categorias': 'Categorías de edad',
+    'Locais de partida/chegada': 'Lugares de salida/llegada',
+    'Horários de partida por categoria/distância': 'Horarios de salida por categoría/distancia',
+    'Tempos limite': 'Tiempos límite',
+    'Levantamento de dorsais (data/hora e local)': 'Recogida de dorsales (fecha/hora y lugar)',
+    'Limite de participantes': 'Límite de participantes',
+    'Prazo de inscrição': 'Plazo de inscripción',
+    'Tipos de piso': 'Tipos de superficie',
+    'Formato do percurso': 'Formato del recorrido',
+    'Percursos da prova': 'Recorridos de la prueba',
+    'Método de cronometragem': 'Método de cronometraje',
+    'WC e localização dos abastecimentos': 'Aseos y ubicación de los avituallamientos',
+    'Estacionamento e shuttles': 'Aparcamiento y traslados',
+    'Política de saco de atleta (drop bag)': 'Política de bolsa del corredor (drop bag)',
+    'Prémios': 'Premios',
+    'Regulamento ↗': 'Reglamento ↗',
+}
+
 
 def profile_for_row(row):
     value = str(row.get('COUNTRY') or '').strip().casefold()
@@ -71,13 +91,30 @@ def localized_prompt(prompt):
     # Схема *_pt остаётся внутренней: меняется язык значений, а не JSON-ключи.
     replacements = {'португальском': 'испанском', 'португальский': 'испанский',
                     'португальского': 'испанского', 'Portuguese': 'Spanish',
-                    'португальских': 'испанских', 'Regulamento ↗': 'Reglamento ↗'}
+                    'португальских': 'испанских', 'португальской': 'испанской',
+                    'Португальские': 'Испанские', 'PT-версия': 'ES-версия',
+                    **SPANISH_HEADINGS}
     for old, new in replacements.items():
         prompt = prompt.replace(old, new)
     return prompt + ('\n\nСтрана мероприятия — Испания. Значения всех полей с суффиксом _pt '
                      'должны быть на ИСПАНСКОМ языке; поля без суффикса — на английском. '
                      'Это совместимая внутренняя схема, португальский перевод не требуется. '
                      'Не копируй факты и географию из примеров; используй только источники события.')
+
+
+def normalize_native_headings(payload):
+    """Убирает остаточные PT-заголовки только из испанского блока организации."""
+    if active_profile() != ES or not isinstance(payload, dict):
+        return payload
+    import re
+    result = dict(payload)
+    text = result.get('org_info_pt')
+    if isinstance(text, str):
+        for original, translated in SPANISH_HEADINGS.items():
+            pattern = r'(<strong>\s*)' + re.escape(original) + r'(\s*:?\s*</strong>)'
+            text = re.sub(pattern, lambda m: m[1] + translated + m[2], text, flags=re.I)
+        result['org_info_pt'] = text
+    return result
 
 
 def primary_metadata(row):
