@@ -215,7 +215,35 @@ def apply_options(config, ids, entries, mappings=None):
             raise ValueError('WordPress не подтвердил точные языковые ID вариантов')
 
 
-def verify_publication(config, ids, row, entries, mappings, attr_ids):
+def publish_products(config, ids):
+    """Публикует только проверенную группу и читает итог после всех WPML-хуков."""
+    auth = (config['consumer_key'], config['consumer_secret'])
+    base = config['wp_url'].rstrip('/') + '/wp-json/wc/v3/products/'
+
+    def read(lang, pid):
+        response = requests.get(base + str(pid), params={'lang': lang}, auth=auth, timeout=45)
+        response.raise_for_status()
+        product = response.json()
+        if product.get('id') != pid:
+            raise ValueError('Проверка публикации ' + lang + ': получен другой ID товара')
+        return product
+
+    for lang, pid in ids.items():
+        product = read(lang, pid)
+        if product.get('status') not in ('draft', 'pending', 'publish'):
+            raise ValueError('Проверка публикации ' + lang + ': неподходящий статус товара')
+        if product['status'] != 'publish':
+            response = requests.put(base + str(pid), params={'lang': lang}, auth=auth,
+                                    json={'status': 'publish', 'lang': lang}, timeout=60)
+            response.raise_for_status()
+    products = {lang: read(lang, pid) for lang, pid in ids.items()}
+    for lang, product in products.items():
+        if product.get('status') != 'publish' or not product.get('slug') or not product.get('permalink'):
+            raise ValueError('Проверка публикации ' + lang + ': товар остался черновиком или без ссылки')
+    return products
+
+
+def verify_publication(config, ids, row, entries, mappings, attr_ids, require_published=True):
     from decimal import Decimal
     from datetime import datetime
     from _6_create_variations import _load_all_variations
@@ -224,6 +252,10 @@ def verify_publication(config, ids, row, entries, mappings, attr_ids):
             params={'lang': lang}, auth=(config['consumer_key'], config['consumer_secret']), timeout=45)
         response.raise_for_status()
         product = response.json()
+        if product.get('id') != pid:
+            raise ValueError('Проверка карточки ' + lang + ': получен другой ID товара')
+        if require_published and product.get('status') != 'publish':
+            raise ValueError('Проверка карточки ' + lang + ': товар не опубликован')
         meta = {item['key']: item['value'] for item in product.get('meta_data', [])}
         expected = {'event_country': active_profile().country, 'event_short_description': row[column('summary', lang)],
                     'organizer_description': row[column('org_info', lang)], 'race_benefits': row.get(column('benefits', lang), ''),
@@ -508,13 +540,13 @@ def _process(m, config, country, third, index, row, block, headers, write):
             if lang != native:
                 link_variations(config, source_id, mappings[lang][row_index], lang)
     apply_options(config, ids, entries, mappings)
-    primary = requests.get(config['wp_url'].rstrip('/') + '/wp-json/wc/v3/products/' + str(ids[native]),
-        auth=(config['consumer_key'], config['consumer_secret']), timeout=45)
-    primary.raise_for_status()
+    verify_publication(config, ids, row, entries, mappings, attr_ids, require_published=False)
+    verify_categories(config, row['_RF_CATEGORY_PLAN'], ids)
+    published = publish_products(config, ids)
     verify_publication(config, ids, row, entries, mappings, attr_ids)
     verify_categories(config, row['_RF_CATEGORY_PLAN'], ids)
     incomplete = str(row.get('STATUS') or '').lower() == m.STATUS_REVISED_INCOMPLETE.lower()
-    updates = {'LINK RACEFINDER': primary.json().get('permalink', ''), 'NOTE': ''}
+    updates = {'LINK RACEFINDER': published[native]['permalink'], 'NOTE': ''}
     if incomplete:
         updates['WEBSITE SNAPSHOT HASH'] = m.compute_website_hash(row.get('WEBSITE', ''))[0]
     write(updates)
