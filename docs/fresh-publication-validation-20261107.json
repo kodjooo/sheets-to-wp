@@ -1,0 +1,379 @@
+{
+  "date": "2026-11-07",
+  "creation_from_empty_ids": true,
+  "source": "Original Antonio Spanish tab, rows for event IDs 3 and 7",
+  "source_antonio_tab_unchanged": true,
+  "input_generated_texts_empty": true,
+  "images_enabled": false,
+  "image_api_limitation": "Configured image API rejects gpt-image-1; no product IDs existed before retry with SKIP_IMAGE=true",
+  "runtime_branch": "ma/shared-country-import-20261026",
+  "runtime_head": "8d9804ca12e826da3cc4367ee79929ed0a3c5939",
+  "publisher_commit": "00420809bc30c4cb29bd5a21fdbd41edbb4884ee",
+  "events_created": 2,
+  "products_checked": 6,
+  "variations_checked": 21,
+  "all_product_and_variation_ids_new": true,
+  "source_category_inputs_unchanged": true,
+  "products": [
+    {
+      "id": 19089,
+      "lang": "pt",
+      "title": "TEST FRESH 20261107 Trail Torres del Foc 2026",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "129",
+          "name": "Corrida",
+          "slug": "corrida",
+          "parent": "0",
+          "lang": "pt",
+          "trid": "639"
+        },
+        {
+          "id": "139",
+          "name": "Trail Run",
+          "slug": "trail-run-pt",
+          "parent": "129",
+          "lang": "pt",
+          "trid": "647"
+        },
+        {
+          "id": "247",
+          "name": "Ultra Maratonas",
+          "slug": "ultra-maratonas",
+          "parent": "129",
+          "lang": "pt",
+          "trid": "651"
+        }
+      ],
+      "variations": 4
+    },
+    {
+      "id": 19088,
+      "lang": "es",
+      "title": "TEST FRESH 20261107 Trail Torres del Foc 2026",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "10508",
+          "name": "Carreras",
+          "slug": "carreras",
+          "parent": "0",
+          "lang": "es",
+          "trid": "639"
+        },
+        {
+          "id": "10519",
+          "name": "Trail Run",
+          "slug": "trail-run-es",
+          "parent": "10508",
+          "lang": "es",
+          "trid": "647"
+        },
+        {
+          "id": "10523",
+          "name": "Ultramaratones",
+          "slug": "ultramaratones",
+          "parent": "10508",
+          "lang": "es",
+          "trid": "651"
+        }
+      ],
+      "variations": 4
+    },
+    {
+      "id": 19091,
+      "lang": "en",
+      "title": "TEST FRESH 20261107 Trail Torres del Foc 2026",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "17",
+          "name": "Running",
+          "slug": "running",
+          "parent": "0",
+          "lang": "en",
+          "trid": "639"
+        },
+        {
+          "id": "25",
+          "name": "Trail Run",
+          "slug": "trail-run",
+          "parent": "17",
+          "lang": "en",
+          "trid": "647"
+        },
+        {
+          "id": "29",
+          "name": "Ultra Marathons",
+          "slug": "ultra-marathons",
+          "parent": "17",
+          "lang": "en",
+          "trid": "651"
+        }
+      ],
+      "variations": 4
+    },
+    {
+      "id": 19107,
+      "lang": "pt",
+      "title": "TEST FRESH 20261107 Maratona Alcarria 2026",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "129",
+          "name": "Corrida",
+          "slug": "corrida",
+          "parent": "0",
+          "lang": "pt",
+          "trid": "639"
+        },
+        {
+          "id": "243",
+          "name": "Maratona",
+          "slug": "maratonas",
+          "parent": "129",
+          "lang": "pt",
+          "trid": "674"
+        }
+      ],
+      "variations": 3
+    },
+    {
+      "id": 19106,
+      "lang": "es",
+      "title": "TEST FRESH 20261107 Maratón Alcarria 2026",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "10508",
+          "name": "Carreras",
+          "slug": "carreras",
+          "parent": "0",
+          "lang": "es",
+          "trid": "639"
+        },
+        {
+          "id": "10540",
+          "name": "Maratón",
+          "slug": "maraton",
+          "parent": "10508",
+          "lang": "es",
+          "trid": "674"
+        }
+      ],
+      "variations": 3
+    },
+    {
+      "id": 19109,
+      "lang": "en",
+      "title": "TEST FRESH 20261107 Alcarria Marathon 2026",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "17",
+          "name": "Running",
+          "slug": "running",
+          "parent": "0",
+          "lang": "en",
+          "trid": "639"
+        },
+        {
+          "id": "52",
+          "name": "Marathon",
+          "slug": "full-marathons",
+          "parent": "17",
+          "lang": "en",
+          "trid": "674"
+        }
+      ],
+      "variations": 3
+    }
+  ],
+  "frontend": [
+    {
+      "id": 19089,
+      "url": "https://dev.racefinder.es/pt/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+      "http": 200,
+      "lang": "pt-PT",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+        "es": "https://dev.racefinder.es/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-fresh-20261107-trail-torres-del-foc-2026/"
+      }
+    },
+    {
+      "id": 19088,
+      "url": "https://dev.racefinder.es/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+      "http": 200,
+      "lang": "es-ES",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+        "es": "https://dev.racefinder.es/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-fresh-20261107-trail-torres-del-foc-2026/"
+      }
+    },
+    {
+      "id": 19091,
+      "url": "https://dev.racefinder.es/en/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+      "http": 200,
+      "lang": "en-US",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+        "es": "https://dev.racefinder.es/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-fresh-20261107-trail-torres-del-foc-2026/"
+      }
+    },
+    {
+      "id": 19107,
+      "url": "https://dev.racefinder.es/pt/event/test-fresh-20261107-maratona-alcarria-2026/",
+      "http": 200,
+      "lang": "pt-PT",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-fresh-20261107-maratona-alcarria-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-fresh-20261107-alcarria-marathon-2026/",
+        "es": "https://dev.racefinder.es/event/test-fresh-20261107-maraton-alcarria-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-fresh-20261107-maraton-alcarria-2026/"
+      }
+    },
+    {
+      "id": 19106,
+      "url": "https://dev.racefinder.es/event/test-fresh-20261107-maraton-alcarria-2026/",
+      "http": 200,
+      "lang": "es-ES",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-fresh-20261107-maratona-alcarria-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-fresh-20261107-alcarria-marathon-2026/",
+        "es": "https://dev.racefinder.es/event/test-fresh-20261107-maraton-alcarria-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-fresh-20261107-maraton-alcarria-2026/"
+      }
+    },
+    {
+      "id": 19109,
+      "url": "https://dev.racefinder.es/en/event/test-fresh-20261107-alcarria-marathon-2026/",
+      "http": 200,
+      "lang": "en-US",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-fresh-20261107-maratona-alcarria-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-fresh-20261107-alcarria-marathon-2026/",
+        "es": "https://dev.racefinder.es/event/test-fresh-20261107-maraton-alcarria-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-fresh-20261107-maraton-alcarria-2026/"
+      }
+    }
+  ],
+  "category_final_verification": true,
+  "all_raw_variant_term_languages_correct": true,
+  "prices_dates_deadlines_descriptions_faq_book_verified": true,
+  "production_changed": false,
+  "publisher_tests": 232,
+  "spanish_template_headings_verified": true,
+  "spanish_geography_verified": true,
+  "source_code_sha256": {
+    "country_profile.py": "84406f0823f7c4d69feaf7353083b776ba3d7cfda62cf1d2a0e4b3e7d014cc6a",
+    "trilingual_import.py": "5b0bdc14d89228019822c19fcf3e2eeeff115df57092bdce8277a083b4141b5a",
+    "_2_content_generation.py": "aa750a692485ca748389171178f857fe31e506a3edf9aad6e75dd41bcddeb398",
+    "source_content.py": "84ebf49dbbe8dce81567700b408452d99feb9b553451b95867cb2d4b4ac477da",
+    "source_http.py": "c05c0ce552107e3a6dd660921fd751c7bf7bee4673a86e87c6b01020c0bf66a8"
+  },
+  "creation_code_commit": "9789416",
+  "string_ids_real_readback_verified": true,
+  "repeat": {
+    "unchanged_sheet": true,
+    "new_ai_requests": 0,
+    "all_ids_retained": true
+  },
+  "test_sheet": "https://docs.google.com/spreadsheets/d/19OyjSoUn_jSY_mvCplbq5gktJZuWTOMhvno8peOkduc#gid=2056558172",
+  "browser_checked_six_languages_and_variant_lists": true,
+  "input_deadlines": [
+    {
+      "input_id": "RF-FRESH-3-20261107",
+      "registration_deadline": ""
+    },
+    {
+      "input_id": "RF-FRESH-7-20261107",
+      "registration_deadline": ""
+    }
+  ],
+  "removed_template_fixture": {
+    "ids": [
+      19026,
+      19025,
+      19028,
+      19043,
+      19042,
+      19045
+    ],
+    "baseline_ids_not_deleted": true
+  },
+  "cleanup": {
+    "temporary_user_removed": true,
+    "temporary_key_http": 401
+  },
+  "after_branch_restore_frontend": [
+    {
+      "url": "https://dev.racefinder.es/pt/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+      "http": 200,
+      "lang": "pt-PT"
+    },
+    {
+      "url": "https://dev.racefinder.es/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+      "http": 200,
+      "lang": "es-ES"
+    },
+    {
+      "url": "https://dev.racefinder.es/en/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+      "http": 200,
+      "lang": "en-US"
+    },
+    {
+      "url": "https://dev.racefinder.es/pt/event/test-fresh-20261107-maratona-alcarria-2026/",
+      "http": 200,
+      "lang": "pt-PT"
+    },
+    {
+      "url": "https://dev.racefinder.es/event/test-fresh-20261107-maraton-alcarria-2026/",
+      "http": 200,
+      "lang": "es-ES"
+    },
+    {
+      "url": "https://dev.racefinder.es/en/event/test-fresh-20261107-alcarria-marathon-2026/",
+      "http": 200,
+      "lang": "en-US"
+    }
+  ],
+  "restored_branch": "kt/70-portal-sync-2",
+  "restored_head": "e5a8c826a3e69e56e9c882ef4c9c914c3d401759",
+  "original_dev_configuration_unchanged": true,
+  "first_fixture_removed": {
+    "ids": [
+      19058,
+      19057,
+      19060,
+      19074,
+      19073,
+      19076
+    ],
+    "baseline_ids_not_deleted": true
+  },
+  "known_site_ui_issue": {
+    "related_cards_use_portuguese_summaries_on_es_en": true,
+    "observed_after_restore": true,
+    "scope": "Existing site recommendation template; main new summaries and variants verified in all three languages"
+  },
+  "first_fixture_variations_removed": true
+}
