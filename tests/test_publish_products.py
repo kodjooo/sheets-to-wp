@@ -3,8 +3,10 @@ import pytest
 import trilingual_import as tri
 
 
-def test_publish_reads_all_versions_after_status_updates(monkeypatch):
+@pytest.mark.parametrize('string_ids', [False, True])
+def test_publish_reads_all_versions_after_status_updates(monkeypatch, string_ids):
     ids = {'es':10, 'en':11, 'pt':12}
+    if string_ids: ids = {lang:str(pid) for lang,pid in ids.items()}
     states = {10:'draft', 11:'pending', 12:'publish'}
     calls = []
     def get(url, **kwargs):

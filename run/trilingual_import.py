@@ -224,7 +224,7 @@ def publish_products(config, ids):
         response = requests.get(base + str(pid), params={'lang': lang}, auth=auth, timeout=45)
         response.raise_for_status()
         product = response.json()
-        if product.get('id') != pid:
+        if str(product.get('id')) != str(pid):
             raise ValueError('Проверка публикации ' + lang + ': получен другой ID товара')
         return product
 
@@ -252,7 +252,7 @@ def verify_publication(config, ids, row, entries, mappings, attr_ids, require_pu
             params={'lang': lang}, auth=(config['consumer_key'], config['consumer_secret']), timeout=45)
         response.raise_for_status()
         product = response.json()
-        if product.get('id') != pid:
+        if str(product.get('id')) != str(pid):
             raise ValueError('Проверка карточки ' + lang + ': получен другой ID товара')
         if require_published and product.get('status') != 'publish':
             raise ValueError('Проверка карточки ' + lang + ': товар не опубликован')
