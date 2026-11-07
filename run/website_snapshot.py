@@ -7,6 +7,7 @@ from urllib.error import URLError, HTTPError
 from urllib.request import Request, urlopen
 
 from url_utils import normalize_http_url
+from source_http import source_headers, validate_source_response
 
 
 def _fetch_html_with_retries(url: str, retries: int = 2, delay_sec: float = 1.0) -> str:
@@ -14,13 +15,18 @@ def _fetch_html_with_retries(url: str, retries: int = 2, delay_sec: float = 1.0)
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.8",
     }
+    headers = source_headers(url, headers)
     last_error = None
     for attempt in range(retries + 1):
         try:
             request = Request(url=url, headers=headers)
             with urlopen(request, timeout=20) as response:
-                return response.read().decode("utf-8", errors="replace")
+                html = response.read().decode("utf-8", errors="replace")
+                validate_source_response(url, html, response.headers)
+                return html
         except (URLError, HTTPError, TimeoutError) as exc:
+            if isinstance(exc, HTTPError) and exc.code < 500 and exc.code not in (408, 429):
+                raise
             last_error = exc
             if attempt < retries:
                 time.sleep(delay_sec * (2 ** attempt))

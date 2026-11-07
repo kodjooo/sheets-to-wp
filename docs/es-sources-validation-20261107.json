@@ -1,0 +1,344 @@
+{
+  "date": "2026-11-07",
+  "scope": "Two Spanish sources; HTTP only; real monitoring and DEV publication",
+  "publisher_tests": 223,
+  "monitor_full_regression_tests": 66,
+  "monitor_es_runtime_tests": 62,
+  "monitor_es_test_exclusion": "Portuguese source2 tests require Playwright; covered in the full PT regression run",
+  "monitor": {
+    "sources": [
+      {
+        "name": "Running.life",
+        "events": 1705
+      },
+      {
+        "name": "RockTheSport",
+        "events": 346
+      }
+    ],
+    "telegram_sent": false,
+    "mode": "apply",
+    "candidates": 2051,
+    "known_rows": 0,
+    "new_events": 1964
+  },
+  "monitor_output": {
+    "url": "https://docs.google.com/spreadsheets/d/12fpkAlmHD7acDyE_jo_pvJ0-J5FOpVcGyapj0-SWOkE#gid=9764588",
+    "rows": 1964,
+    "all_country_spain": true,
+    "unique_url_date": true,
+    "races_only_country_header_added": true
+  },
+  "deployment": {
+    "path": "/usr/local/sheets-to-wp-racefinder/parser-of-racer-es",
+    "commit": "b1728022fbb3c88ecd1e68fed4d9ee972e77e931",
+    "image": "racefinder-es_race-monitor-es:latest",
+    "running": true,
+    "restart": "unless-stopped",
+    "schedule": "07:02 Europe/Lisbon daily",
+    "telegram_enabled": false,
+    "deployed_container_full_crawl_success": true,
+    "pt_server_branch_unchanged": "main",
+    "publisher_production_unchanged": true
+  },
+  "http_findings": {
+    "old_monitor_image_403_with_same_user_agent": true,
+    "new_python311_http_image_full_crawl_success": true,
+    "publisher_content_and_snapshot_both_success": true,
+    "browser_added": false
+  },
+  "publication": {
+    "date": "2026-11-07",
+    "events_processed": 2,
+    "products_checked": 6,
+    "variations_checked": 21,
+    "all_ids_stable": true,
+    "source_antonio_tab_unchanged": true,
+    "source_category_inputs_unchanged": true,
+    "products": [
+      {
+        "id": 18978,
+        "lang": "pt",
+        "title": "TEST ANTONIO Trail Torres del Foc 2026",
+        "country": "spain",
+        "categories": [
+          {
+            "id": "129",
+            "name": "Corrida",
+            "slug": "corrida",
+            "parent": "0",
+            "lang": "pt",
+            "trid": "639"
+          },
+          {
+            "id": "139",
+            "name": "Trail Run",
+            "slug": "trail-run-pt",
+            "parent": "129",
+            "lang": "pt",
+            "trid": "647"
+          },
+          {
+            "id": "247",
+            "name": "Ultra Maratonas",
+            "slug": "ultra-maratonas",
+            "parent": "129",
+            "lang": "pt",
+            "trid": "651"
+          }
+        ],
+        "variations": 4
+      },
+      {
+        "id": 18977,
+        "lang": "es",
+        "title": "TEST ANTONIO Trail Torres del Foc 2026",
+        "country": "spain",
+        "categories": [
+          {
+            "id": "10508",
+            "name": "Carreras",
+            "slug": "carreras",
+            "parent": "0",
+            "lang": "es",
+            "trid": "639"
+          },
+          {
+            "id": "10519",
+            "name": "Trail Run",
+            "slug": "trail-run-es",
+            "parent": "10508",
+            "lang": "es",
+            "trid": "647"
+          },
+          {
+            "id": "10523",
+            "name": "Ultramaratones",
+            "slug": "ultramaratones",
+            "parent": "10508",
+            "lang": "es",
+            "trid": "651"
+          }
+        ],
+        "variations": 4
+      },
+      {
+        "id": 18980,
+        "lang": "en",
+        "title": "TEST ANTONIO Trail Torres del Foc 2026",
+        "country": "spain",
+        "categories": [
+          {
+            "id": "17",
+            "name": "Running",
+            "slug": "running",
+            "parent": "0",
+            "lang": "en",
+            "trid": "639"
+          },
+          {
+            "id": "25",
+            "name": "Trail Run",
+            "slug": "trail-run",
+            "parent": "17",
+            "lang": "en",
+            "trid": "647"
+          },
+          {
+            "id": "29",
+            "name": "Ultra Marathons",
+            "slug": "ultra-marathons",
+            "parent": "17",
+            "lang": "en",
+            "trid": "651"
+          }
+        ],
+        "variations": 4
+      },
+      {
+        "id": 18996,
+        "lang": "pt",
+        "title": "TEST Antonio Maratona Alcarria 2026",
+        "country": "spain",
+        "categories": [
+          {
+            "id": "129",
+            "name": "Corrida",
+            "slug": "corrida",
+            "parent": "0",
+            "lang": "pt",
+            "trid": "639"
+          },
+          {
+            "id": "243",
+            "name": "Maratona",
+            "slug": "maratonas",
+            "parent": "129",
+            "lang": "pt",
+            "trid": "674"
+          }
+        ],
+        "variations": 3
+      },
+      {
+        "id": 18995,
+        "lang": "es",
+        "title": "TEST ANTONIO Maratón Alcarria 2026",
+        "country": "spain",
+        "categories": [
+          {
+            "id": "10508",
+            "name": "Carreras",
+            "slug": "carreras",
+            "parent": "0",
+            "lang": "es",
+            "trid": "639"
+          },
+          {
+            "id": "10540",
+            "name": "Maratón",
+            "slug": "maraton",
+            "parent": "10508",
+            "lang": "es",
+            "trid": "674"
+          }
+        ],
+        "variations": 3
+      },
+      {
+        "id": 18998,
+        "lang": "en",
+        "title": "TEST Antonio Alcarria Marathon 2026",
+        "country": "spain",
+        "categories": [
+          {
+            "id": "17",
+            "name": "Running",
+            "slug": "running",
+            "parent": "0",
+            "lang": "en",
+            "trid": "639"
+          },
+          {
+            "id": "52",
+            "name": "Marathon",
+            "slug": "full-marathons",
+            "parent": "17",
+            "lang": "en",
+            "trid": "674"
+          }
+        ],
+        "variations": 3
+      }
+    ],
+    "frontend": [
+      {
+        "id": 18978,
+        "url": "https://dev.racefinder.es/pt/event/test-antonio-trail-torres-del-foc-2026/",
+        "http": 200,
+        "lang": "pt-PT",
+        "book_visible": true,
+        "registration_deadline_passed": true,
+        "hreflang": {
+          "pt": "https://dev.racefinder.es/pt/event/test-antonio-trail-torres-del-foc-2026/",
+          "en": "https://dev.racefinder.es/en/event/test-antonio-trail-torres-del-foc-2026/",
+          "es": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/",
+          "x-default": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/"
+        }
+      },
+      {
+        "id": 18977,
+        "url": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/",
+        "http": 200,
+        "lang": "es-ES",
+        "book_visible": true,
+        "registration_deadline_passed": true,
+        "hreflang": {
+          "pt": "https://dev.racefinder.es/pt/event/test-antonio-trail-torres-del-foc-2026/",
+          "en": "https://dev.racefinder.es/en/event/test-antonio-trail-torres-del-foc-2026/",
+          "es": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/",
+          "x-default": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/"
+        }
+      },
+      {
+        "id": 18980,
+        "url": "https://dev.racefinder.es/en/event/test-antonio-trail-torres-del-foc-2026/",
+        "http": 200,
+        "lang": "en-US",
+        "book_visible": true,
+        "registration_deadline_passed": true,
+        "hreflang": {
+          "pt": "https://dev.racefinder.es/pt/event/test-antonio-trail-torres-del-foc-2026/",
+          "en": "https://dev.racefinder.es/en/event/test-antonio-trail-torres-del-foc-2026/",
+          "es": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/",
+          "x-default": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/"
+        }
+      },
+      {
+        "id": 18996,
+        "url": "https://dev.racefinder.es/pt/event/test-antonio-alcarria-marathon-2026/",
+        "http": 200,
+        "lang": "pt-PT",
+        "book_visible": true,
+        "registration_deadline_passed": false,
+        "hreflang": {
+          "pt": "https://dev.racefinder.es/pt/event/test-antonio-alcarria-marathon-2026/",
+          "en": "https://dev.racefinder.es/en/event/test-antonio-alcarria-marathon-2026/",
+          "es": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/",
+          "x-default": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/"
+        }
+      },
+      {
+        "id": 18995,
+        "url": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/",
+        "http": 200,
+        "lang": "es-ES",
+        "book_visible": true,
+        "registration_deadline_passed": false,
+        "hreflang": {
+          "pt": "https://dev.racefinder.es/pt/event/test-antonio-alcarria-marathon-2026/",
+          "en": "https://dev.racefinder.es/en/event/test-antonio-alcarria-marathon-2026/",
+          "es": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/",
+          "x-default": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/"
+        }
+      },
+      {
+        "id": 18998,
+        "url": "https://dev.racefinder.es/en/event/test-antonio-alcarria-marathon-2026/",
+        "http": 200,
+        "lang": "en-US",
+        "book_visible": true,
+        "registration_deadline_passed": false,
+        "hreflang": {
+          "pt": "https://dev.racefinder.es/pt/event/test-antonio-alcarria-marathon-2026/",
+          "en": "https://dev.racefinder.es/en/event/test-antonio-alcarria-marathon-2026/",
+          "es": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/",
+          "x-default": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/"
+        }
+      }
+    ],
+    "category_final_verification": true,
+    "all_raw_variant_term_languages_correct": true,
+    "prices_dates_deadlines_descriptions_faq_book_verified": true,
+    "production_publisher_changed": false,
+    "cleanup": {
+      "temporary_user_removed": true,
+      "temporary_key_http": 401
+    }
+  },
+  "repeat": {
+    "new_ai_requests": 0,
+    "all_product_ids_retained": true
+  },
+  "dev_restored": {
+    "branch": "kt/70-portal-sync-2",
+    "head": "e5a8c826a3e69e56e9c882ef4c9c914c3d401759",
+    "temporary_module_removed": true
+  },
+  "source_code_sha256": {
+    "run/source_http.py": "c05c0ce552107e3a6dd660921fd751c7bf7bee4673a86e87c6b01020c0bf66a8",
+    "run/source_content.py": "84ebf49dbbe8dce81567700b408452d99feb9b553451b95867cb2d4b4ac477da",
+    "run/_2_content_generation.py": "aa750a692485ca748389171178f857fe31e506a3edf9aad6e75dd41bcddeb398",
+    "run/website_snapshot.py": "d618384f837d37dc64a9b5b87c4316089b3c3e57636670c93321e7e6c61b05d0"
+  }
+}

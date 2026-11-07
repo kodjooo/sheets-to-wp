@@ -17,6 +17,8 @@ from _1_google_loader import load_config, get_logger
 from _3_create_product import get_jwt_token
 from translation_prompt import build_translation_messages
 from url_utils import normalize_http_url
+from source_http import source_headers, validate_source_response
+from source_content import extract_spanish_card
 
 logger = get_logger()
 config = load_config()
@@ -38,13 +40,13 @@ def _parse_retry_delays(value: str | None) -> list[float]:
             logger.warning("⚠️ Некорректное значение задержки ретрая: %s", item)
     return delays
 
-def _build_request_headers() -> dict:
+def _build_request_headers(url: str = "") -> dict:
     user_agent = config.get("fetch_user_agent") or "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
-    return {
+    return source_headers(url, {
         "User-Agent": user_agent,
         "Accept": "text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.8",
         "Accept-Language": "en-US,en;q=0.9,pt-PT;q=0.8,pt;q=0.7"
-    }
+    })
 
 def _parse_insecure_hosts(value: str | None) -> set[str]:
     if not value:
@@ -83,14 +85,20 @@ def _fetch_with_retries(url: str):
             verify = _resolve_requests_verify(url)
             response = requests.get(
                 url,
-                headers=_build_request_headers(),
+                headers=_build_request_headers(url),
                 timeout=20,
                 verify=verify
             )
             response.raise_for_status()
+            validate_source_response(url, response.text, response.headers)
             return response
         except Exception as exc:
             last_err = exc
+            if isinstance(exc, getattr(requests, "HTTPError", ())) and exc.response is not None:
+                if exc.response.status_code < 500 and exc.response.status_code not in (408, 429):
+                    raise
+            if isinstance(exc, ValueError):
+                raise
             logger.warning(
                 "⚠️ Ошибка загрузки из %s (попытка %s/%s): %s",
                 url,
@@ -188,7 +196,8 @@ def extract_text_from_url(url):
             # Для обычных веб-страниц
             response = _fetch_with_retries(direct_url)
             soup = BeautifulSoup(response.text, 'html.parser')
-            text = soup.get_text(separator=' ', strip=True)
+            source_text = extract_spanish_card(direct_url, response.text)
+            text = source_text if source_text is not None else soup.get_text(separator=' ', strip=True)
             protected_nodes = getattr(soup, "select", lambda _selector: [])("[data-cfemail]")
             protected_emails = {
                 decode_cloudflare_email(tag.get("data-cfemail", ""))

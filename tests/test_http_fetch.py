@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 import os
 import sys
 
@@ -30,3 +30,31 @@ class HttpFetchTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_forbidden_is_not_retried():
+    from requests import Response, HTTPError
+    response = Response()
+    response.status_code = 403
+    error = HTTPError('Forbidden', response=response)
+    with patch.dict(content_generation.config, {'fetch_retry_delays_sec': '1,2'}):
+        with patch('_2_content_generation.requests.get', side_effect=error) as get:
+            with patch('_2_content_generation.time.sleep') as sleep:
+                with __import__('pytest').raises(HTTPError):
+                    content_generation._fetch_with_retries('https://running.life/test')
+                assert get.call_count == 1
+                sleep.assert_not_called()
+
+
+def test_temporary_server_failure_is_retried():
+    from requests import Response, HTTPError
+    response = Response()
+    response.status_code = 503
+    success = Mock()
+    success.headers = {}
+    success.text = '<h1>Race</h1>'
+    with patch.dict(content_generation.config, {'fetch_retry_delays_sec': '1'}):
+        with patch('_2_content_generation.requests.get', side_effect=[HTTPError(response=response), success]) as get:
+            with patch('_2_content_generation.time.sleep'):
+                assert content_generation._fetch_with_retries('https://running.life/test') is success
+                assert get.call_count == 2
