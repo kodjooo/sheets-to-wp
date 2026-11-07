@@ -87,6 +87,8 @@ def workflow(monkeypatch):
     monkeypatch.setattr(tri,'ensure_terms',lambda cfg,specs,ids:{(name,value):{lang:{'id':1,'name':labels[lang]} for lang in tri.LANGUAGES} for name,value,labels in specs})
     monkeypatch.setattr(tri,'verify_publication',Mock())
     monkeypatch.setattr(tri,'apply_options',Mock())
+    monkeypatch.setattr(tri,'resolve_categories',Mock(return_value={'ids':{'pt':[1],'es':[2],'en':[3]},'groups':[]}))
+    monkeypatch.setattr(tri,'verify_categories',Mock())
     monkeypatch.setattr(tri,'ensure_translation',Mock(side_effect=ensure))
     response=Mock();response.json.return_value={'permalink':'https://example.test/event/test'}
     monkeypatch.setattr(tri.requests,'get',Mock(return_value=response))

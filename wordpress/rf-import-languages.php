@@ -5,6 +5,134 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
+add_action( 'rest_api_init', function () {
+    register_rest_route( 'custom-api/v1', '/import-category-catalog/', array(
+        'methods' => 'GET', 'permission_callback' => function () { return current_user_can( 'manage_woocommerce' ); },
+        'callback' => function () {
+            global $wpdb;
+            // Обычный WC REST на DEV отфильтровывает часть EN даже с lang=all.
+            $rows = $wpdb->get_results( "SELECT t.term_id AS id,t.name,tt.parent,i.language_code AS lang,i.trid FROM {$wpdb->terms} t JOIN {$wpdb->term_taxonomy} tt USING(term_id) JOIN {$wpdb->prefix}icl_translations i ON i.element_id=tt.term_taxonomy_id AND i.element_type='tax_product_cat' WHERE tt.taxonomy='product_cat' ORDER BY t.term_id", ARRAY_A );
+            $groups = array();
+            foreach ( $rows as $r ) { $groups[$r['trid']][$r['lang']] = (int) $r['id']; }
+            foreach ( $rows as &$r ) { $r['id'] = (int) $r['id']; $r['parent'] = (int) $r['parent']; $r['translations'] = $groups[$r['trid']]; }
+            unset( $r );
+            return rest_ensure_response( $rows );
+        },
+    ) );
+    foreach ( array( 'ensure-import-category-group' => 'rf_import_category_group', 'verify-import-categories' => 'rf_import_verify_categories' ) as $route => $callback ) {
+        register_rest_route( 'custom-api/v1', '/' . $route . '/', array(
+            'methods' => 'POST', 'permission_callback' => function () { return current_user_can( 'manage_woocommerce' ); },
+            'callback' => function ( $request ) use ( $callback ) { return rf_import_with_exact_terms( $callback, $request ); },
+        ) );
+    }
+} );
+
+function rf_import_category_record( $id ) {
+    global $wpdb;
+    $row = $wpdb->get_row( $wpdb->prepare(
+        "SELECT t.term_id AS id,t.name,tt.parent,tt.term_taxonomy_id AS tt,i.language_code AS lang,i.trid,i.source_language_code FROM {$wpdb->terms} t JOIN {$wpdb->term_taxonomy} tt USING(term_id) JOIN {$wpdb->prefix}icl_translations i ON i.element_id=tt.term_taxonomy_id AND i.element_type='tax_product_cat' WHERE tt.taxonomy='product_cat' AND t.term_id=%d", (int) $id
+    ), ARRAY_A );
+    if ( $row ) { foreach ( array( 'id', 'parent', 'tt', 'trid' ) as $key ) { $row[$key] = (int) $row[$key]; } }
+    return $row;
+}
+
+function rf_import_category_group( $request ) {
+    global $wpdb;
+    $roots = $request->get_param( 'roots' ); $names = $request->get_param( 'names' );
+    $source = rf_import_category_record( $request->get_param( 'source_id' ) );
+    if ( ! is_array( $roots ) || ! is_array( $names ) || ! $source ) { return new WP_Error( 'rf_category_input', 'Не задана группа категорий', array( 'status' => 400 ) ); }
+    $root_group = null;
+    foreach ( array( 'en', 'pt', 'es' ) as $lang ) {
+        $root = rf_import_category_record( $roots[$lang] ?? 0 );
+        if ( ! $root || $root['lang'] !== $lang || $root['parent'] !== 0 || ( $root_group && $root_group !== $root['trid'] ) || empty( $names[$lang] ) || ! is_string( $names[$lang] ) ) {
+            return new WP_Error( 'rf_category_root', 'Неверный язык или группа родительской категории', array( 'status' => 409 ) );
+        }
+        $root_group = $root['trid']; $roots[$lang] = $root['id'];
+    }
+    if ( ! isset( $roots[$source['lang']] ) || $source['parent'] !== $roots[$source['lang']] ) { return new WP_Error( 'rf_category_source', 'Исходная подкатегория находится под другим родителем', array( 'status' => 409 ) ); }
+    $lock = 'rf_category_' . $source['trid'];
+    if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s,10)', $lock ) ) ) { return new WP_Error( 'rf_category_busy', 'Группа занята', array( 'status' => 409 ) ); }
+    $previous = apply_filters( 'wpml_current_language', null );
+    try {
+        $categories = array();
+        $ids = $wpdb->get_col( $wpdb->prepare( "SELECT tt.term_id FROM {$wpdb->prefix}icl_translations i JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id=i.element_id WHERE i.element_type='tax_product_cat' AND i.trid=%d", $source['trid'] ) );
+        foreach ( $ids as $id ) {
+            $c = rf_import_category_record( $id );
+            if ( isset( $roots[$c['lang']] ) ) {
+                if ( $c['parent'] !== $roots[$c['lang']] || isset( $categories[$c['lang']] ) ) { return new WP_Error( 'rf_category_parent', 'Перевод категории находится под неверным родителем', array( 'status' => 409 ) ); }
+                $categories[$c['lang']] = $c;
+            }
+        }
+        $new_english = ! isset( $categories['en'] );
+        $original_lang = 'en';
+        foreach ( $categories as $c ) { if ( empty( $c['source_language_code'] ) ) { $original_lang = $c['lang']; break; } }
+        foreach ( array( 'en', 'pt', 'es' ) as $lang ) {
+            if ( isset( $categories[$lang] ) ) { continue; }
+            do_action( 'wpml_switch_language', $lang );
+            $slug = 'rf-category-' . $source['trid'] . '-' . $lang;
+            $existing = get_term_by( 'slug', $slug, 'product_cat' );
+            $created = $existing ? array( 'term_id' => $existing->term_id, 'term_taxonomy_id' => $existing->term_taxonomy_id ) : wp_insert_term( $names[$lang], 'product_cat', array( 'parent' => $roots[$lang], 'slug' => $slug ) );
+            if ( is_wp_error( $created ) ) { return $created; }
+            do_action( 'wpml_set_element_language_details', array( 'element_id' => (int) $created['term_taxonomy_id'], 'element_type' => 'tax_product_cat', 'trid' => $source['trid'], 'language_code' => $lang, 'source_language_code' => $lang === 'en' && $new_english ? null : $original_lang, 'check_duplicates' => true ) );
+            $categories[$lang] = rf_import_category_record( $created['term_id'] );
+        }
+        // В старой группе мог быть удалён EN-оригинал: восстанавливаем его без создания новой группы.
+        if ( $new_english ) {
+            foreach ( $categories as $lang => $c ) {
+                do_action( 'wpml_set_element_language_details', array( 'element_id' => $c['tt'], 'element_type' => 'tax_product_cat', 'trid' => $source['trid'], 'language_code' => $lang, 'source_language_code' => $lang === 'en' ? null : 'en', 'check_duplicates' => true ) );
+            }
+        }
+        foreach ( $categories as $lang => $c ) {
+            $actual = rf_import_category_record( $c['id'] );
+            if ( ! $actual || $actual['lang'] !== $lang || $actual['parent'] !== $roots[$lang] || $actual['trid'] !== $source['trid'] ) { return new WP_Error( 'rf_category_link', 'Не сохранились язык/родитель/группа категории', array( 'status' => 409 ) ); }
+            $categories[$lang] = $actual;
+        }
+        return rest_ensure_response( array( 'trid' => $source['trid'], 'roots' => $roots, 'categories' => $categories ) );
+    } finally { do_action( 'wpml_switch_language', $previous ); $wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) ); }
+}
+
+function rf_import_verify_categories( $request ) {
+    global $wpdb;
+    $plan = $request->get_param( 'plan' ); $products = $request->get_param( 'products' );
+    if ( ! is_array( $plan ) || ! is_array( $products ) || count( $products ) !== 3 || ! isset( $plan['ids'], $plan['groups'], $plan['roots'] ) ) { return new WP_Error( 'rf_category_plan', 'Нет плана категорий', array( 'status' => 400 ) ); }
+    $product_group = null;
+    foreach ( array( 'pt', 'es', 'en' ) as $lang ) {
+        $id = (int) ( $products[$lang] ?? 0 ); $details = apply_filters( 'wpml_post_language_details', null, $id );
+        $trid = apply_filters( 'wpml_element_trid', null, $id, 'post_product' );
+        if ( ! $details || $details['language_code'] !== $lang || ! current_user_can( 'edit_post', $id ) || ! $trid || ( $product_group && (int) $trid !== (int) $product_group ) ) { return new WP_Error( 'rf_category_product', 'Карточки не принадлежат одной группе', array( 'status' => 409 ) ); }
+        $product_group = $trid; $expected = array_map( 'intval', $plan['ids'][$lang] ?? array() );
+        if ( ! $expected ) { return new WP_Error( 'rf_category_empty', 'Категории не заданы', array( 'status' => 409 ) ); }
+        foreach ( $expected as $cid ) {
+            $c = rf_import_category_record( $cid );
+            if ( ! $c || $c['lang'] !== $lang || ( $c['parent'] && ! in_array( $c['parent'], $expected, true ) ) ) { return new WP_Error( 'rf_category_hierarchy', 'Неверный язык или иерархия категории', array( 'status' => 409 ) ); }
+        }
+        $actual = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT tt.term_id FROM {$wpdb->term_relationships} r JOIN {$wpdb->term_taxonomy} tt USING(term_taxonomy_id) WHERE r.object_id=%d AND tt.taxonomy='product_cat'", $id ) ) );
+        foreach ( array_diff( $actual, $expected ) as $extra ) {
+            $c = rf_import_category_record( $extra );
+            // Автоматическая категория истёкшего события добавляется сайтом, а не таблицей.
+            $english = $c ? $wpdb->get_var( $wpdb->prepare( "SELECT t.name FROM {$wpdb->prefix}icl_translations i JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id=i.element_id JOIN {$wpdb->terms} t USING(term_id) WHERE i.element_type='tax_product_cat' AND i.trid=%d AND i.language_code='en'", $c['trid'] ) ) : '';
+            if ( $c && $c['lang'] === $lang && $c['parent'] === 0 && $english === 'Expired' ) { $actual = array_values( array_diff( $actual, array( $extra ) ) ); }
+        }
+        sort( $actual ); sort( $expected );
+        if ( $actual !== $expected ) { return new WP_Error( 'rf_category_assignment', 'В карточке отсутствуют нужные категории или появились лишние', array( 'status' => 409 ) ); }
+    }
+    foreach ( $plan['roots'] as $roots ) {
+        $root_group = null;
+        foreach ( array( 'pt', 'es', 'en' ) as $lang ) {
+            $root = rf_import_category_record( $roots[$lang] ?? 0 );
+            if ( ! $root || $root['lang'] !== $lang || $root['parent'] !== 0 || ( $root_group && $root_group !== $root['trid'] ) || ! in_array( $root['id'], array_map( 'intval', $plan['ids'][$lang] ), true ) ) { return new WP_Error( 'rf_category_root_changed', 'Изменилась группа родительских категорий', array( 'status' => 409 ) ); }
+            $root_group = $root['trid'];
+        }
+    }
+    foreach ( $plan['groups'] as $group ) {
+        foreach ( array( 'pt', 'es', 'en' ) as $lang ) {
+            $c = rf_import_category_record( $group['categories'][$lang]['id'] ?? 0 );
+            if ( ! $c || $c['trid'] !== (int) $group['trid'] || $c['lang'] !== $lang || $c['parent'] !== (int) $group['roots'][$lang] ) { return new WP_Error( 'rf_category_group_changed', 'Изменилась группа переводов категории', array( 'status' => 409 ) ); }
+        }
+    }
+    return rest_ensure_response( array( 'verified' => true ) );
+}
+
 // Справочники значений связываются до сохранения родителей: WCML использует эти связи.
 add_action( 'rest_api_init', function () {
     register_rest_route( 'custom-api/v1', '/ensure-import-terms/', array(
@@ -175,6 +303,12 @@ function rf_import_apply_options_exact( $request ) {
                 $product = wc_get_product( (int) $item['product_id'] );
                 $product->set_attributes( $attributes );
                 $product->save();
+                // WCML может вернуть уже переведённые ID при чтении старой карточки,
+                // и CRUD не заметит отличия от сырых связей. Фиксируем отношения явно.
+                foreach ( $item['attributes'] as $attr ) {
+                    $saved = wp_set_object_terms( (int) $item['product_id'], array_map( 'intval', $attr['term_ids'] ), wc_attribute_taxonomy_name_by_id( (int) $attr['id'] ), false );
+                    if ( is_wp_error( $saved ) ) { return $saved; }
+                }
             }
             foreach ( $items as $item ) {
                 do_action( 'wpml_switch_language', $item['language'] );

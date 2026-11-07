@@ -326,7 +326,7 @@ def create_product(data, on_created=None):
 
     # Registration deadline (плагин miss-events, уровень товара) через штатный
     # WC REST param `miss_events`. Время по умолчанию 18:00 подставляется в rf_schedule.
-    if data.get("RF_REGISTRATION_DEADLINE"):
+    if "RF_REGISTRATION_DEADLINE" in data:
         product_data["miss_events"] = {
             "registration_deadline": data["RF_REGISTRATION_DEADLINE"]
         }
@@ -575,7 +575,7 @@ def create_or_update_product(data, existing_product_id=None, on_created=None):
     metadata = primary_metadata(data)
     if metadata:
         payload["meta_data"] = metadata
-    if data.get("RF_REGISTRATION_DEADLINE"):
+    if "RF_REGISTRATION_DEADLINE" in data:
         payload["miss_events"] = {
             "registration_deadline": data["RF_REGISTRATION_DEADLINE"]
         }

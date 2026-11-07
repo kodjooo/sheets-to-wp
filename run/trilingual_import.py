@@ -3,11 +3,13 @@ import hashlib
 import json
 import logging
 import os
+import re
 from pathlib import Path
 
 import requests
 from publication_contract import validate_block, label_catalog, known_labels
 from rf_schedule import parse_datetime
+from category_catalog import resolve_categories, verify_categories
 from utils import parse_faq_items
 from country_profile import (CountryProfile, active_profile, activate_profile,
                              reset_profile, validate_spanish_row)
@@ -71,17 +73,26 @@ def translate_content(source, target):
         + '. Верни только завершённый JSON с теми же ключами title, summary, org_info, benefits, faq. '
         'Все значения — строки. Сохрани HTML, URL, имена брендов, даты, числа и факты. '
         'В FAQ сохрани служебные префиксы Q: и A: без перевода; переводи только вопросы и ответы. '
-        'Не добавляй информацию. Не меняй страну мероприятия. Сохрани префикс TEST, если он есть. '
+        'Не добавляй информацию. Не меняй страну мероприятия. В названии переводи обычные '
+        'обозначения гонок (например Marathon → Maratona для PT), сохраняя собственные имена. '
         'Не добавляй Markdown-обёртку. Пустое значение сохраняй пустым.'
     )
+    translated_source = dict(source)
+    marker = re.match(r'^(TEST\b(?:\s+(?:ANTONIO|TRI)\b)?\s*(?:[—–-]\s*)?)', source.get('title', ''), re.I)
+    prefix = marker.group(0) if marker else ''
+    if prefix:
+        translated_source['title'] = source['title'][len(prefix):]
     for attempt in range(3):
         response = _OPENAI_CLIENT.responses.create(
             model=config['openai_second_model'],
             input=[{'role': 'system', 'content': [{'type': 'input_text', 'text': prompt}]},
-                   {'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps(source, ensure_ascii=False)}]}],
+                   {'role': 'user', 'content': [{'type': 'input_text', 'text': json.dumps(translated_source, ensure_ascii=False)}]}],
         )
         try:
-            return validate_translation(json.loads(response.output_text), source)
+            result = json.loads(response.output_text)
+            if prefix and isinstance(result, dict) and isinstance(result.get('title'), str):
+                result['title'] = prefix + result['title']
+            return validate_translation(result, source)
         except ValueError:
             if attempt == 2:
                 raise
@@ -296,6 +307,7 @@ def process_trilingual(m, index, original, following, headers):
             validate_spanish_row(row, headers, config['wp_url'])
         validate_block(block)
         write({'LANGUAGE SCHEME': SCHEME, 'LANGUAGE STATE': 'IN_PROGRESS' if row['_RF_RESUME'] else 'CHECKING_SOURCE'})
+        row['_RF_CATEGORY_PLAN'] = resolve_categories(config, row, block)
         _process(m, config, country, third, index, row, block, headers, write)
     except Exception as error:
         write({'NOTE': 'Trilingual import incomplete: ' + str(error)[:350]})
@@ -465,7 +477,7 @@ def _process(m, config, country, third, index, row, block, headers, write):
             data = dict(row)
             for key in ('title', *FIELDS):
                 data['RACE NAME (PT)' if key == 'title' else FIELDS[key] + ' (PT)'] = row[column(key, lang)]
-            data['CATEGORY_IDS_PT'] = m._build_pt_category_ids_from_en(data)
+            data['CATEGORY_IDS_PT'] = [{'id': cid} for cid in row['_RF_CATEGORY_PLAN']['ids'][lang]]
             def checkpoint(pid):
                 write({'WP PRODUCT ID ' + lang.upper(): pid})
             existing = row.get('WP PRODUCT ID ' + lang.upper())
@@ -497,6 +509,7 @@ def _process(m, config, country, third, index, row, block, headers, write):
         auth=(config['consumer_key'], config['consumer_secret']), timeout=45)
     primary.raise_for_status()
     verify_publication(config, ids, row, entries, mappings, attr_ids)
+    verify_categories(config, row['_RF_CATEGORY_PLAN'], ids)
     incomplete = str(row.get('STATUS') or '').lower() == m.STATUS_REVISED_INCOMPLETE.lower()
     updates = {'LINK RACEFINDER': primary.json().get('permalink', ''), 'NOTE': ''}
     if incomplete:

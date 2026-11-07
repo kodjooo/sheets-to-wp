@@ -1,0 +1,2860 @@
+{
+  "date": "2026-11-07",
+  "tests": 215,
+  "runtime_branch": "kt/70-portal-sync-2",
+  "runtime_head": "e5a8c826a3e69e56e9c882ef4c9c914c3d401759",
+  "source_format_unchanged": true,
+  "source_antonio_tab_unchanged": true,
+  "source_category_plans": [
+    {
+      "id": "1",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Ultra marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Ultra marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            247,
+            139
+          ],
+          "es": [
+            10508,
+            10523,
+            10519
+          ],
+          "en": [
+            17,
+            29,
+            25
+          ]
+        },
+        "groups": [
+          {
+            "trid": 651,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 29,
+                "name": "Ultra Marathons",
+                "parent": 17,
+                "tt": 29,
+                "lang": "en",
+                "trid": 651,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 247,
+                "name": "Ultra Maratonas",
+                "parent": 129,
+                "tt": 247,
+                "lang": "pt",
+                "trid": 651,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10523,
+                "name": "Ultramaratones",
+                "parent": 10508,
+                "tt": 10523,
+                "lang": "es",
+                "trid": 651,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 647,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 25,
+                "name": "Trail Run",
+                "parent": 17,
+                "tt": 25,
+                "lang": "en",
+                "trid": 647,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 139,
+                "name": "Trail Run",
+                "parent": 129,
+                "tt": 139,
+                "lang": "pt",
+                "trid": 647,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10519,
+                "name": "Trail Run",
+                "parent": 10508,
+                "tt": 10519,
+                "lang": "es",
+                "trid": 647,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "2",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            139
+          ],
+          "es": [
+            10508,
+            10519
+          ],
+          "en": [
+            17,
+            25
+          ]
+        },
+        "groups": [
+          {
+            "trid": 647,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 25,
+                "name": "Trail Run",
+                "parent": 17,
+                "tt": 25,
+                "lang": "en",
+                "trid": 647,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 139,
+                "name": "Trail Run",
+                "parent": 129,
+                "tt": 139,
+                "lang": "pt",
+                "trid": 647,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10519,
+                "name": "Trail Run",
+                "parent": 10508,
+                "tt": 10519,
+                "lang": "es",
+                "trid": 647,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "3",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Ultra marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            247,
+            139
+          ],
+          "es": [
+            10508,
+            10523,
+            10519
+          ],
+          "en": [
+            17,
+            29,
+            25
+          ]
+        },
+        "groups": [
+          {
+            "trid": 651,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 29,
+                "name": "Ultra Marathons",
+                "parent": 17,
+                "tt": 29,
+                "lang": "en",
+                "trid": 651,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 247,
+                "name": "Ultra Maratonas",
+                "parent": 129,
+                "tt": 247,
+                "lang": "pt",
+                "trid": 651,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10523,
+                "name": "Ultramaratones",
+                "parent": 10508,
+                "tt": 10523,
+                "lang": "es",
+                "trid": 651,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 647,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 25,
+                "name": "Trail Run",
+                "parent": 17,
+                "tt": 25,
+                "lang": "en",
+                "trid": 647,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 139,
+                "name": "Trail Run",
+                "parent": 129,
+                "tt": 139,
+                "lang": "pt",
+                "trid": 647,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10519,
+                "name": "Trail Run",
+                "parent": 10508,
+                "tt": 10519,
+                "lang": "es",
+                "trid": 647,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "4",
+      "pairs": [
+        {
+          "category": "Cycling",
+          "subcategory": "MTB"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Cycling",
+          "subcategory": "MTB"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            130,
+            12126,
+            129,
+            139
+          ],
+          "es": [
+            10510,
+            12127,
+            10508,
+            10519
+          ],
+          "en": [
+            36,
+            11217,
+            17,
+            25
+          ]
+        },
+        "groups": [
+          {
+            "trid": 80401,
+            "roots": {
+              "pt": 130,
+              "es": 10510,
+              "en": 36
+            },
+            "categories": {
+              "en": {
+                "id": 11217,
+                "name": "MTB",
+                "parent": 36,
+                "tt": 11217,
+                "lang": "en",
+                "trid": 80401,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 12126,
+                "name": "BTT",
+                "parent": 130,
+                "tt": 12126,
+                "lang": "pt",
+                "trid": 80401,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 12127,
+                "name": "MTB",
+                "parent": 10510,
+                "tt": 12127,
+                "lang": "es",
+                "trid": 80401,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 647,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 25,
+                "name": "Trail Run",
+                "parent": 17,
+                "tt": 25,
+                "lang": "en",
+                "trid": 647,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 139,
+                "name": "Trail Run",
+                "parent": 129,
+                "tt": 139,
+                "lang": "pt",
+                "trid": 647,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10519,
+                "name": "Trail Run",
+                "parent": 10508,
+                "tt": 10519,
+                "lang": "es",
+                "trid": 647,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 130,
+            "es": 10510,
+            "en": 36
+          },
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "5",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            139
+          ],
+          "es": [
+            10508,
+            10519
+          ],
+          "en": [
+            17,
+            25
+          ]
+        },
+        "groups": [
+          {
+            "trid": 647,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 25,
+                "name": "Trail Run",
+                "parent": 17,
+                "tt": 25,
+                "lang": "en",
+                "trid": 647,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 139,
+                "name": "Trail Run",
+                "parent": 129,
+                "tt": 139,
+                "lang": "pt",
+                "trid": 647,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10519,
+                "name": "Trail Run",
+                "parent": 10508,
+                "tt": 10519,
+                "lang": "es",
+                "trid": 647,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "6",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Ultra marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Ultra marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Ultra marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Ultra marathon"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            247
+          ],
+          "es": [
+            10508,
+            10523
+          ],
+          "en": [
+            17,
+            29
+          ]
+        },
+        "groups": [
+          {
+            "trid": 651,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 29,
+                "name": "Ultra Marathons",
+                "parent": 17,
+                "tt": 29,
+                "lang": "en",
+                "trid": 651,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 247,
+                "name": "Ultra Maratonas",
+                "parent": 129,
+                "tt": 247,
+                "lang": "pt",
+                "trid": 651,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10523,
+                "name": "Ultramaratones",
+                "parent": 10508,
+                "tt": 10523,
+                "lang": "es",
+                "trid": 651,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "7",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            243
+          ],
+          "es": [
+            10508,
+            10540
+          ],
+          "en": [
+            17,
+            52
+          ]
+        },
+        "groups": [
+          {
+            "trid": 674,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 52,
+                "name": "Marathon",
+                "parent": 17,
+                "tt": 52,
+                "lang": "en",
+                "trid": 674,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 243,
+                "name": "Maratona",
+                "parent": 129,
+                "tt": 243,
+                "lang": "pt",
+                "trid": 674,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10540,
+                "name": "Maratón",
+                "parent": 10508,
+                "tt": 10540,
+                "lang": "es",
+                "trid": 674,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "8",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            243
+          ],
+          "es": [
+            10508,
+            10540
+          ],
+          "en": [
+            17,
+            52
+          ]
+        },
+        "groups": [
+          {
+            "trid": 674,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 52,
+                "name": "Marathon",
+                "parent": 17,
+                "tt": 52,
+                "lang": "en",
+                "trid": 674,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 243,
+                "name": "Maratona",
+                "parent": 129,
+                "tt": 243,
+                "lang": "pt",
+                "trid": 674,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10540,
+                "name": "Maratón",
+                "parent": 10508,
+                "tt": 10540,
+                "lang": "es",
+                "trid": 674,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "9",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Sky Running"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Walking"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            139,
+            1387,
+            140
+          ],
+          "es": [
+            10508,
+            10519,
+            10550,
+            10521
+          ],
+          "en": [
+            17,
+            25,
+            1367,
+            27
+          ]
+        },
+        "groups": [
+          {
+            "trid": 647,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 25,
+                "name": "Trail Run",
+                "parent": 17,
+                "tt": 25,
+                "lang": "en",
+                "trid": 647,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 139,
+                "name": "Trail Run",
+                "parent": 129,
+                "tt": 139,
+                "lang": "pt",
+                "trid": 647,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10519,
+                "name": "Trail Run",
+                "parent": 10508,
+                "tt": 10519,
+                "lang": "es",
+                "trid": 647,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 6564,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 1367,
+                "name": "Skyrunning",
+                "parent": 17,
+                "tt": 1367,
+                "lang": "en",
+                "trid": 6564,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 1387,
+                "name": "Skyrunning",
+                "parent": 129,
+                "tt": 1387,
+                "lang": "pt",
+                "trid": 6564,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10550,
+                "name": "Skyrunning",
+                "parent": 10508,
+                "tt": 10550,
+                "lang": "es",
+                "trid": 6564,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 649,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 27,
+                "name": "Walking",
+                "parent": 17,
+                "tt": 27,
+                "lang": "en",
+                "trid": 649,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 140,
+                "name": "Caminhada",
+                "parent": 129,
+                "tt": 140,
+                "lang": "pt",
+                "trid": 649,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10521,
+                "name": "Marcha",
+                "parent": 10508,
+                "tt": 10521,
+                "lang": "es",
+                "trid": 649,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "10",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Running 10 km"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            243,
+            225
+          ],
+          "es": [
+            10508,
+            10540,
+            10516
+          ],
+          "en": [
+            17,
+            52,
+            21
+          ]
+        },
+        "groups": [
+          {
+            "trid": 674,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 52,
+                "name": "Marathon",
+                "parent": 17,
+                "tt": 52,
+                "lang": "en",
+                "trid": 674,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 243,
+                "name": "Maratona",
+                "parent": 129,
+                "tt": 243,
+                "lang": "pt",
+                "trid": 674,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10540,
+                "name": "Maratón",
+                "parent": 10508,
+                "tt": 10540,
+                "lang": "es",
+                "trid": 674,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 643,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 21,
+                "name": "Running 10 km",
+                "parent": 17,
+                "tt": 21,
+                "lang": "en",
+                "trid": 643,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 225,
+                "name": "Corrida 10 km",
+                "parent": 129,
+                "tt": 225,
+                "lang": "pt",
+                "trid": 643,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10516,
+                "name": "Carrera 10 km",
+                "parent": 10508,
+                "tt": 10516,
+                "lang": "es",
+                "trid": 643,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "11",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            139
+          ],
+          "es": [
+            10508,
+            10519
+          ],
+          "en": [
+            17,
+            25
+          ]
+        },
+        "groups": [
+          {
+            "trid": 647,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 25,
+                "name": "Trail Run",
+                "parent": 17,
+                "tt": 25,
+                "lang": "en",
+                "trid": 647,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 139,
+                "name": "Trail Run",
+                "parent": 129,
+                "tt": 139,
+                "lang": "pt",
+                "trid": 647,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10519,
+                "name": "Trail Run",
+                "parent": 10508,
+                "tt": 10519,
+                "lang": "es",
+                "trid": 647,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "12",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Half Marathon"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            243,
+            244
+          ],
+          "es": [
+            10508,
+            10540,
+            10517
+          ],
+          "en": [
+            17,
+            52,
+            22
+          ]
+        },
+        "groups": [
+          {
+            "trid": 674,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 52,
+                "name": "Marathon",
+                "parent": 17,
+                "tt": 52,
+                "lang": "en",
+                "trid": 674,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 243,
+                "name": "Maratona",
+                "parent": 129,
+                "tt": 243,
+                "lang": "pt",
+                "trid": 674,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10540,
+                "name": "Maratón",
+                "parent": 10508,
+                "tt": 10540,
+                "lang": "es",
+                "trid": 674,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 644,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 22,
+                "name": "Half Marathon",
+                "parent": 17,
+                "tt": 22,
+                "lang": "en",
+                "trid": 644,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 244,
+                "name": "Meia Maratona",
+                "parent": 129,
+                "tt": 244,
+                "lang": "pt",
+                "trid": 644,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10517,
+                "name": "Media maratón",
+                "parent": 10508,
+                "tt": 10517,
+                "lang": "es",
+                "trid": 644,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "13",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            243
+          ],
+          "es": [
+            10508,
+            10540
+          ],
+          "en": [
+            17,
+            52
+          ]
+        },
+        "groups": [
+          {
+            "trid": 674,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 52,
+                "name": "Marathon",
+                "parent": 17,
+                "tt": 52,
+                "lang": "en",
+                "trid": 674,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 243,
+                "name": "Maratona",
+                "parent": 129,
+                "tt": 243,
+                "lang": "pt",
+                "trid": 674,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10540,
+                "name": "Maratón",
+                "parent": 10508,
+                "tt": 10540,
+                "lang": "es",
+                "trid": 674,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "14",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Half Marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Running 10 km"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Running 5 km"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Kids"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            243,
+            244,
+            225,
+            224,
+            161
+          ],
+          "es": [
+            10508,
+            10540,
+            10517,
+            10516,
+            10515,
+            10520
+          ],
+          "en": [
+            17,
+            52,
+            22,
+            21,
+            20,
+            26
+          ]
+        },
+        "groups": [
+          {
+            "trid": 674,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 52,
+                "name": "Marathon",
+                "parent": 17,
+                "tt": 52,
+                "lang": "en",
+                "trid": 674,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 243,
+                "name": "Maratona",
+                "parent": 129,
+                "tt": 243,
+                "lang": "pt",
+                "trid": 674,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10540,
+                "name": "Maratón",
+                "parent": 10508,
+                "tt": 10540,
+                "lang": "es",
+                "trid": 674,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 644,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 22,
+                "name": "Half Marathon",
+                "parent": 17,
+                "tt": 22,
+                "lang": "en",
+                "trid": 644,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 244,
+                "name": "Meia Maratona",
+                "parent": 129,
+                "tt": 244,
+                "lang": "pt",
+                "trid": 644,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10517,
+                "name": "Media maratón",
+                "parent": 10508,
+                "tt": 10517,
+                "lang": "es",
+                "trid": 644,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 643,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 21,
+                "name": "Running 10 km",
+                "parent": 17,
+                "tt": 21,
+                "lang": "en",
+                "trid": 643,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 225,
+                "name": "Corrida 10 km",
+                "parent": 129,
+                "tt": 225,
+                "lang": "pt",
+                "trid": 643,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10516,
+                "name": "Carrera 10 km",
+                "parent": 10508,
+                "tt": 10516,
+                "lang": "es",
+                "trid": 643,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 642,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 20,
+                "name": "Running 5 km",
+                "parent": 17,
+                "tt": 20,
+                "lang": "en",
+                "trid": 642,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 224,
+                "name": "Corrida 5 km",
+                "parent": 129,
+                "tt": 224,
+                "lang": "pt",
+                "trid": 642,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10515,
+                "name": "Carrera 5 km",
+                "parent": 10508,
+                "tt": 10515,
+                "lang": "es",
+                "trid": 642,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 648,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 26,
+                "name": "Kids",
+                "parent": 17,
+                "tt": 26,
+                "lang": "en",
+                "trid": 648,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 161,
+                "name": "Kids",
+                "parent": 129,
+                "tt": 161,
+                "lang": "pt",
+                "trid": 648,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10520,
+                "name": "Infantil",
+                "parent": 10508,
+                "tt": 10520,
+                "lang": "es",
+                "trid": 648,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "15",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Walking"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Walking"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            139,
+            140
+          ],
+          "es": [
+            10508,
+            10519,
+            10521
+          ],
+          "en": [
+            17,
+            25,
+            27
+          ]
+        },
+        "groups": [
+          {
+            "trid": 647,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 25,
+                "name": "Trail Run",
+                "parent": 17,
+                "tt": 25,
+                "lang": "en",
+                "trid": 647,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 139,
+                "name": "Trail Run",
+                "parent": 129,
+                "tt": 139,
+                "lang": "pt",
+                "trid": 647,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10519,
+                "name": "Trail Run",
+                "parent": 10508,
+                "tt": 10519,
+                "lang": "es",
+                "trid": 647,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 649,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 27,
+                "name": "Walking",
+                "parent": 17,
+                "tt": 27,
+                "lang": "en",
+                "trid": 649,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 140,
+                "name": "Caminhada",
+                "parent": 129,
+                "tt": 140,
+                "lang": "pt",
+                "trid": 649,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10521,
+                "name": "Marcha",
+                "parent": 10508,
+                "tt": 10521,
+                "lang": "es",
+                "trid": 649,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "16",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            243
+          ],
+          "es": [
+            10508,
+            10540
+          ],
+          "en": [
+            17,
+            52
+          ]
+        },
+        "groups": [
+          {
+            "trid": 674,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 52,
+                "name": "Marathon",
+                "parent": 17,
+                "tt": 52,
+                "lang": "en",
+                "trid": 674,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 243,
+                "name": "Maratona",
+                "parent": 129,
+                "tt": 243,
+                "lang": "pt",
+                "trid": 674,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10540,
+                "name": "Maratón",
+                "parent": 10508,
+                "tt": 10540,
+                "lang": "es",
+                "trid": 674,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "17",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Road Running"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Road Running"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Road Running"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Half Marathon"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Road Running"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Road Running"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Running 5 km"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            243,
+            246,
+            244,
+            224
+          ],
+          "es": [
+            10508,
+            10540,
+            10522,
+            10517,
+            10515
+          ],
+          "en": [
+            17,
+            52,
+            28,
+            22,
+            20
+          ]
+        },
+        "groups": [
+          {
+            "trid": 674,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 52,
+                "name": "Marathon",
+                "parent": 17,
+                "tt": 52,
+                "lang": "en",
+                "trid": 674,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 243,
+                "name": "Maratona",
+                "parent": 129,
+                "tt": 243,
+                "lang": "pt",
+                "trid": 674,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10540,
+                "name": "Maratón",
+                "parent": 10508,
+                "tt": 10540,
+                "lang": "es",
+                "trid": 674,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 650,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 28,
+                "name": "Road Running",
+                "parent": 17,
+                "tt": 28,
+                "lang": "en",
+                "trid": 650,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 246,
+                "name": "Corrida de Rua",
+                "parent": 129,
+                "tt": 246,
+                "lang": "pt",
+                "trid": 650,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10522,
+                "name": "Carreras de asfalto",
+                "parent": 10508,
+                "tt": 10522,
+                "lang": "es",
+                "trid": 650,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 644,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 22,
+                "name": "Half Marathon",
+                "parent": 17,
+                "tt": 22,
+                "lang": "en",
+                "trid": 644,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 244,
+                "name": "Meia Maratona",
+                "parent": 129,
+                "tt": 244,
+                "lang": "pt",
+                "trid": 644,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10517,
+                "name": "Media maratón",
+                "parent": 10508,
+                "tt": 10517,
+                "lang": "es",
+                "trid": 644,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 642,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 20,
+                "name": "Running 5 km",
+                "parent": 17,
+                "tt": 20,
+                "lang": "en",
+                "trid": 642,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 224,
+                "name": "Corrida 5 km",
+                "parent": 129,
+                "tt": 224,
+                "lang": "pt",
+                "trid": 642,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10515,
+                "name": "Carrera 5 km",
+                "parent": 10508,
+                "tt": 10515,
+                "lang": "es",
+                "trid": 642,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "18",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            139
+          ],
+          "es": [
+            10508,
+            10519
+          ],
+          "en": [
+            17,
+            25
+          ]
+        },
+        "groups": [
+          {
+            "trid": 647,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 25,
+                "name": "Trail Run",
+                "parent": 17,
+                "tt": 25,
+                "lang": "en",
+                "trid": 647,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 139,
+                "name": "Trail Run",
+                "parent": 129,
+                "tt": 139,
+                "lang": "pt",
+                "trid": 647,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10519,
+                "name": "Trail Run",
+                "parent": 10508,
+                "tt": 10519,
+                "lang": "es",
+                "trid": 647,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "19",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Trail Run"
+        },
+        {
+          "category": "Running",
+          "subcategory": "Walking"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            139,
+            140
+          ],
+          "es": [
+            10508,
+            10519,
+            10521
+          ],
+          "en": [
+            17,
+            25,
+            27
+          ]
+        },
+        "groups": [
+          {
+            "trid": 647,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 25,
+                "name": "Trail Run",
+                "parent": 17,
+                "tt": 25,
+                "lang": "en",
+                "trid": 647,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 139,
+                "name": "Trail Run",
+                "parent": 129,
+                "tt": 139,
+                "lang": "pt",
+                "trid": 647,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10519,
+                "name": "Trail Run",
+                "parent": 10508,
+                "tt": 10519,
+                "lang": "es",
+                "trid": 647,
+                "source_language_code": "en"
+              }
+            }
+          },
+          {
+            "trid": 649,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 27,
+                "name": "Walking",
+                "parent": 17,
+                "tt": 27,
+                "lang": "en",
+                "trid": 649,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 140,
+                "name": "Caminhada",
+                "parent": 129,
+                "tt": 140,
+                "lang": "pt",
+                "trid": 649,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10521,
+                "name": "Marcha",
+                "parent": 10508,
+                "tt": 10521,
+                "lang": "es",
+                "trid": 649,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    },
+    {
+      "id": "20",
+      "pairs": [
+        {
+          "category": "Running",
+          "subcategory": "Marathon"
+        }
+      ],
+      "plan": {
+        "ids": {
+          "pt": [
+            129,
+            243
+          ],
+          "es": [
+            10508,
+            10540
+          ],
+          "en": [
+            17,
+            52
+          ]
+        },
+        "groups": [
+          {
+            "trid": 674,
+            "roots": {
+              "pt": 129,
+              "es": 10508,
+              "en": 17
+            },
+            "categories": {
+              "en": {
+                "id": 52,
+                "name": "Marathon",
+                "parent": 17,
+                "tt": 52,
+                "lang": "en",
+                "trid": 674,
+                "source_language_code": null
+              },
+              "pt": {
+                "id": 243,
+                "name": "Maratona",
+                "parent": 129,
+                "tt": 243,
+                "lang": "pt",
+                "trid": 674,
+                "source_language_code": "en"
+              },
+              "es": {
+                "id": 10540,
+                "name": "Maratón",
+                "parent": 10508,
+                "tt": 10540,
+                "lang": "es",
+                "trid": 674,
+                "source_language_code": "en"
+              }
+            }
+          }
+        ],
+        "roots": [
+          {
+            "pt": 129,
+            "es": 10508,
+            "en": 17
+          }
+        ]
+      }
+    }
+  ],
+  "events_processed": 4,
+  "products_checked": 12,
+  "variations_checked": 27,
+  "all_product_and_variation_ids_stable": true,
+  "legacy_rows_unchanged": true,
+  "source_category_inputs_unchanged": true,
+  "products": [
+    {
+      "id": 18956,
+      "lang": "pt",
+      "title": "TEST TRI — Zurich Marathon Barcelona 2027",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "129",
+          "name": "Corrida",
+          "slug": "corrida",
+          "parent": "0",
+          "lang": "pt",
+          "trid": "639"
+        }
+      ],
+      "variations": 1
+    },
+    {
+      "id": 18955,
+      "lang": "es",
+      "title": "TEST TRI — Zurich Marató Barcelona 2027",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "10508",
+          "name": "Carreras",
+          "slug": "carreras",
+          "parent": "0",
+          "lang": "es",
+          "trid": "639"
+        }
+      ],
+      "variations": 1
+    },
+    {
+      "id": 18958,
+      "lang": "en",
+      "title": "TEST TRI — Zurich Marathon Barcelona 2027",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "17",
+          "name": "Running",
+          "slug": "running",
+          "parent": "0",
+          "lang": "en",
+          "trid": "639"
+        }
+      ],
+      "variations": 1
+    },
+    {
+      "id": 18960,
+      "lang": "pt",
+      "title": "TEST TRI — São Silvestre de Lisboa",
+      "country": "portugal",
+      "categories": [
+        {
+          "id": "129",
+          "name": "Corrida",
+          "slug": "corrida",
+          "parent": "0",
+          "lang": "pt",
+          "trid": "639"
+        },
+        {
+          "id": "225",
+          "name": "Corrida 10 km",
+          "slug": "10-km-pt",
+          "parent": "129",
+          "lang": "pt",
+          "trid": "643"
+        }
+      ],
+      "variations": 1
+    },
+    {
+      "id": 18962,
+      "lang": "es",
+      "title": "TEST TRI — São Silvestre de Lisboa",
+      "country": "portugal",
+      "categories": [
+        {
+          "id": "10508",
+          "name": "Carreras",
+          "slug": "carreras",
+          "parent": "0",
+          "lang": "es",
+          "trid": "639"
+        },
+        {
+          "id": "10516",
+          "name": "Carrera 10 km",
+          "slug": "10-km-es",
+          "parent": "10508",
+          "lang": "es",
+          "trid": "643"
+        }
+      ],
+      "variations": 1
+    },
+    {
+      "id": 18961,
+      "lang": "en",
+      "title": "TEST TRI — São Silvestre de Lisboa",
+      "country": "portugal",
+      "categories": [
+        {
+          "id": "17",
+          "name": "Running",
+          "slug": "running",
+          "parent": "0",
+          "lang": "en",
+          "trid": "639"
+        },
+        {
+          "id": "21",
+          "name": "Running 10 km",
+          "slug": "10-km",
+          "parent": "17",
+          "lang": "en",
+          "trid": "643"
+        }
+      ],
+      "variations": 1
+    },
+    {
+      "id": 18978,
+      "lang": "pt",
+      "title": "TEST ANTONIO Trail Torres del Foc 2026",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "129",
+          "name": "Corrida",
+          "slug": "corrida",
+          "parent": "0",
+          "lang": "pt",
+          "trid": "639"
+        },
+        {
+          "id": "139",
+          "name": "Trail Run",
+          "slug": "trail-run-pt",
+          "parent": "129",
+          "lang": "pt",
+          "trid": "647"
+        },
+        {
+          "id": "247",
+          "name": "Ultra Maratonas",
+          "slug": "ultra-maratonas",
+          "parent": "129",
+          "lang": "pt",
+          "trid": "651"
+        }
+      ],
+      "variations": 4
+    },
+    {
+      "id": 18977,
+      "lang": "es",
+      "title": "TEST ANTONIO Trail Torres del Foc 2026",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "10508",
+          "name": "Carreras",
+          "slug": "carreras",
+          "parent": "0",
+          "lang": "es",
+          "trid": "639"
+        },
+        {
+          "id": "10519",
+          "name": "Trail Run",
+          "slug": "trail-run-es",
+          "parent": "10508",
+          "lang": "es",
+          "trid": "647"
+        },
+        {
+          "id": "10523",
+          "name": "Ultramaratones",
+          "slug": "ultramaratones",
+          "parent": "10508",
+          "lang": "es",
+          "trid": "651"
+        }
+      ],
+      "variations": 4
+    },
+    {
+      "id": 18980,
+      "lang": "en",
+      "title": "TEST ANTONIO Trail Torres del Foc 2026",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "17",
+          "name": "Running",
+          "slug": "running",
+          "parent": "0",
+          "lang": "en",
+          "trid": "639"
+        },
+        {
+          "id": "25",
+          "name": "Trail Run",
+          "slug": "trail-run",
+          "parent": "17",
+          "lang": "en",
+          "trid": "647"
+        },
+        {
+          "id": "29",
+          "name": "Ultra Marathons",
+          "slug": "ultra-marathons",
+          "parent": "17",
+          "lang": "en",
+          "trid": "651"
+        }
+      ],
+      "variations": 4
+    },
+    {
+      "id": 18996,
+      "lang": "pt",
+      "title": "TEST Antonio Maratona Alcarria 2026",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "129",
+          "name": "Corrida",
+          "slug": "corrida",
+          "parent": "0",
+          "lang": "pt",
+          "trid": "639"
+        },
+        {
+          "id": "243",
+          "name": "Maratona",
+          "slug": "maratonas",
+          "parent": "129",
+          "lang": "pt",
+          "trid": "674"
+        }
+      ],
+      "variations": 3
+    },
+    {
+      "id": 18995,
+      "lang": "es",
+      "title": "TEST ANTONIO Maratón Alcarria 2026",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "10508",
+          "name": "Carreras",
+          "slug": "carreras",
+          "parent": "0",
+          "lang": "es",
+          "trid": "639"
+        },
+        {
+          "id": "10540",
+          "name": "Maratón",
+          "slug": "maraton",
+          "parent": "10508",
+          "lang": "es",
+          "trid": "674"
+        }
+      ],
+      "variations": 3
+    },
+    {
+      "id": 18998,
+      "lang": "en",
+      "title": "TEST Antonio Marathon Alcarria 2026",
+      "country": "spain",
+      "categories": [
+        {
+          "id": "17",
+          "name": "Running",
+          "slug": "running",
+          "parent": "0",
+          "lang": "en",
+          "trid": "639"
+        },
+        {
+          "id": "52",
+          "name": "Marathon",
+          "slug": "full-marathons",
+          "parent": "17",
+          "lang": "en",
+          "trid": "674"
+        }
+      ],
+      "variations": 3
+    }
+  ],
+  "frontend": [
+    {
+      "id": 18956,
+      "url": "https://dev.racefinder.es/pt/event/test-tri-zurich-marathon-barcelona-2027/",
+      "http": 200,
+      "lang": "pt-PT",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-tri-zurich-marathon-barcelona-2027/",
+        "en": "https://dev.racefinder.es/en/event/test-tri-zurich-marathon-barcelona-2027/",
+        "es": "https://dev.racefinder.es/event/test-tri-zurich-marato-barcelona-2027/",
+        "x-default": "https://dev.racefinder.es/event/test-tri-zurich-marato-barcelona-2027/"
+      }
+    },
+    {
+      "id": 18955,
+      "url": "https://dev.racefinder.es/event/test-tri-zurich-marato-barcelona-2027/",
+      "http": 200,
+      "lang": "es-ES",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-tri-zurich-marathon-barcelona-2027/",
+        "en": "https://dev.racefinder.es/en/event/test-tri-zurich-marathon-barcelona-2027/",
+        "es": "https://dev.racefinder.es/event/test-tri-zurich-marato-barcelona-2027/",
+        "x-default": "https://dev.racefinder.es/event/test-tri-zurich-marato-barcelona-2027/"
+      }
+    },
+    {
+      "id": 18958,
+      "url": "https://dev.racefinder.es/en/event/test-tri-zurich-marathon-barcelona-2027/",
+      "http": 200,
+      "lang": "en-US",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-tri-zurich-marathon-barcelona-2027/",
+        "en": "https://dev.racefinder.es/en/event/test-tri-zurich-marathon-barcelona-2027/",
+        "es": "https://dev.racefinder.es/event/test-tri-zurich-marato-barcelona-2027/",
+        "x-default": "https://dev.racefinder.es/event/test-tri-zurich-marato-barcelona-2027/"
+      }
+    },
+    {
+      "id": 18960,
+      "url": "https://dev.racefinder.pt/event/test-tri-sao-silvestre-de-lisboa/",
+      "http": 200,
+      "lang": "pt-PT",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.pt/event/test-tri-sao-silvestre-de-lisboa/",
+        "en": "https://dev.racefinder.pt/en/event/test-tri-sao-silvestre-de-lisboa/",
+        "es": "https://dev.racefinder.pt/es/event/test-tri-sao-silvestre-de-lisboa/",
+        "x-default": "https://dev.racefinder.pt/event/test-tri-sao-silvestre-de-lisboa/"
+      }
+    },
+    {
+      "id": 18962,
+      "url": "https://dev.racefinder.pt/es/event/test-tri-sao-silvestre-de-lisboa/",
+      "http": 200,
+      "lang": "es-ES",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.pt/event/test-tri-sao-silvestre-de-lisboa/",
+        "en": "https://dev.racefinder.pt/en/event/test-tri-sao-silvestre-de-lisboa/",
+        "es": "https://dev.racefinder.pt/es/event/test-tri-sao-silvestre-de-lisboa/",
+        "x-default": "https://dev.racefinder.pt/event/test-tri-sao-silvestre-de-lisboa/"
+      }
+    },
+    {
+      "id": 18961,
+      "url": "https://dev.racefinder.pt/en/event/test-tri-sao-silvestre-de-lisboa/",
+      "http": 200,
+      "lang": "en-US",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.pt/event/test-tri-sao-silvestre-de-lisboa/",
+        "en": "https://dev.racefinder.pt/en/event/test-tri-sao-silvestre-de-lisboa/",
+        "es": "https://dev.racefinder.pt/es/event/test-tri-sao-silvestre-de-lisboa/",
+        "x-default": "https://dev.racefinder.pt/event/test-tri-sao-silvestre-de-lisboa/"
+      }
+    },
+    {
+      "id": 18978,
+      "url": "https://dev.racefinder.es/pt/event/test-antonio-trail-torres-del-foc-2026/",
+      "http": 200,
+      "lang": "pt-PT",
+      "book_visible": true,
+      "registration_deadline_passed": true,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-antonio-trail-torres-del-foc-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-antonio-trail-torres-del-foc-2026/",
+        "es": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/"
+      }
+    },
+    {
+      "id": 18977,
+      "url": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/",
+      "http": 200,
+      "lang": "es-ES",
+      "book_visible": true,
+      "registration_deadline_passed": true,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-antonio-trail-torres-del-foc-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-antonio-trail-torres-del-foc-2026/",
+        "es": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/"
+      }
+    },
+    {
+      "id": 18980,
+      "url": "https://dev.racefinder.es/en/event/test-antonio-trail-torres-del-foc-2026/",
+      "http": 200,
+      "lang": "en-US",
+      "book_visible": true,
+      "registration_deadline_passed": true,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-antonio-trail-torres-del-foc-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-antonio-trail-torres-del-foc-2026/",
+        "es": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-antonio-trail-torres-del-foc-2026/"
+      }
+    },
+    {
+      "id": 18996,
+      "url": "https://dev.racefinder.es/pt/event/test-antonio-alcarria-marathon-2026/",
+      "http": 200,
+      "lang": "pt-PT",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-antonio-alcarria-marathon-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-antonio-alcarria-marathon-2026/",
+        "es": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/"
+      }
+    },
+    {
+      "id": 18995,
+      "url": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/",
+      "http": 200,
+      "lang": "es-ES",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-antonio-alcarria-marathon-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-antonio-alcarria-marathon-2026/",
+        "es": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/"
+      }
+    },
+    {
+      "id": 18998,
+      "url": "https://dev.racefinder.es/en/event/test-antonio-alcarria-marathon-2026/",
+      "http": 200,
+      "lang": "en-US",
+      "book_visible": true,
+      "registration_deadline_passed": false,
+      "hreflang": {
+        "pt": "https://dev.racefinder.es/pt/event/test-antonio-alcarria-marathon-2026/",
+        "en": "https://dev.racefinder.es/en/event/test-antonio-alcarria-marathon-2026/",
+        "es": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/",
+        "x-default": "https://dev.racefinder.es/event/test-antonio-maraton-alcarria-2026/"
+      }
+    }
+  ],
+  "category_final_verification": true,
+  "all_raw_variant_term_languages_correct": true,
+  "prices_dates_deadlines_descriptions_faq_book_verified": true,
+  "production_changed": false,
+  "security_and_negative_real_checks": {
+    "import-category-catalog/unauthenticated": 401,
+    "ensure-import-category-group/unauthenticated": 401,
+    "verify-import-categories/unauthenticated": 401,
+    "wrong_existing_parent_rejected": 409,
+    "mixed_sport_roots_rejected": 409,
+    "incomplete_assignment_rejected": 409
+  },
+  "published_repeats_skip_generation_and_updates": true,
+  "removed_unused_test_categories": {
+    "ids": [
+      12088,
+      12089,
+      12090
+    ],
+    "zero_usage_and_zero_children_verified": true,
+    "snapshot": [
+      {
+        "id": 12088,
+        "name": "Ultra Marathon",
+        "parent": 17,
+        "tt": 12088,
+        "lang": "en",
+        "trid": 81641,
+        "source_language_code": null
+      },
+      {
+        "id": 12089,
+        "name": "Ultra Maratón",
+        "parent": 10508,
+        "tt": 12089,
+        "lang": "es",
+        "trid": 81641,
+        "source_language_code": "en"
+      },
+      {
+        "id": 12090,
+        "name": "Ultra Marathon",
+        "parent": 0,
+        "tt": 12090,
+        "lang": "pt",
+        "trid": 81641,
+        "source_language_code": "en"
+      }
+    ]
+  },
+  "source_sha256": {
+    "run/category_catalog.py": "b77415b6fe5865bdd1b79a1d163a62a61348303155fce4042530ee60a2da7e37",
+    "run/trilingual_import.py": "0478a7858f5f397c13de90ee1150ced5b0b8d9bc6c6eb16e3097d1d577219e8d",
+    "run/_3_create_product.py": "a559012718f6a1587169f4030a69abc1750f67a960d2025c801959a512a79f4f",
+    "wordpress/rf-import-languages.php": "b3555bca5c23497488e81bc120ed4f356d3d00b3452c59ef7225850c993ad00a"
+  },
+  "wordpress_code_commit": "43b257f2b16a5e0b30afd76851cfec163ea73696",
+  "automatic_sheet_links_verified": [
+    {
+      "input_id": "RF-TRI-ES-20261102",
+      "sheet_link": "https://dev.racefinder.pt/es/event/test-tri-zurich-marato-barcelona-2027/",
+      "http": 200,
+      "correct_native_language": true
+    },
+    {
+      "input_id": "RF-TRI-PT-20261102",
+      "sheet_link": "https://dev.racefinder.pt/event/test-tri-sao-silvestre-de-lisboa/",
+      "http": 200,
+      "correct_native_language": true
+    },
+    {
+      "input_id": "RF-ANTONIO-3-20261104",
+      "sheet_link": "https://dev.racefinder.pt/es/event/test-antonio-trail-torres-del-foc-2026/",
+      "http": 200,
+      "correct_native_language": true
+    },
+    {
+      "input_id": "RF-ANTONIO-7-20261104",
+      "sheet_link": "https://dev.racefinder.pt/es/event/test-antonio-maraton-alcarria-2026/",
+      "http": 200,
+      "correct_native_language": true
+    }
+  ],
+  "cleanup": {
+    "temporary_user_removed": true,
+    "temporary_key_http": 401,
+    "temporary_private_files_removed": true,
+    "temporary_module_restored": true,
+    "wp_config_unchanged": true,
+    "current_dev_branch": "kt/70-portal-sync-2",
+    "current_dev_head": "e5a8c826a3e69e56e9c882ef4c9c914c3d401759"
+  }
+}
