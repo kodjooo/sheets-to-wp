@@ -30,6 +30,7 @@ def test_product_translation_uses_jwt_and_does_not_hide_link_failure(monkeypatch
         with pytest.raises(Exception, match='WPML forbidden'):
             translations.create_product_translation_en({'RACE NAME':'Race'}, 42, config=config, on_created=persisted.append)
     assert persisted == [99]
+    assert post.call_args_list[0].kwargs['json']['status'] == 'draft'
     kwargs = post.call_args_list[-1].kwargs
     assert kwargs['headers'] == {'Authorization':'Bearer test-jwt'}
     assert 'auth' not in kwargs

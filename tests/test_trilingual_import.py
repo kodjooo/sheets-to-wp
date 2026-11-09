@@ -87,7 +87,7 @@ def workflow(monkeypatch):
     monkeypatch.setattr(tri,'attribute_id',lambda name: {'Distance':1,'Team':2,'Running':3}.get(name,4))
     monkeypatch.setattr(tri,'ensure_terms',lambda cfg,specs,ids:{(name,value):{lang:{'id':1,'name':labels[lang]} for lang in tri.LANGUAGES} for name,value,labels in specs})
     monkeypatch.setattr(tri,'verify_publication',Mock())
-    monkeypatch.setattr(tri,'publish_products',Mock(return_value={lang:{'permalink':'https://example.test/event/test'} for lang in tri.LANGUAGES}))
+    monkeypatch.setattr(tri,'read_imported_products',Mock(return_value={lang:{'permalink':'https://example.test/event/test'} for lang in tri.LANGUAGES}))
     monkeypatch.setattr(tri,'apply_options',Mock())
     monkeypatch.setattr(tri,'resolve_categories',Mock(return_value={'ids':{'pt':[1],'es':[2],'en':[3]},'groups':[]}))
     monkeypatch.setattr(tri,'verify_categories',Mock())
@@ -272,13 +272,13 @@ def test_unavailable_cover_reports_clear_error_before_product_creation(workflow,
     assert 'обложку' in workflow.row['NOTE']
 
 
-def test_publish_failure_keeps_row_retryable_with_saved_ids(workflow,monkeypatch):
+def test_readback_failure_keeps_row_retryable_with_saved_ids(workflow,monkeypatch):
     w=workflow
-    monkeypatch.setattr(tri,'publish_products',Mock(side_effect=ValueError('Still draft')))
-    with pytest.raises(ValueError,match='Still draft'):w.run()
+    monkeypatch.setattr(tri,'read_imported_products',Mock(side_effect=ValueError('Wrong product ID')))
+    with pytest.raises(ValueError,match='Wrong product ID'):w.run()
     assert w.row['STATUS']=='Revised (complete)' and w.row['LANGUAGE STATE']=='IN_PROGRESS'
     assert w.row['WP PRODUCT ID PT'] and w.row['WP PRODUCT ID ES'] and w.row['WP PRODUCT ID EN']
-    monkeypatch.setattr(tri,'publish_products',Mock(return_value={lang:{'permalink':'https://example.test/event/race'} for lang in tri.LANGUAGES}))
+    monkeypatch.setattr(tri,'read_imported_products',Mock(return_value={lang:{'permalink':'https://example.test/event/race'} for lang in tri.LANGUAGES}))
     w.run()
     assert w.row['STATUS']=='Published' and len(w.created)==1
     assert m.call_openai_assistant.call_count==1

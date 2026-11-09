@@ -124,7 +124,7 @@ def test_exact_term_failure_cannot_mark_event_success(workflow,monkeypatch):
     assert w.row['STATUS']=='Revised (complete)' and w.row['LANGUAGE STATE']=='IN_PROGRESS'
 
 
-@pytest.mark.parametrize('fault', [None,'draft','wrong_id','description','benefits','faq','deadline','price','blank_price','label','missing','schedule'])
+@pytest.mark.parametrize('fault', [None,'trash','wrong_id','description','benefits','faq','deadline','price','blank_price','label','missing','schedule'])
 def test_real_readback_contract_rejects_incorrect_saved_data(monkeypatch,fault):
     import _6_create_variations as variations
     row={'EVENT START DATE':'14/11/2026','EVENT END DATE':'14/11/2026','WEBSITE':'https://example.test/race',
@@ -134,7 +134,7 @@ def test_real_readback_contract_rejects_incorrect_saved_data(monkeypatch,fault):
     if fault=='description':metadata['event_short_description']='Wrong language'
     if fault=='benefits':metadata['race_benefits']='Wrong language'
     if fault=='faq':metadata['event_faq_items']='1'
-    product={'id':11 if fault=='wrong_id' else 10,'status':'draft' if fault=='draft' else 'publish','meta_data':[{'key':k,'value':v} for k,v in metadata.items()],
+    product={'id':11 if fault=='wrong_id' else 10,'status':'trash' if fault=='trash' else 'draft','meta_data':[{'key':k,'value':v} for k,v in metadata.items()],
              'miss_events':{'registration_deadline':'2026-11-11 18:00:00' if fault=='deadline' else '2026-11-12 18:00:00'}}
     response=Mock();response.json.return_value=product
     monkeypatch.setattr(tri.requests,'get',Mock(return_value=response))

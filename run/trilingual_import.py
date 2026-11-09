@@ -184,35 +184,24 @@ def apply_options(config, ids, entries, mappings=None):
             raise ValueError('WordPress не подтвердил точные языковые ID вариантов')
 
 
-def publish_products(config, ids):
-    """Публикует только проверенную группу и читает итог после всех WPML-хуков."""
+def read_imported_products(config, ids):
+    """Проверяет готовность карточек, не меняя редакционный статус WordPress."""
     auth = (config['consumer_key'], config['consumer_secret'])
     base = config['wp_url'].rstrip('/') + '/wp-json/wc/v3/products/'
-
-    def read(lang, pid):
+    products = {}
+    for lang, pid in ids.items():
         response = requests.get(base + str(pid), params={'lang': lang}, auth=auth, timeout=45)
         response.raise_for_status()
         product = response.json()
         if str(product.get('id')) != str(pid):
-            raise ValueError('Проверка публикации ' + lang + ': получен другой ID товара')
-        return product
-
-    for lang, pid in ids.items():
-        product = read(lang, pid)
-        if product.get('status') not in ('draft', 'pending', 'publish'):
-            raise ValueError('Проверка публикации ' + lang + ': неподходящий статус товара')
-        if product['status'] != 'publish':
-            response = requests.put(base + str(pid), params={'lang': lang}, auth=auth,
-                                    json={'status': 'publish', 'lang': lang}, timeout=60)
-            response.raise_for_status()
-    products = {lang: read(lang, pid) for lang, pid in ids.items()}
-    for lang, product in products.items():
-        if product.get('status') != 'publish' or not product.get('slug') or not product.get('permalink'):
-            raise ValueError('Проверка публикации ' + lang + ': товар остался черновиком или без ссылки')
+            raise ValueError('Проверка карточки ' + lang + ': получен другой ID товара')
+        if product.get('status') not in ('draft', 'pending', 'publish', 'private', 'future'):
+            raise ValueError('Проверка карточки ' + lang + ': неподходящий статус товара')
+        products[lang] = product
     return products
 
 
-def verify_publication(config, ids, row, entries, mappings, attr_ids, require_published=True):
+def verify_publication(config, ids, row, entries, mappings, attr_ids, require_published=False):
     from decimal import Decimal
     from datetime import datetime
     from _6_create_variations import _load_all_variations
@@ -223,6 +212,8 @@ def verify_publication(config, ids, row, entries, mappings, attr_ids, require_pu
         product = response.json()
         if str(product.get('id')) != str(pid):
             raise ValueError('Проверка карточки ' + lang + ': получен другой ID товара')
+        if product.get('status') not in ('draft', 'pending', 'publish', 'private', 'future'):
+            raise ValueError('Проверка карточки ' + lang + ': неподходящий статус товара')
         if require_published and product.get('status') != 'publish':
             raise ValueError('Проверка карточки ' + lang + ': товар не опубликован')
         meta = {item['key']: item['value'] for item in product.get('meta_data', [])}
@@ -499,11 +490,9 @@ def _process(m, config, country, third, index, row, block, headers, write):
     apply_options(config, ids, entries, mappings)
     verify_publication(config, ids, row, entries, mappings, attr_ids, require_published=False)
     verify_categories(config, row['_RF_CATEGORY_PLAN'], ids)
-    published = publish_products(config, ids)
-    verify_publication(config, ids, row, entries, mappings, attr_ids)
-    verify_categories(config, row['_RF_CATEGORY_PLAN'], ids)
+    products = read_imported_products(config, ids)
     incomplete = str(row.get('STATUS') or '').lower() == m.STATUS_REVISED_INCOMPLETE.lower()
-    updates = {'LINK RACEFINDER': published[native]['permalink'], 'NOTE': ''}
+    updates = {'LINK RACEFINDER': products[native].get('permalink', ''), 'NOTE': ''}
     if incomplete:
         updates['WEBSITE SNAPSHOT HASH'] = m.compute_website_hash(row.get('WEBSITE', ''))[0]
     write(updates)
