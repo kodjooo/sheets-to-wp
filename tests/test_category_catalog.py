@@ -90,30 +90,6 @@ def test_roots_from_different_sports_fail_even_without_subcategory(monkeypatch):
     with pytest.raises(ValueError,match='одной группе'):catalog.resolve_categories({'wp_url':'https://example.test'},row,[(2,row)])
 
 
-def test_test_marker_is_not_treated_as_part_of_race_name(monkeypatch):
-    import _2_content_generation as generation
-    source={'title':'TEST Antonio Marathon Alcarria 2026','summary':'Summary','org_info':'Info','benefits':'','faq':''}
-    response=Mock(output_text=json.dumps({**source,'title':'Maratona Alcarria 2026'}))
-    create=Mock(return_value=response);monkeypatch.setattr(generation._OPENAI_CLIENT.responses,'create',create)
-    result=tri.translate_content(source,'pt')
-    assert result['title']=='TEST Antonio Maratona Alcarria 2026'
-    sent=json.loads(create.call_args.kwargs['input'][1]['content'][0]['text'])
-    assert sent['title']=='Marathon Alcarria 2026'
-
-
-@pytest.mark.parametrize('title,core,translated,expected',[
-    ('TEST TRIATHLON 2026','TRIATHLON 2026','Triatlo 2026','TEST Triatlo 2026'),
-    ('Testing Marathon 2026','Testing Marathon 2026','Testing Maratona 2026','Testing Maratona 2026'),
-])
-def test_marker_does_not_remove_part_of_real_event_name(monkeypatch,title,core,translated,expected):
-    import _2_content_generation as generation
-    source={'title':title,'summary':'Summary','org_info':'Info','benefits':'','faq':''}
-    response=Mock(output_text=json.dumps({**source,'title':translated}));create=Mock(return_value=response)
-    monkeypatch.setattr(generation._OPENAI_CLIENT.responses,'create',create)
-    assert tri.translate_content(source,'pt')['title']==expected
-    assert json.loads(create.call_args.kwargs['input'][1]['content'][0]['text'])['title']==core
-
-
 def test_empty_deadline_removes_previous_value_without_changing_public_status(monkeypatch):
     import _3_create_product as products
     monkeypatch.setattr(products,'_collect_category_ids',lambda row:[])

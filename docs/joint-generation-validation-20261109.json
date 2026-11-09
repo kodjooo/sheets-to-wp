@@ -1,0 +1,346 @@
+{
+  "date": "2026-11-09",
+  "events": 2,
+  "products_checked": 6,
+  "variations_checked": 21,
+  "all_existing_ids_retained": true,
+  "original_source_unchanged": true,
+  "business_inputs_unchanged": true,
+  "readonly_summaries_and_faq_preserved_from_first_response": true,
+  "generation": "joint PT/ES/EN in original generation and cleanup steps",
+  "separate_content_or_title_translation_calls": 0,
+  "api_calls": [
+    {
+      "stage": "generation",
+      "model": "gpt-4.1-mini",
+      "strict_schema": true,
+      "returned_keys": [
+        "title",
+        "summary",
+        "org_info",
+        "benefits",
+        "faq",
+        "cancellation",
+        "title_pt",
+        "summary_pt",
+        "org_info_pt",
+        "benefits_pt",
+        "faq_pt",
+        "cancellation_pt",
+        "title_es",
+        "summary_es",
+        "org_info_es",
+        "benefits_es",
+        "faq_es",
+        "cancellation_es",
+        "image_prompt",
+        "organizer_name",
+        "organizer_email"
+      ],
+      "usage": {
+        "input_tokens": 7846,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 890,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 8736
+      }
+    },
+    {
+      "stage": "cleanup",
+      "model": "gpt-4.1-mini",
+      "strict_schema": true,
+      "returned_keys": [
+        "title",
+        "summary",
+        "org_info",
+        "benefits",
+        "faq",
+        "cancellation",
+        "title_pt",
+        "summary_pt",
+        "org_info_pt",
+        "benefits_pt",
+        "faq_pt",
+        "cancellation_pt",
+        "title_es",
+        "summary_es",
+        "org_info_es",
+        "benefits_es",
+        "faq_es",
+        "cancellation_es",
+        "image_prompt",
+        "organizer_name",
+        "organizer_email"
+      ],
+      "usage": {
+        "input_tokens": 3330,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 459,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 3789
+      }
+    },
+    {
+      "stage": "generation",
+      "model": "gpt-4.1-mini",
+      "strict_schema": true,
+      "returned_keys": [
+        "title",
+        "summary",
+        "org_info",
+        "benefits",
+        "faq",
+        "cancellation",
+        "title_pt",
+        "summary_pt",
+        "org_info_pt",
+        "benefits_pt",
+        "faq_pt",
+        "cancellation_pt",
+        "title_es",
+        "summary_es",
+        "org_info_es",
+        "benefits_es",
+        "faq_es",
+        "cancellation_es",
+        "image_prompt",
+        "organizer_name",
+        "organizer_email"
+      ],
+      "usage": {
+        "input_tokens": 7838,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 1807,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 9645
+      }
+    },
+    {
+      "stage": "cleanup",
+      "model": "gpt-4.1-mini",
+      "strict_schema": true,
+      "returned_keys": [
+        "title",
+        "summary",
+        "org_info",
+        "benefits",
+        "faq",
+        "cancellation",
+        "title_pt",
+        "summary_pt",
+        "org_info_pt",
+        "benefits_pt",
+        "faq_pt",
+        "cancellation_pt",
+        "title_es",
+        "summary_es",
+        "org_info_es",
+        "benefits_es",
+        "faq_es",
+        "cancellation_es",
+        "image_prompt",
+        "organizer_name",
+        "organizer_email"
+      ],
+      "usage": {
+        "input_tokens": 4335,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 1534,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 5869
+      }
+    }
+  ],
+  "tests": 240,
+  "products": [
+    {
+      "id": 19089,
+      "lang": "pt",
+      "title": "TEST FRESH 20261107 Trail Torres del Foc 2026",
+      "variants": 4
+    },
+    {
+      "id": 19088,
+      "lang": "es",
+      "title": "TEST FRESH 20261107 Trail Torres del Foc 2026",
+      "variants": 4
+    },
+    {
+      "id": 19091,
+      "lang": "en",
+      "title": "TEST FRESH 20261107 Trail Torres del Foc 2026",
+      "variants": 4
+    },
+    {
+      "id": 19107,
+      "lang": "pt",
+      "title": "TEST FRESH 20261107 Maratona Alcarria 2026",
+      "variants": 3
+    },
+    {
+      "id": 19106,
+      "lang": "es",
+      "title": "TEST FRESH 20261107 Maratón Alcarria 2026",
+      "variants": 3
+    },
+    {
+      "id": 19109,
+      "lang": "en",
+      "title": "TEST FRESH 20261107 Marathon Alcarria 2026",
+      "variants": 3
+    }
+  ],
+  "frontend": [
+    {
+      "id": 19089,
+      "lang": "pt",
+      "url": "https://dev.racefinder.es/pt/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+      "http": 200,
+      "variant_headings": [
+        "60 km Corrida de montanha",
+        "42 km Corrida de montanha",
+        "21 km Corrida de montanha",
+        "12 km Corrida de montanha"
+      ]
+    },
+    {
+      "id": 19088,
+      "lang": "es",
+      "url": "https://dev.racefinder.es/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+      "http": 200,
+      "variant_headings": [
+        "60 km Carrera de montaña",
+        "42 km Carrera de montaña",
+        "21 km Carrera de montaña",
+        "12 km Carrera de montaña"
+      ]
+    },
+    {
+      "id": 19091,
+      "lang": "en",
+      "url": "https://dev.racefinder.es/en/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+      "http": 200,
+      "variant_headings": [
+        "60 km Trail running",
+        "42 km Trail running",
+        "21 km Trail running",
+        "12 km Trail running"
+      ]
+    },
+    {
+      "id": 19107,
+      "lang": "pt",
+      "url": "https://dev.racefinder.es/pt/event/test-fresh-20261107-maratona-alcarria-2026/",
+      "http": 200,
+      "variant_headings": [
+        "42 km Individual Corrida de Estrada",
+        "42 km Duplas Corrida de Estrada",
+        "42 km Equipas de 4 Corrida de Estrada"
+      ]
+    },
+    {
+      "id": 19106,
+      "lang": "es",
+      "url": "https://dev.racefinder.es/event/test-fresh-20261107-maraton-alcarria-2026/",
+      "http": 200,
+      "variant_headings": [
+        "42 km Individual Carrera en carretera",
+        "42 km Parejas Carrera en carretera",
+        "42 km Equipos de 4 Carrera en carretera"
+      ]
+    },
+    {
+      "id": 19109,
+      "lang": "en",
+      "url": "https://dev.racefinder.es/en/event/test-fresh-20261107-alcarria-marathon-2026/",
+      "http": 200,
+      "variant_headings": [
+        "42 km Individual Road Running",
+        "42 km Pairs Road Running",
+        "42 km Teams of 4 Road Running"
+      ]
+    }
+  ],
+  "tested_wp_head": "3b3601fe48c6543a517338c1fbf312ca9fe3af9c",
+  "images_enabled": false,
+  "business_category_negative_checks_passed": true,
+  "active_prompt_sha256": {
+    "assistant_system.txt": "7390cef413cfbcab68be9875f7e93c722e48e6ad072b3c7d12fda2a07cb575d8",
+    "second_system.txt": "579e62a6cdb50caf956064545c7e00df162e41e21b85e68fa0d5d2d9aa8eb613"
+  },
+  "source_sha256": {
+    "trilingual_import.py": "e232bc594bc1725bcb7f2a9be1c6a8f29e8ee5a3202e41e6572b3011a4b19024",
+    "_2_content_generation.py": "fbdf6c2acc88830a44d842e12ff83c33a3cc0da791e1e5a443469817c243cfb7",
+    "joint_content.py": "d6d2ced837b715bc21c31d0052dbb92e445c9dddc7213599a902ce645cf4658d"
+  },
+  "original_prompt_sha256": {
+    "assistant_system.txt": "12282d0edebcc47ffe51cf8762d995d25225545fee7f1efa536de4e2e3e729c3",
+    "second_system.txt": "0e799737818c7af453b65ba44a5620c7eb89efa0832a770b9b4f3d69dd754382"
+  },
+  "published_repeat_without_ai_calls": true,
+  "restored_branch": "kt/70-portal-sync-2",
+  "restored_head": "e5a8c826a3e69e56e9c882ef4c9c914c3d401759",
+  "after_restore_frontend": [
+    {
+      "url": "https://dev.racefinder.es/pt/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+      "http": 200,
+      "lang": "pt"
+    },
+    {
+      "url": "https://dev.racefinder.es/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+      "http": 200,
+      "lang": "es"
+    },
+    {
+      "url": "https://dev.racefinder.es/en/event/test-fresh-20261107-trail-torres-del-foc-2026/",
+      "http": 200,
+      "lang": "en"
+    },
+    {
+      "url": "https://dev.racefinder.es/pt/event/test-fresh-20261107-maratona-alcarria-2026/",
+      "http": 200,
+      "lang": "pt"
+    },
+    {
+      "url": "https://dev.racefinder.es/event/test-fresh-20261107-maraton-alcarria-2026/",
+      "http": 200,
+      "lang": "es"
+    },
+    {
+      "url": "https://dev.racefinder.es/en/event/test-fresh-20261107-alcarria-marathon-2026/",
+      "http": 200,
+      "lang": "en"
+    }
+  ],
+  "temporary_access_revoked_http": 401,
+  "original_configuration_unchanged": true,
+  "browser_review": {
+    "alcarria_en_pt_es": true,
+    "foc_en_before_and_after_restore": true
+  },
+  "limitations": [
+    "Image generation was disabled; this acceptance checks text generation and publication, not image generation.",
+    "Existing frontend date formatting and recommendation-language issues were outside this change.",
+    "After restoring the original DEV branch, breadcrumb choice and booking labels follow that branch; all six cards remain published."
+  ]
+}

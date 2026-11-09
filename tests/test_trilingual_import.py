@@ -39,7 +39,9 @@ def test_portuguese_event_in_spanish_stays_portuguese():
 def workflow(monkeypatch):
     native_result={'summary':'English summary','org_info':'English info','benefits':'Water','faq':'Q: Time?\nA: Morning.',
         'summary_pt':'Native summary','org_info_pt':'Native info','benefits_pt':'Agua','faq_pt':'Q: Time?\nA: Morning.',
-        'cancellation':'Terms EN','cancellation_pt':'Terms native','organizer_name':'Organizer','organizer_email':'contact@example.test'}
+        'title':'English race','title_pt':'Corrida','title_es':'Carrera',
+        'summary_es':'Resumen español','org_info_es':'Información española','benefits_es':'Agua','faq_es':'Q: Time?\nA: Morning.',
+        'cancellation_es':'Condiciones','cancellation':'Terms EN','cancellation_pt':'Terms native','organizer_name':'Organizer','organizer_email':'contact@example.test'}
     row={'ID':'TEST-TRI','STATUS':'Revised (complete)','COUNTRY':'Portugal','RACE NAME (PT)':'Corrida',
          'RACE NAME (ES)':'Carrera','CATEGORY':'Running','LOCATION':'38.72, -9.14','LOCATION (CITY)':'Lisboa',
          'WEBSITE':'https://example.test/race','REGULATIONS':'','EVENT START DATE':'20/06/2027',
@@ -69,8 +71,8 @@ def workflow(monkeypatch):
     monkeypatch.setattr(m,'_batch_update_cells',write)
     monkeypatch.setattr(m,'extract_text_from_url',Mock(return_value=('Verified source text',None)))
     monkeypatch.setattr(m,'validate_source_texts',Mock(return_value=[]))
-    monkeypatch.setattr(m,'translate_title_to_en',Mock(return_value='English race'))
-    monkeypatch.setattr(m,'call_openai_assistant',Mock(return_value={'facts':'verified'}))
+    monkeypatch.setattr(m,'translate_title_to_en',Mock(side_effect=AssertionError('Separate title translation must not run')))
+    monkeypatch.setattr(m,'call_openai_assistant',Mock(return_value=dict(native_result)))
     monkeypatch.setattr(m,'call_second_openai_assistant',Mock(return_value=native_result))
     monkeypatch.setattr(m,'get_coordinates_with_city_fallback',Mock(return_value=(38.72,-9.14)))
     monkeypatch.setattr(m,'resolve_municipality',lambda value:'Lisboa')
@@ -79,7 +81,6 @@ def workflow(monkeypatch):
     monkeypatch.setattr(m,'assign_attributes_to_product',Mock())
     monkeypatch.setattr(m,'sync_variations_by_ids',Mock(side_effect=lambda pid,entries,lang=None:{e['row_index']:pid*10+i for i,e in enumerate(entries)}))
     monkeypatch.setattr(m,'reapply_price_schedules',Mock())
-    monkeypatch.setattr(tri,'translate_content',Mock(side_effect=lambda source,target:{k:(v if k=='faq' else 'Translated '+v if v else '') for k,v in source.items()}))
     monkeypatch.setattr(tri,'write_content',Mock())
     monkeypatch.setattr(tri,'link_variations',Mock())
     monkeypatch.setattr(tri,'auth_token',Mock(return_value='test-jwt'))
@@ -117,19 +118,21 @@ def test_three_languages_share_country_prices_and_stable_ids(workflow,profile):
     w.row['STATUS']='Revised (complete)';w.run(profile)
     assert first=={key:value for key,value in w.row.items() if ' ID ' in key}
     assert len(w.created)==1
-    assert m.call_openai_assistant.call_count==1 and tri.translate_content.call_count==1
+    assert m.call_openai_assistant.call_count==1 and m.call_second_openai_assistant.call_count==1
     assert active_profile()==PT
 
 
-def test_third_generation_failure_reuses_finished_pair(workflow,monkeypatch):
-    w=workflow;translate=tri.translate_content
-    monkeypatch.setattr(tri,'translate_content',Mock(side_effect=ValueError('Third language failed')))
+def test_missing_third_language_does_not_checkpoint_partial_pair(workflow,monkeypatch):
+    w=workflow
+    good=dict(m.call_second_openai_assistant.return_value)
+    m.call_second_openai_assistant.return_value['org_info_es']=''
     with pytest.raises(ValueError):w.run()
-    assert w.row['STATUS']=='Revised (complete)'
-    assert w.row['CONTENT FINGERPRINT'] and not w.row['THIRD LANGUAGE FINGERPRINT']
+    assert w.row['STATUS']=='Revised (complete)' and not w.row['CONTENT FINGERPRINT']
     assert not w.created
-    monkeypatch.setattr(tri,'translate_content',translate);w.run()
-    assert m.call_openai_assistant.call_count==1 and m.translate_title_to_en.call_count==1
+    m.call_second_openai_assistant.return_value=good
+    w.run()
+    assert m.call_openai_assistant.call_count==2
+    m.translate_title_to_en.assert_not_called()
     assert w.row['STATUS']=='Published'
 
 
@@ -143,7 +146,7 @@ def test_wp_failure_after_primary_creation_reuses_id_and_all_text(workflow,monke
     assert w.row['WP PRODUCT ID PT']==100 and w.row['STATUS']=='Revised (complete)'
     monkeypatch.setattr(m,'create_product_pt_primary',w.create);w.run()
     assert len(w.created)==1 and w.row['STATUS']=='Published'
-    assert m.call_openai_assistant.call_count==1 and tri.translate_content.call_count==1
+    assert m.call_openai_assistant.call_count==1 and m.call_second_openai_assistant.call_count==1
 
 
 def test_missing_headers_stop_before_generation_or_writes(workflow):
@@ -156,8 +159,7 @@ def test_missing_headers_stop_before_generation_or_writes(workflow):
 def test_input_change_invalidates_both_translation_caches(workflow):
     w=workflow;w.run();w.row['PRICE']='15';w.row['STATUS']='Revised (complete)';w.run()
     assert m.call_openai_assistant.call_count==2
-    # Если английский текст не изменился, уже готовый третий перевод остаётся пригоден.
-    assert tri.translate_content.call_count==1
+    assert m.call_second_openai_assistant.call_count==2
     assert len(w.created)==1
 
 
@@ -191,7 +193,7 @@ def test_main_dispatches_new_event_and_skips_published_repeat(workflow,monkeypat
     m.run_automation()
     assert w.row['STATUS']=='Published' and len(w.created)==1
     m.run_automation()
-    assert m.call_openai_assistant.call_count==1 and tri.translate_content.call_count==1
+    assert m.call_openai_assistant.call_count==1 and m.call_second_openai_assistant.call_count==1
 
 
 def test_acf_failure_is_not_reported_as_published_and_retry_keeps_id(workflow,monkeypatch):
@@ -209,16 +211,17 @@ def test_translated_faq_must_preserve_machine_readable_question_answer_pairs():
     with pytest.raises(ValueError,match='FAQ'):tri.validate_translation({**source,'faq':'P: Onde?\nR: Aqui.'},source)
 
 
-def test_retry_uses_snapshot_even_if_source_would_change(workflow,monkeypatch):
-    w=workflow;translate=tri.translate_content
-    monkeypatch.setattr(tri,'translate_content',Mock(side_effect=ValueError('Temporary model failure')))
+def test_retry_uses_all_three_cached_versions_when_wp_failed(workflow,monkeypatch):
+    w=workflow
+    monkeypatch.setattr(tri,'write_content',Mock(side_effect=ValueError('Temporary WP failure')))
     with pytest.raises(ValueError):w.run()
     assert w.row['LANGUAGE STATE']=='IN_PROGRESS'
-    monkeypatch.setattr(tri,'translate_content',translate)
+    monkeypatch.setattr(tri,'write_content',Mock())
     monkeypatch.setattr(m,'extract_text_from_url',Mock(side_effect=RuntimeError('Source changed or unavailable')))
     w.run()
     assert w.row['STATUS']=='Published' and w.row['LANGUAGE STATE']=='COMPLETE'
     assert m.call_openai_assistant.call_count==1
+    assert m.call_second_openai_assistant.call_count==1
 
 
 def test_preview_requires_trilingual_columns_before_promising_readiness(workflow,monkeypatch):
@@ -279,3 +282,23 @@ def test_publish_failure_keeps_row_retryable_with_saved_ids(workflow,monkeypatch
     w.run()
     assert w.row['STATUS']=='Published' and len(w.created)==1
     assert m.call_openai_assistant.call_count==1
+
+
+def test_joint_generation_uses_only_existing_two_steps_for_both_countries(workflow):
+    w=workflow;w.run()
+    m.call_openai_assistant.assert_called_once()
+    assert m.call_openai_assistant.call_args.kwargs['trilingual'] is True
+    m.call_second_openai_assistant.assert_called_once()
+    assert m.call_second_openai_assistant.call_args.kwargs['trilingual'] is True
+    m.translate_title_to_en.assert_not_called()
+    assert all(w.row[tri.column(key,lang)] for lang in tri.LANGUAGES for key in ('title','summary','org_info'))
+
+
+@pytest.mark.parametrize('title,is_test',[('TEST Antonio Marathon Alcarria 2026',True),('TEST TRIATHLON 2026',True),('Testing Marathon 2026',False)])
+def test_joint_titles_preserve_test_marker_without_separate_translation(workflow,title,is_test):
+    w=workflow;w.row['RACE NAME (PT)']=title;w.run()
+    assert w.row['RACE NAME (PT)']==title
+    assert w.row['RACE NAME'].startswith('TEST ')==is_test
+    assert w.row['RACE NAME (ES)'].startswith('TEST ')==is_test
+    assert title in m.call_openai_assistant.call_args.args[0]
+    m.translate_title_to_en.assert_not_called()

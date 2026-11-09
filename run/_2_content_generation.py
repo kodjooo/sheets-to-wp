@@ -19,6 +19,7 @@ from translation_prompt import build_translation_messages
 from url_utils import normalize_http_url
 from source_http import source_headers, validate_source_response
 from source_content import extract_spanish_card
+from joint_content import content_prompt, joint_response_format
 
 logger = get_logger()
 config = load_config()
@@ -242,7 +243,7 @@ def validate_source_texts(
         errors.append("REGULATIONS parse failed")
     return errors
 
-def normalize_regulations_link_block(payload: dict, regulations_url: str) -> dict:
+def normalize_regulations_link_block(payload: dict, regulations_url: str, trilingual=False) -> dict:
     if not isinstance(payload, dict) or not regulations_url:
         return payload
     link_html = (
@@ -251,7 +252,7 @@ def normalize_regulations_link_block(payload: dict, regulations_url: str) -> dic
     )
     link_html_pt = (
         f'<strong><a class="" href="{regulations_url}" target="_new" rel="noopener">'
-        + ("Reglamento ↗</a></strong>" if active_profile().code == "es" else "Regulamento ↗</a></strong>")
+        + ("Reglamento ↗</a></strong>" if active_profile().code == "es" and not trilingual else "Regulamento ↗</a></strong>")
     )
     org_info = payload.get("org_info", "")
     if isinstance(org_info, str) and "Regulation link ↗" in org_info:
@@ -262,7 +263,7 @@ def normalize_regulations_link_block(payload: dict, regulations_url: str) -> dic
                 break
         payload["org_info"] = "\n".join(lines)
     org_info_pt = payload.get("org_info_pt", "")
-    primary_label = "Reglamento ↗" if active_profile().code == "es" else "Regulamento ↗"
+    primary_label = "Reglamento ↗" if active_profile().code == "es" and not trilingual else "Regulamento ↗"
     if isinstance(org_info_pt, str) and primary_label in org_info_pt:
         lines = org_info_pt.splitlines()
         for i, line in enumerate(lines):
@@ -270,6 +271,14 @@ def normalize_regulations_link_block(payload: dict, regulations_url: str) -> dic
                 lines[i] = link_html_pt
                 break
         payload["org_info_pt"] = "\n".join(lines)
+    if trilingual:
+        info = payload.get('org_info_es', '')
+        es_link = link_html.replace('Regulation link ↗', 'Reglamento ↗')
+        if isinstance(info, str):
+            lines = info.splitlines()
+            if lines and ('Reglamento ↗' in lines[0] or 'Regulation link ↗' in lines[0]):
+                lines = lines[1:]
+            payload['org_info_es'] = es_link + '\n\n' + '\n'.join(lines).strip()
     return payload
 
 def translate_title_to_en(title: str) -> str:
@@ -291,12 +300,12 @@ def translate_title_to_en(title: str) -> str:
         logger.error(f"❌ Ошибка при переводе заголовка: {e}")
         return ""
 
-def call_openai_assistant(text, file_ids=None):
+def call_openai_assistant(text, file_ids=None, trilingual=False):
     max_attempts = 3
     for attempt in range(1, max_attempts + 1):
         try:
             model = config["openai_text_model"]
-            system_prompt = localized_prompt(_load_prompt_file(config["openai_system_prompt_file"]))
+            system_prompt = content_prompt(_load_prompt_file(config["openai_system_prompt_file"]), trilingual)
             user_prompt = text
 
             logger.info("🤖 Отправка в OpenAI Responses API, модель: %s", model)
@@ -324,6 +333,8 @@ def call_openai_assistant(text, file_ids=None):
                 "model": model,
                 "input": input_payload,
             }
+            if trilingual:
+                request_kwargs['text'] = joint_response_format()
             reasoning_effort = config.get("openai_text_reasoning_effort")
             if reasoning_effort:
                 logger.info("🧠 Уровень размышления для текста: %s", reasoning_effort)
@@ -431,7 +442,7 @@ def call_organizer_contacts_assistant(text, file_ids=None):
             if attempt == max_attempts:
                 return None
 
-def call_second_openai_assistant(first_result, regulations_hint: str | None = None):
+def call_second_openai_assistant(first_result, regulations_hint: str | None = None, trilingual=False):
     """
     Вызывает второй запрос OpenAI Responses API с результатом первого ассистента.
     """
@@ -439,7 +450,7 @@ def call_second_openai_assistant(first_result, regulations_hint: str | None = No
     for attempt in range(1, max_attempts + 1):
         try:
             model = config["openai_second_model"]
-            system_prompt = localized_prompt(_load_prompt_file(config["openai_second_system_prompt_file"]))
+            system_prompt = content_prompt(_load_prompt_file(config["openai_second_system_prompt_file"]), trilingual)
             if isinstance(first_result, dict):
                 text_content = json.dumps(first_result, ensure_ascii=False, indent=2)
             else:
@@ -458,13 +469,15 @@ def call_second_openai_assistant(first_result, regulations_hint: str | None = No
                     {"role": "system", "content": [{"type": "input_text", "text": system_prompt}]}
                 )
             input_payload.append(
-                {"role": "user", "content": [{"type": "input_text", "text": user_prompt[:40000]}]}
+                {"role": "user", "content": [{"type": "input_text", "text": user_prompt if trilingual else user_prompt[:40000]}]}
             )
 
             request_kwargs = {
                 "model": model,
                 "input": input_payload,
             }
+            if trilingual:
+                request_kwargs['text'] = joint_response_format()
             reasoning_effort = config.get("openai_second_reasoning_effort")
             if reasoning_effort:
                 logger.info("🧠 Уровень размышления для второго шага: %s", reasoning_effort)

@@ -111,7 +111,10 @@ function rf_import_verify_categories( $request ) {
             $c = rf_import_category_record( $extra );
             // Автоматическая категория истёкшего события добавляется сайтом, а не таблицей.
             $english = $c ? $wpdb->get_var( $wpdb->prepare( "SELECT t.name FROM {$wpdb->prefix}icl_translations i JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id=i.element_id JOIN {$wpdb->terms} t USING(term_id) WHERE i.element_type='tax_product_cat' AND i.trid=%d AND i.language_code='en'", $c['trid'] ) ) : '';
-            if ( $c && $c['lang'] === $lang && $c['parent'] === 0 && $english === 'Expired' ) { $actual = array_values( array_diff( $actual, array( $extra ) ) ); }
+            $end = (string) get_post_meta( $id, 'event_date_end', true );
+            // Старый обработчик сайта назначает общий EN Expired и ES-карточке.
+            $shared_expired = $c && $c['lang'] === 'en' && preg_match( '/^[0-9]{8}$/', $end ) && $end < wp_date( 'Ymd' );
+            if ( $c && ( $c['lang'] === $lang || $shared_expired ) && $c['parent'] === 0 && $english === 'Expired' ) { $actual = array_values( array_diff( $actual, array( $extra ) ) ); }
         }
         sort( $actual ); sort( $expected );
         if ( $actual !== $expected ) { return new WP_Error( 'rf_category_assignment', 'В карточке отсутствуют нужные категории или появились лишние', array( 'status' => 409 ) ); }

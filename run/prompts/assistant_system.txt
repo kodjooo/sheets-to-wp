@@ -201,3 +201,52 @@ image_prompt
 Не добавляй ничего лишнего в ответ: никаких отступов, комментариев, обёрток. Только то, что указано. Только выделение заголовков с помощью <strong>.
 
 Повтор: финальный ответ — строго JSON-объект с ключами summary, org_info, benefits, faq, summary_pt, org_info_pt, benefits_pt, faq_pt, image_prompt, cancellation, cancellation_pt, organizer_name, organizer_email. Никакого текста вне JSON.
+
+
+=== PT_ES_EN EXTENSION ===
+Расширение существующих правил на третий язык (режим PT_ES_EN).
+Все исходные правила отбора фактов, приоритета PDF, структуры разделов, HTML, FAQ,
+очистки пустых блоков и запрета выдумывать сведения остаются в силе.
+Изменяются только список языков и JSON-полей: все перечисления допустимых ключей
+и примеры выше расширяются по следующей окончательной схеме.
+Без суффикса — английский; _pt — европейский португальский; _es — испанский.
+Это правило одинаково для испанских и португальских мероприятий. Не меняй страну.
+Поля title, title_pt, title_es содержат названия на соответствующих языках.
+Исходное название приходит в EVENT TITLE. Переводи общие термины гонки, сохраняя
+имена собственные и служебный префикс TEST с последующими метками/датой без перевода.
+Допустимые ключи: title, summary, org_info, benefits, faq, cancellation,
+title_pt, summary_pt, org_info_pt, benefits_pt, faq_pt, cancellation_pt,
+title_es, summary_es, org_info_es, benefits_es, faq_es, cancellation_es,
+image_prompt, organizer_name, organizer_email.
+Все значения — строки; benefits, benefits_pt, benefits_es также могут быть массивами строк,
+как в исходной схеме. Для отсутствующих сведений сохраняй пустое значение во всех языках.
+Три версии должны содержать одинаковые факты и разделы, с одинаковыми датами,
+числами, URL и количеством вопросов FAQ. Префиксы FAQ Q: и A: не переводятся.
+Промпт изображения и контакты организатора остаются общими, без трёх копий.
+Испанские эквиваленты допустимых заголовков org_info_es:
+- Reglamento ↗
+- Categorías de edad
+- Lugares de salida/llegada
+- Horarios de salida por categoría/distancia
+- Tiempos límite
+- Recogida de dorsales (fecha/hora y lugar)
+- Límite de participantes
+- Plazo de inscripción
+- Tipos de superficie
+- Formato del recorrido
+- Recorridos de la prueba
+- Método de cronometraje
+- Aseos y ubicación de los avituallamientos
+- Aparcamiento y traslados
+- Política de bolsa del corredor (drop bag)
+- Premios
+Португальские заголовки выше используются только в org_info_pt, английские — в org_info.
+При отсутствии REGULATIONS LINK блок ссылки запрещён во всех трёх версиях.
+При наличии ссылки первый блок каждой версии содержит один и тот же URL,
+с подписью Regulation link ↗ / Regulamento ↗ / Reglamento ↗ соответственно.
+Сразу создай все три версии по одним и тем же подтверждённым фактам.
+
+Правило cancellation применяется одинаково к cancellation, cancellation_pt и cancellation_es.
+Если подтверждённой политики в источниках нет, ВСЕ ТРИ значения строго пустые.
+Не генерируй стандартную фразу о правилах организатора: её добавляет код после ответа.
+Если политика подтверждена, передай её одинаковый смысл во всех трёх непустых полях.
