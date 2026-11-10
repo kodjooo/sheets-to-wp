@@ -172,6 +172,11 @@ def load_all_rows():
         all_rows.append((i + 2, row))  # +2 из-за заголовка
     return all_rows, headers
 
+def get_worksheet_link():
+    sheet = _get_sheet_with_retry()
+    return f"https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/edit#gid={sheet.id}"
+
+
 def update_cell(row_index, column_name, value, headers):
     # Обновляем ячейку с контролируемыми ретраями и переинициализацией клиента при необходимости
     if column_name not in headers:

@@ -43,6 +43,7 @@ if "_1_google_loader" not in sys.modules:
     gl_stub.load_config = lambda: {}
     gl_stub.load_revised_rows = lambda: []
     gl_stub.load_all_rows = lambda: ([], {})
+    gl_stub.get_worksheet_link = lambda: "https://example.test/sheet"
     gl_stub.update_status_to_published = lambda *args, **kwargs: None
     gl_stub.batch_update_cells = lambda *args, **kwargs: None
     sys.modules["_1_google_loader"] = gl_stub

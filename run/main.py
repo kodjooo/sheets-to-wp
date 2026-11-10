@@ -67,6 +67,7 @@ if LOG_FILE:
 from _1_google_loader import (
     load_config,
     load_all_rows,
+    get_worksheet_link,
     batch_update_cells as _batch_update_cells
 )
 
@@ -110,6 +111,7 @@ from utils import (
     get_missing_pt_fields,
     normalize_attribute_name,
 )
+from website_alerts import format_website_changes
 from website_snapshot import (
     compute_website_hash,
     has_website_changed,
@@ -867,12 +869,9 @@ def run_automation(event_id=None):
             continue
 
     if TELEGRAM_NOTIFICATIONS_ENABLED and changed_websites:
-        lines = ["Website changes detected", ""]
-        for item in changed_websites[:100]:
-            lines.append(f"- ID: {item['id']} | Race: {item['race']} | URL: {item['url']}")
-        if len(changed_websites) > 100:
-            lines.append(f"... and {len(changed_websites) - 100} more")
-        message = "\n".join(lines)
+        message = format_website_changes(
+            changed_websites, get_worksheet_link(),
+        )
         sent = send_telegram_notification(
             TELEGRAM_API_ID,
             TELEGRAM_API_HASH,

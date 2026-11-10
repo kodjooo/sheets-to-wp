@@ -109,7 +109,7 @@ async def _send_telethon_message(
             return False
 
         target_entity = _resolve_target(target)
-        await client.send_message(target_entity, message)
+        await client.send_message(target_entity, message, parse_mode=None, link_preview=False)
         return True
     finally:
         await client.disconnect()
