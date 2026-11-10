@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-10",
+  "container": "racefinder-automation",
+  "running": true,
+  "timezone": "Europe/Moscow",
+  "scheduled_hour": 2,
+  "scheduled_minute": 0,
+  "run_on_startup": false,
+  "next_run": "2026-11-11 02:00:00 Europe/Moscow",
+  "startup_log_verified": true,
+  "immediate_processing_started": false,
+  "new_product_status": "draft",
+  "publisher_commit": "0ba8c9f",
+  "restart_policy": "unless-stopped"
+}
