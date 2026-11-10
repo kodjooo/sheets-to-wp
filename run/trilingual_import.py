@@ -1,10 +1,8 @@
 """Три языка для новых публикаций: контроль режима, возобновление и единая география."""
-import hashlib
 import json
 import logging
 import os
 import re
-from pathlib import Path
 
 import requests
 from publication_contract import validate_block, label_catalog, known_labels
@@ -13,7 +11,7 @@ from category_catalog import resolve_categories, verify_categories
 from utils import parse_faq_items
 from country_profile import (CountryProfile, active_profile, activate_profile,
                              reset_profile, validate_spanish_row)
-from joint_content import GENERATION_CONTRACT, SUFFIXES, validate_joint_result, validate_cleaned_result
+from joint_content import SUFFIXES, validate_joint_result, validate_cleaned_result
 
 SCHEME = 'PT_ES_EN'
 FIELDS = {'summary': 'SUMMARY', 'org_info': 'ORG INFO', 'benefits': 'BENEFITS', 'faq': 'FAQ'}
@@ -78,24 +76,6 @@ def write_content(product_id, data):
     response.raise_for_status()
 
 
-def digest(value):
-    return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, default=str).encode()).hexdigest()
-
-
-def input_snapshot(row, block, native):
-    keys = ('COUNTRY', 'CATEGORY', 'SUBCATEGORY', 'LOCATION', 'LOCATION (CITY)', 'MUNICIPALITY',
-            'PROVINCE', 'WEBSITE', 'REGULATIONS', 'BOOK URL', 'EVENT START DATE', 'EVENT END DATE',
-            'EVENT START TIME', 'REGISTRATION DEADLINE', 'DISTANCE', 'PRICE', 'PRICE CHANGES',
-            'TEAM', 'TYPE', 'LICENSE', 'RACE START DATE', 'RACE START TIME', 'ATTRIBUTE', 'VALUE')
-    return {'generation_contract': GENERATION_CONTRACT, 'input': {k: row.get(k, '') for k in keys}, 'native_title': row.get(column('title', native)),
-            'variations': [{k: child.get(k, '') for k in keys if k != 'COUNTRY'} for _, child in block[1:]]}
-
-
-def source_fingerprint(row, block, website, regulations, pdf, native):
-    return digest({'inputs': input_snapshot(row, block, native), 'website': website, 'regulations': regulations,
-                   'pdf': hashlib.sha256(Path(pdf).read_bytes()).hexdigest() if pdf else ''})
-
-
 def auth_token(config):
     from _3_create_product import get_jwt_token
     return get_jwt_token()
@@ -127,7 +107,7 @@ def link_variations(config, source_id, target_id, lang, allow_missing=False):
 
 
 def schema_columns():
-    columns = ['LANGUAGE SCHEME', 'LANGUAGE STATE', 'INPUT FINGERPRINT', 'CONTENT FINGERPRINT', 'THIRD LANGUAGE FINGERPRINT', 'ATTRIBUTE TRANSLATIONS', 'COUNTRY', 'NOTE', 'STATUS']
+    columns = ['LANGUAGE SCHEME', 'COUNTRY', 'NOTE', 'STATUS']
     for lang in LANGUAGES:
         columns.extend(column(key, lang) for key in ('title', *FIELDS))
         columns.extend(('WP PRODUCT ID ' + lang.upper(), 'WP VARIATION ID ' + lang.upper()))
@@ -290,7 +270,6 @@ def process_trilingual(m, index, original, following, headers):
         m._batch_update_cells(row_index, updates, headers)
         if row_index == index:
             row.update(updates)
-    row['_RF_RESUME'] = row.get('LANGUAGE STATE') == 'IN_PROGRESS'
     try:
         if not str(row.get(column('title', native)) or '').strip():
             raise ValueError('Не заполнено название мероприятия на исходном языке')
@@ -298,7 +277,7 @@ def process_trilingual(m, index, original, following, headers):
         if native == 'es':
             validate_spanish_row(row, headers, config['wp_url'])
         validate_block(block)
-        write({'LANGUAGE SCHEME': SCHEME, 'LANGUAGE STATE': 'IN_PROGRESS' if row['_RF_RESUME'] else 'CHECKING_SOURCE'})
+        write({'LANGUAGE SCHEME': SCHEME})
         row['_RF_CATEGORY_PLAN'] = resolve_categories(config, row, block)
         _process(m, config, country, third, index, row, block, headers, write)
     except Exception as error:
@@ -308,89 +287,60 @@ def process_trilingual(m, index, original, following, headers):
 
 def _process(m, config, country, third, index, row, block, headers, write):
     native = country.language
-    input_hash = digest(input_snapshot(row, block, native))
-    resumed = (row.get('_RF_RESUME') and row.get('INPUT FINGERPRINT') == input_hash
-               and bool(row.get('CONTENT FINGERPRINT')))
-    if resumed:
-        try:
-            for lang in LANGUAGES:
-                validate_translation(content(row, lang), content(row, 'en'))
-        except ValueError:
-            resumed = False
     regulations_url = m.unwrap_google_viewer_url(row.get('REGULATIONS', ''))
-    website, regulations, pdf = '', '', None
-    if resumed:
-        fingerprint = row['CONTENT FINGERPRINT']
-    else:
-        website, _ = m.extract_text_from_url(row.get('WEBSITE', ''))
-        regulations, pdf = m.extract_text_from_url(regulations_url) if regulations_url else ('', None)
-        errors = m.validate_source_texts(website_url=row.get('WEBSITE', ''), website_text=website,
-            regulations_url=regulations_url, regulations_text=regulations, regulations_pdf_path=pdf)
-        if errors:
-            raise ValueError('; '.join(errors))
-        fingerprint = source_fingerprint(row, block, website, regulations, pdf, native)
-    ready = bool(resumed or row.get('CONTENT FINGERPRINT') == fingerprint)
-    ready = ready and all(str(row.get(column(k, lang)) or '').strip() for lang in LANGUAGES for k in ('title', 'summary', 'org_info'))
-    if ready:
+    website, _ = m.extract_text_from_url(row.get('WEBSITE', ''))
+    regulations, pdf = m.extract_text_from_url(regulations_url) if regulations_url else ('', None)
+    errors = m.validate_source_texts(website_url=row.get('WEBSITE', ''), website_text=website,
+        regulations_url=regulations_url, regulations_text=regulations, regulations_pdf_path=pdf)
+    if errors:
+        raise ValueError('; '.join(errors))
+    # Каждый явный Revised заново получает тексты; STATUS и сохранённые ID управляют повтором.
+    if m.SKIP_AI:
+        raise ValueError('Трёхъязычный импорт требует настоящие тексты: SKIP_AI должен быть false')
+    file_ids = []
+    if pdf:
+        with open(pdf, 'rb') as source:
+            file_ids.append(m.openai.files.create(file=source, purpose='assistants').id)
+    source_prompt = m.build_first_assistant_prompt(
+        regulations_url=regulations_url, regulations_text=regulations, website_text=website)
+    source_prompt = 'EVENT TITLE ('+native.upper()+'): '+row[column('title',native)]+'\n\n'+source_prompt
+    first = m.call_openai_assistant(source_prompt, file_ids=file_ids, trilingual=True)
+    validate_joint_result(first)
+    first = m.normalize_regulations_link_block(first, regulations_url, trilingual=True)
+    result = None
+    error = None
+    for _ in range(1 + max(0, m.PT_RETRY_ATTEMPTS)):
+        cleaned = m.call_second_openai_assistant(first,
+            regulations_hint='REGULATIONS LINK: '+(regulations_url or '(empty)'), trilingual=True)
         try:
-            for lang in LANGUAGES:
-                validate_translation(content(row, lang), content(row, 'en'))
-        except ValueError:
-            ready = False
-    if not ready:
-        write({'CONTENT FINGERPRINT': '', 'THIRD LANGUAGE FINGERPRINT': ''})
-    # Старые тексты не становятся снимком нового запуска до успешного чтения источника.
-    write({'LANGUAGE STATE': 'IN_PROGRESS'})
-    if not ready:
-        if m.SKIP_AI:
-            raise ValueError('Трёхъязычный импорт требует настоящие тексты: SKIP_AI должен быть false')
-        file_ids = []
-        if pdf:
-            with open(pdf, 'rb') as source:
-                file_ids.append(m.openai.files.create(file=source, purpose='assistants').id)
-        source_prompt = m.build_first_assistant_prompt(
-            regulations_url=regulations_url, regulations_text=regulations, website_text=website)
-        source_prompt = 'EVENT TITLE ('+native.upper()+'): '+row[column('title',native)]+'\n\n'+source_prompt
-        first = m.call_openai_assistant(source_prompt, file_ids=file_ids, trilingual=True)
-        validate_joint_result(first)
-        first = m.normalize_regulations_link_block(first, regulations_url, trilingual=True)
-        result = None
-        error = None
-        for _ in range(1 + max(0, m.PT_RETRY_ATTEMPTS)):
-            cleaned = m.call_second_openai_assistant(first,
-                regulations_hint='REGULATIONS LINK: '+(regulations_url or '(empty)'), trilingual=True)
-            try:
-                result = validate_cleaned_result(first, cleaned)
-                break
-            except ValueError as exc:
-                error = exc
-        if result is None:
-            raise ValueError('Не получены полные PT/EN/ES версии: '+str(error))
-        updates = {}
-        for lang, suffix in SUFFIXES.items():
-            title = result['title'+suffix]
-            if row[column('title', native)].startswith('TEST ') and not title.startswith('TEST '):
-                title = 'TEST '+title
-            updates[column('title',lang)] = row[column('title',native)] if lang == native else title
-            for key in FIELDS:
-                value = result[key+suffix]
-                if key == 'org_info':
-                    value = m._append_cancellation_block(value, result['cancellation'+suffix], lang)
-                updates[column(key,lang)] = value
-        generated = dict(row, **updates)
-        for lang in LANGUAGES:
-            validate_translation(content(generated,lang),content(generated,'en'))
-        if not m.SKIP_IMAGE:
-            image = m.generate_image(result['image_prompt'])
-            if not image:
-                raise ValueError('Не удалось сгенерировать обложку; проверьте доступ модели изображений или SKIP_IMAGE')
-            updates.update({'IMAGE URL': image.get('url', ''), 'IMAGE ID': image.get('id') or ''})
-        updates.update({k: v for k, v in {'ORGANIZER NAME': result.get('organizer_name', ''),
-            'ORGANIZER EMAIL': m._extract_valid_emails(result.get('organizer_email', ''))}.items() if k in headers})
-        write(updates)
-        # Отпечаток ставится только после проверки и сохранения всех трёх языков.
-        write({'INPUT FINGERPRINT': input_hash, 'CONTENT FINGERPRINT': fingerprint,
-               'THIRD LANGUAGE FINGERPRINT': digest(content(row,'en'))})
+            result = validate_cleaned_result(first, cleaned)
+            break
+        except ValueError as exc:
+            error = exc
+    if result is None:
+        raise ValueError('Не получены полные PT/EN/ES версии: '+str(error))
+    updates = {}
+    for lang, suffix in SUFFIXES.items():
+        title = result['title'+suffix]
+        if row[column('title', native)].startswith('TEST ') and not title.startswith('TEST '):
+            title = 'TEST '+title
+        updates[column('title',lang)] = row[column('title',native)] if lang == native else title
+        for key in FIELDS:
+            value = result[key+suffix]
+            if key == 'org_info':
+                value = m._append_cancellation_block(value, result['cancellation'+suffix], lang)
+            updates[column(key,lang)] = value
+    generated = dict(row, **updates)
+    for lang in LANGUAGES:
+        validate_translation(content(generated,lang),content(generated,'en'))
+    if not m.SKIP_IMAGE:
+        image = m.generate_image(result['image_prompt'])
+        if not image:
+            raise ValueError('Не удалось сгенерировать обложку; проверьте доступ модели изображений или SKIP_IMAGE')
+        updates.update({'IMAGE URL': image.get('url', ''), 'IMAGE ID': image.get('id') or ''})
+    updates.update({k: v for k, v in {'ORGANIZER NAME': result.get('organizer_name', ''),
+        'ORGANIZER EMAIL': m._extract_valid_emails(result.get('organizer_email', ''))}.items() if k in headers})
+    write(updates)
 
     lat, lon = m.get_coordinates_with_city_fallback(row.get('LOCATION', ''), row.get('LOCATION (CITY)', ''))
     row.update(LAT=lat if lat is not None else '', LON=lon if lon is not None else '')
@@ -408,8 +358,7 @@ def _process(m, config, country, third, index, row, block, headers, write):
                 pair = (variation['CATEGORY'], item)
                 if pair not in row['extra_categories']:
                     row['extra_categories'].append(pair)
-    catalog = label_catalog(block, row.get('ATTRIBUTE TRANSLATIONS'))
-    write({'ATTRIBUTE TRANSLATIONS': json.dumps(catalog, ensure_ascii=False)})
+    catalog = label_catalog(block)
     config['_import_jwt'] = auth_token(config)
     term_specs = []
     attr_ids = {}
@@ -496,6 +445,5 @@ def _process(m, config, country, third, index, row, block, headers, write):
     if incomplete:
         updates['WEBSITE SNAPSHOT HASH'] = m.compute_website_hash(row.get('WEBSITE', ''))[0]
     write(updates)
-    write({'LANGUAGE STATE': 'COMPLETE'})
     write({'STATUS': m.STATUS_PUBLISHED_INCOMPLETE if incomplete else m.STATUS_PUBLISHED})
     logging.info('Трёхъязычная обработка завершена: ID=%s products=%s', row.get('ID'), ids)

@@ -1,0 +1,158 @@
+{
+  "date": "2026-11-10",
+  "reprocessed_existing_ids_after_simulated_write_failure": true,
+  "sheet": {
+    "url": "https://docs.google.com/spreadsheets/d/19OyjSoUn_jSY_mvCplbq5gktJZuWTOMhvno8peOkduc#gid=554440393",
+    "gid": 554440393
+  },
+  "event": "TEST DRAFT 20261110 Maratón Alcarria 2026",
+  "row_id": "RF-DRAFT-20261110",
+  "spreadsheet_status": "Published",
+  "products": [
+    {
+      "id": 19129,
+      "lang": "pt",
+      "status": "publish",
+      "title": "TEST DRAFT 20261110 Maratona Alcarria 2026",
+      "variants": 3,
+      "edit_url": "https://dev.racefinder.pt/wp-admin/post.php?post=19129&action=edit",
+      "preview_url": "https://dev.racefinder.pt/?post_type=product&p=19129&preview=true"
+    },
+    {
+      "id": 19128,
+      "lang": "es",
+      "status": "publish",
+      "title": "TEST DRAFT 20261110 Maratón Alcarria 2026",
+      "variants": 3,
+      "edit_url": "https://dev.racefinder.pt/wp-admin/post.php?post=19128&action=edit",
+      "preview_url": "https://dev.racefinder.pt/?post_type=product&p=19128&preview=true"
+    },
+    {
+      "id": 19131,
+      "lang": "en",
+      "status": "publish",
+      "title": "TEST DRAFT 20261110 Marathon Alcarria 2026",
+      "variants": 3,
+      "edit_url": "https://dev.racefinder.pt/wp-admin/post.php?post=19131&action=edit",
+      "preview_url": "https://dev.racefinder.pt/?post_type=product&p=19131&preview=true"
+    }
+  ],
+  "variations_checked": 9,
+  "editorial_statuses": {
+    "pt": "publish",
+    "es": "publish",
+    "en": "publish"
+  },
+  "concurrent_admin_edit_observed": true,
+  "content_prices_categories_attributes_faq_deadlines_verified": true,
+  "api_calls": {
+    "interrupt": [
+      {
+        "phase": "interrupt",
+        "model": "gpt-4.1-mini",
+        "strict": true
+      },
+      {
+        "phase": "interrupt",
+        "model": "gpt-4.1-mini",
+        "strict": true
+      }
+    ],
+    "retry": [
+      {
+        "phase": "retry",
+        "model": "gpt-4.1-mini",
+        "strict": true
+      },
+      {
+        "phase": "retry",
+        "model": "gpt-4.1-mini",
+        "strict": true
+      }
+    ],
+    "skip": []
+  },
+  "images_enabled": false,
+  "tests": 246,
+  "all_existing_ids_retained": true,
+  "removed_columns": [
+    "LANGUAGE STATE",
+    "INPUT FINGERPRINT",
+    "CONTENT FINGERPRINT",
+    "THIRD LANGUAGE FINGERPRINT",
+    "ATTRIBUTE TRANSLATIONS"
+  ],
+  "raw_database_wpml_and_stable_ids_verified": true,
+  "raw_database": [
+    {
+      "id": 19129,
+      "status": "publish",
+      "lang": "pt",
+      "trid": "81692",
+      "variants": 3
+    },
+    {
+      "id": 19128,
+      "status": "publish",
+      "lang": "es",
+      "trid": "81692",
+      "variants": 3
+    },
+    {
+      "id": 19131,
+      "status": "publish",
+      "lang": "en",
+      "trid": "81692",
+      "variants": 3
+    }
+  ],
+  "restored_branch": "kt/70-portal-sync-2",
+  "restored_head": "e5a8c826a3e69e56e9c882ef4c9c914c3d401759",
+  "settings_and_wp_config_unchanged": true,
+  "temporary_access_revoked_http": 401,
+  "main_sheet_migration": {
+    "sheet": "RACES",
+    "url": "https://docs.google.com/spreadsheets/d/12fpkAlmHD7acDyE_jo_pvJ0-J5FOpVcGyapj0-SWOkE/edit#gid=0",
+    "removed_columns": [
+      "LANGUAGE STATE",
+      "INPUT FINGERPRINT",
+      "CONTENT FINGERPRINT",
+      "THIRD LANGUAGE FINGERPRINT",
+      "ATTRIBUTE TRANSLATIONS"
+    ],
+    "retained_processing_column": "LANGUAGE SCHEME",
+    "columns_before": 66,
+    "columns_after": 61,
+    "data_rows_unchanged": 8986,
+    "all_retained_values_unchanged": true,
+    "backup": {
+      "id": 1951155083,
+      "name": "RACES_backup_20261110_simple",
+      "hidden": true
+    },
+    "method": "atomic duplicateSheet + deleteDimension; retained cells not rewritten"
+  },
+  "production_reader": {
+    "rows": 8986,
+    "columns": 61,
+    "only_language_scheme_remains": true,
+    "passed": true
+  },
+  "services_resumed": [
+    "racefinder-automation",
+    "racefinder-es_race-monitor-es_1"
+  ],
+  "no_duplicate_products_or_variants_verified_in_database": true,
+  "persistent_state_database_added": false,
+  "source_sha256": {
+    "run/trilingual_import.py": "8688fddf7496252650d8d09531c07016ed0739bf0cad9885341440ec668d3749",
+    "run/publication_contract.py": "dd3082ea8738bae2944b28b31e19591e3329f7545ae1d3a143fdb9303ef45709",
+    "run/joint_content.py": "b43b75cfe1e41dd70a7bf0e7bdb1d098d36102e40b2a6e326bfcd23c0e428ee5"
+  },
+  "scope_notes": [
+    "DEV test reprocessed the existing Alcarria group after a deliberate interruption; initial IDs were retained.",
+    "Test products were also edited through the admin during acceptance; their observed publish status was preserved, not reset to draft.",
+    "Production publisher code and runtime configuration were not deployed or changed; its existing reader successfully loaded the migrated RACES sheet.",
+    "Old historical acceptance reports and hidden backups retain the previous schema as records of earlier runs."
+  ]
+}

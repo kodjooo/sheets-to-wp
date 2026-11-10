@@ -4,7 +4,6 @@ from utils import parse_faq_items
 import re
 
 PROMPT_MARKER = '\n\n=== PT_ES_EN EXTENSION ===\n'
-GENERATION_CONTRACT = 'joint-pt-es-en-v1'
 SUFFIXES = {'en': '', 'pt': '_pt', 'es': '_es'}
 
 

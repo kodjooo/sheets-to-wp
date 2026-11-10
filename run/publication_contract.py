@@ -118,18 +118,12 @@ def translate_labels(values):
     return result
 
 
-def label_catalog(block, cached):
-    try:
-        cache = json.loads(cached or '{}')
-    except (ValueError, TypeError):
-        cache = {}
-    if not isinstance(cache, dict):
-        cache = {}
+def label_catalog(block):
     values = list(dict.fromkeys(str(r.get(k) or '').strip() for _, r in block
                                for k in ('TEAM', 'TYPE', 'LICENSE', 'VALUE') if str(r.get(k) or '').strip()))
     result, unknown = {}, []
     for value in values:
-        labels = known_labels(value) or cache.get(value)
+        labels = known_labels(value)
         if isinstance(labels, dict) and all(isinstance(labels.get(l), str) and labels[l].strip() for l in ('pt', 'es', 'en')):
             result[value] = labels
         else:

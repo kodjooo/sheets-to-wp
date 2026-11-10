@@ -50,7 +50,7 @@ def workflow(monkeypatch):
     for lang in tri.LANGUAGES:
         for key in ('title', *tri.FIELDS):row.setdefault(tri.column(key,lang),'')
         row['WP PRODUCT ID '+lang.upper()]='';row['WP VARIATION ID '+lang.upper()]=''
-    row.update({'LANGUAGE SCHEME':'','LANGUAGE STATE':'','INPUT FINGERPRINT':'','CONTENT FINGERPRINT':'','THIRD LANGUAGE FINGERPRINT':'','ATTRIBUTE TRANSLATIONS':'','NOTE':''})
+    row.update({'LANGUAGE SCHEME':'','NOTE':''})
     headers={key:i+1 for i,key in enumerate(row)}
     saved={2:row,3:child};writes=[];created=[];targets={};contexts=[];payloads=[]
     def write(index,updates,columns):saved[index].update(updates);writes.append((index,dict(updates)))
@@ -118,7 +118,7 @@ def test_three_languages_share_country_prices_and_stable_ids(workflow,profile):
     w.row['STATUS']='Revised (complete)';w.run(profile)
     assert first=={key:value for key,value in w.row.items() if ' ID ' in key}
     assert len(w.created)==1
-    assert m.call_openai_assistant.call_count==1 and m.call_second_openai_assistant.call_count==1
+    assert m.call_openai_assistant.call_count==2 and m.call_second_openai_assistant.call_count==2
     assert active_profile()==PT
 
 
@@ -127,7 +127,7 @@ def test_missing_third_language_does_not_checkpoint_partial_pair(workflow,monkey
     good=dict(m.call_second_openai_assistant.return_value)
     m.call_second_openai_assistant.return_value['org_info_es']=''
     with pytest.raises(ValueError):w.run()
-    assert w.row['STATUS']=='Revised (complete)' and not w.row['CONTENT FINGERPRINT']
+    assert w.row['STATUS']=='Revised (complete)'
     assert not w.created
     m.call_second_openai_assistant.return_value=good
     w.run()
@@ -136,7 +136,7 @@ def test_missing_third_language_does_not_checkpoint_partial_pair(workflow,monkey
     assert w.row['STATUS']=='Published'
 
 
-def test_wp_failure_after_primary_creation_reuses_id_and_all_text(workflow,monkeypatch):
+def test_wp_failure_after_primary_creation_reuses_id_and_regenerates_text(workflow,monkeypatch):
     w=workflow
     def fail_after_create(*args,**kwargs):
         w.create(*args,**kwargs)
@@ -146,17 +146,17 @@ def test_wp_failure_after_primary_creation_reuses_id_and_all_text(workflow,monke
     assert w.row['WP PRODUCT ID PT']==100 and w.row['STATUS']=='Revised (complete)'
     monkeypatch.setattr(m,'create_product_pt_primary',w.create);w.run()
     assert len(w.created)==1 and w.row['STATUS']=='Published'
-    assert m.call_openai_assistant.call_count==1 and m.call_second_openai_assistant.call_count==1
+    assert m.call_openai_assistant.call_count==2 and m.call_second_openai_assistant.call_count==2
 
 
 def test_missing_headers_stop_before_generation_or_writes(workflow):
-    del workflow.headers['CONTENT FINGERPRINT']
-    with pytest.raises(ValueError,match='CONTENT FINGERPRINT'):workflow.run()
+    del workflow.headers['LANGUAGE SCHEME']
+    with pytest.raises(ValueError,match='LANGUAGE SCHEME'):workflow.run()
     assert not workflow.writes
     m.call_openai_assistant.assert_not_called()
 
 
-def test_input_change_invalidates_both_translation_caches(workflow):
+def test_revised_input_change_regenerates_text_and_keeps_ids(workflow):
     w=workflow;w.run();w.row['PRICE']='15';w.row['STATUS']='Revised (complete)';w.run()
     assert m.call_openai_assistant.call_count==2
     assert m.call_second_openai_assistant.call_count==2
@@ -169,10 +169,11 @@ def test_blank_or_wrong_shape_translation_is_rejected():
     with pytest.raises(ValueError):tri.validate_translation({**source,'benefits':[]},source)
 
 
-def test_fingerprint_ignores_generated_ids_and_translations(workflow):
-    w=workflow;before=tri.source_fingerprint(w.row,[(2,w.row),(3,w.child)],'source','',None,'pt')
-    w.row.update({'WP PRODUCT ID EN':123,'SUMMARY':'Generated','RACE NAME (ES)':'Nuevo'})
-    assert tri.source_fingerprint(w.row,[(2,w.row),(3,w.child)],'source','',None,'pt')==before
+def test_only_language_scheme_is_required_as_processing_metadata(workflow):
+    w=workflow;w.run()
+    forbidden={'LANGUAGE STATE','INPUT FINGERPRINT','CONTENT FINGERPRINT','THIRD LANGUAGE FINGERPRINT','ATTRIBUTE TRANSLATIONS'}
+    assert not forbidden.intersection(tri.schema_columns())
+    assert all(not forbidden.intersection(updates) for _,updates in w.writes)
 
 
 def test_sheet_preparation_protects_old_rows_and_does_not_rebaseline_new_rows():
@@ -203,7 +204,7 @@ def test_acf_failure_is_not_reported_as_published_and_retry_keeps_id(workflow,mo
     assert w.row['STATUS']=='Revised (complete)' and len(w.created)==1
     monkeypatch.setattr(tri,'write_content',Mock());w.run()
     assert w.row['STATUS']=='Published' and len(w.created)==1
-    assert m.call_openai_assistant.call_count==1
+    assert m.call_openai_assistant.call_count==2
 
 
 def test_translated_faq_must_preserve_machine_readable_question_answer_pairs():
@@ -211,17 +212,16 @@ def test_translated_faq_must_preserve_machine_readable_question_answer_pairs():
     with pytest.raises(ValueError,match='FAQ'):tri.validate_translation({**source,'faq':'P: Onde?\nR: Aqui.'},source)
 
 
-def test_retry_uses_all_three_cached_versions_when_wp_failed(workflow,monkeypatch):
+def test_retry_requires_fresh_source_and_keeps_saved_ids(workflow,monkeypatch):
     w=workflow
     monkeypatch.setattr(tri,'write_content',Mock(side_effect=ValueError('Temporary WP failure')))
     with pytest.raises(ValueError):w.run()
-    assert w.row['LANGUAGE STATE']=='IN_PROGRESS'
+    pid=w.row['WP PRODUCT ID PT']
     monkeypatch.setattr(tri,'write_content',Mock())
-    monkeypatch.setattr(m,'extract_text_from_url',Mock(side_effect=RuntimeError('Source changed or unavailable')))
-    w.run()
-    assert w.row['STATUS']=='Published' and w.row['LANGUAGE STATE']=='COMPLETE'
-    assert m.call_openai_assistant.call_count==1
-    assert m.call_second_openai_assistant.call_count==1
+    monkeypatch.setattr(m,'extract_text_from_url',Mock(side_effect=RuntimeError('Source unavailable')))
+    with pytest.raises(RuntimeError,match='Source unavailable'):w.run()
+    assert w.row['STATUS']=='Revised (complete)' and w.row['WP PRODUCT ID PT']==pid
+    assert len(w.created)==1 and m.call_openai_assistant.call_count==1
 
 
 def test_preview_requires_trilingual_columns_before_promising_readiness(workflow,monkeypatch):
@@ -229,9 +229,9 @@ def test_preview_requires_trilingual_columns_before_promising_readiness(workflow
     w=workflow;monkeypatch.setenv('NEW_EVENT_LANGUAGES','pt,es,en')
     result=preview([w.row],w.headers,'https://example.test')[0]
     assert result['ready'] and set(result['languages'])==set(tri.LANGUAGES)
-    del w.headers['INPUT FINGERPRINT']
+    del w.headers['LANGUAGE SCHEME']
     result=preview([w.row],w.headers,'https://example.test')[0]
-    assert not result['ready'] and 'INPUT FINGERPRINT' in result['error']
+    assert not result['ready'] and 'LANGUAGE SCHEME' in result['error']
 
 
 def test_variation_categories_are_preserved_for_each_language(workflow):
@@ -254,12 +254,12 @@ def test_variation_link_failure_stays_incomplete_and_resumes_before_parent_save(
     w=workflow
     monkeypatch.setattr(tri,'link_variations',Mock(side_effect=RuntimeError('Variation link failed')))
     with pytest.raises(RuntimeError):w.run()
-    assert w.row['STATUS']=='Revised (complete)' and w.row['LANGUAGE STATE']=='IN_PROGRESS'
+    assert w.row['STATUS']=='Revised (complete)'
     assert all(w.row['WP PRODUCT ID '+lang.upper()] for lang in tri.LANGUAGES)
     linked=Mock();monkeypatch.setattr(tri,'link_variations',linked);w.run()
     assert w.row['STATUS']=='Published' and len(w.created)==1
     assert linked.call_args_list[0].kwargs=={'allow_missing':True}
-    assert m.call_openai_assistant.call_count==1
+    assert m.call_openai_assistant.call_count==2
 
 
 def test_unavailable_cover_reports_clear_error_before_product_creation(workflow, monkeypatch):
@@ -276,12 +276,12 @@ def test_readback_failure_keeps_row_retryable_with_saved_ids(workflow,monkeypatc
     w=workflow
     monkeypatch.setattr(tri,'read_imported_products',Mock(side_effect=ValueError('Wrong product ID')))
     with pytest.raises(ValueError,match='Wrong product ID'):w.run()
-    assert w.row['STATUS']=='Revised (complete)' and w.row['LANGUAGE STATE']=='IN_PROGRESS'
+    assert w.row['STATUS']=='Revised (complete)'
     assert w.row['WP PRODUCT ID PT'] and w.row['WP PRODUCT ID ES'] and w.row['WP PRODUCT ID EN']
     monkeypatch.setattr(tri,'read_imported_products',Mock(return_value={lang:{'permalink':'https://example.test/event/race'} for lang in tri.LANGUAGES}))
     w.run()
     assert w.row['STATUS']=='Published' and len(w.created)==1
-    assert m.call_openai_assistant.call_count==1
+    assert m.call_openai_assistant.call_count==2
 
 
 def test_joint_generation_uses_only_existing_two_steps_for_both_countries(workflow):

@@ -67,7 +67,7 @@ def test_category_validation_failure_is_incomplete_and_retry_reuses_ids(workflow
     w=workflow;check=Mock(side_effect=ValueError('Wrong category parent'))
     monkeypatch.setattr(tri,'verify_categories',check)
     with pytest.raises(ValueError):w.run()
-    assert w.row['STATUS']=='Revised (complete)' and w.row['LANGUAGE STATE']=='IN_PROGRESS'
+    assert w.row['STATUS']=='Revised (complete)'
     saved={l:w.row['WP PRODUCT ID '+l.upper()] for l in tri.LANGUAGES}
     monkeypatch.setattr(tri,'verify_categories',Mock());w.run()
     assert w.row['STATUS']=='Published' and saved=={l:w.row['WP PRODUCT ID '+l.upper()] for l in tri.LANGUAGES}

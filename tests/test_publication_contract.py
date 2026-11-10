@@ -17,7 +17,7 @@ def rows():
 def test_empty_individual_becomes_explicit_and_all_languages_differ_from_team_options():
     block=rows();validate_block(block)
     assert block[0][1]['TEAM']=='Individual'
-    labels=label_catalog(block,'')
+    labels=label_catalog(block)
     for lang in tri.LANGUAGES:
         assert len({labels[r['TEAM']][lang] for _,r in block})==3
     assert labels['Dobles']=={'en':'Pairs','pt':'Duplas','es':'Parejas'}
@@ -40,15 +40,13 @@ def test_invalid_license_wildcard_rejected():
     with pytest.raises(ValueError,match='LICENSE'):validate_block(block)
 
 
-def test_cached_arbitrary_labels_do_not_call_model(monkeypatch):
+def test_arbitrary_labels_are_translated_again_without_sheet_cache(monkeypatch):
     import publication_contract as contract
     block=rows();block[0][1]['TYPE']='Special wave'
     translate=Mock(return_value=[{'en':'Special wave','pt':'Vaga especial','es':'Salida especial'}])
     monkeypatch.setattr(contract,'translate_labels',translate)
-    first=label_catalog(block,'')
-    import json
-    assert label_catalog(block,json.dumps(first))==first
-    assert translate.call_count==1
+    assert label_catalog(block)==label_catalog(block)
+    assert translate.call_count==2
 
 
 def test_preflight_failure_does_not_generate_content_or_call_wp(workflow):
@@ -63,7 +61,7 @@ def test_failed_readback_never_marks_success(workflow,monkeypatch):
     w=workflow
     monkeypatch.setattr(tri,'verify_publication',Mock(side_effect=ValueError('Saved price mismatch')))
     with pytest.raises(ValueError):w.run()
-    assert w.row['STATUS']=='Revised (complete)' and w.row['LANGUAGE STATE']=='IN_PROGRESS'
+    assert w.row['STATUS']=='Revised (complete)'
     assert 'Saved price mismatch' in w.row['NOTE']
 
 
@@ -89,7 +87,7 @@ def test_failed_source_refresh_cannot_silently_resume_old_published_text(workflo
     for _ in range(2):
         with pytest.raises(RuntimeError,match='Source unavailable'):w.run()
         assert w.row['STATUS']=='Revised (complete)'
-        assert w.row['LANGUAGE STATE']=='CHECKING_SOURCE'
+        assert 'Source unavailable' in w.row['NOTE']
     assert source.call_count==2
     assert len(w.contexts)==3
 
@@ -121,7 +119,7 @@ def test_exact_term_failure_cannot_mark_event_success(workflow,monkeypatch):
     w=workflow
     monkeypatch.setattr(tri,'apply_options',Mock(side_effect=ValueError('Wrong term language')))
     with pytest.raises(ValueError):w.run()
-    assert w.row['STATUS']=='Revised (complete)' and w.row['LANGUAGE STATE']=='IN_PROGRESS'
+    assert w.row['STATUS']=='Revised (complete)'
 
 
 @pytest.mark.parametrize('fault', [None,'trash','wrong_id','description','benefits','faq','deadline','price','blank_price','label','missing','schedule'])
