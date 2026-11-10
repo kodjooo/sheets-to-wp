@@ -1,0 +1,396 @@
+{
+  "date": "2026-11-10",
+  "active_languages": [
+    {
+      "code": "en",
+      "english_name": "English"
+    },
+    {
+      "code": "es",
+      "english_name": "Spanish"
+    },
+    {
+      "code": "pt",
+      "english_name": "Portuguese"
+    }
+  ],
+  "default_language": "pt",
+  "root_categories": [
+    {
+      "id": "16",
+      "name": "Others",
+      "slug": "others",
+      "lang": "en",
+      "trid": "638"
+    },
+    {
+      "id": "241",
+      "name": "Outros",
+      "slug": "outros",
+      "lang": "pt",
+      "trid": "638"
+    },
+    {
+      "id": "17",
+      "name": "Running",
+      "slug": "running",
+      "lang": "en",
+      "trid": "639"
+    },
+    {
+      "id": "15047",
+      "name": "Carreras",
+      "slug": "carreras",
+      "lang": "es",
+      "trid": "639"
+    },
+    {
+      "id": "129",
+      "name": "Corrida",
+      "slug": "corrida",
+      "lang": "pt",
+      "trid": "639"
+    },
+    {
+      "id": "30",
+      "name": "Triathlon",
+      "slug": "triathlon",
+      "lang": "en",
+      "trid": "652"
+    },
+    {
+      "id": "15048",
+      "name": "Triatlón",
+      "slug": "triatlon-es",
+      "lang": "es",
+      "trid": "652"
+    },
+    {
+      "id": "132",
+      "name": "Triatlo",
+      "slug": "triatlo",
+      "lang": "pt",
+      "trid": "652"
+    },
+    {
+      "id": "36",
+      "name": "Cycling",
+      "slug": "cycling",
+      "lang": "en",
+      "trid": "658"
+    },
+    {
+      "id": "15049",
+      "name": "Ciclismo",
+      "slug": "ciclismo-es",
+      "lang": "es",
+      "trid": "658"
+    },
+    {
+      "id": "130",
+      "name": "Ciclismo",
+      "slug": "ciclismo",
+      "lang": "pt",
+      "trid": "658"
+    },
+    {
+      "id": "43",
+      "name": "Swimming",
+      "slug": "swimming",
+      "lang": "en",
+      "trid": "665"
+    },
+    {
+      "id": "15050",
+      "name": "Natación",
+      "slug": "natacion",
+      "lang": "es",
+      "trid": "665"
+    },
+    {
+      "id": "131",
+      "name": "Natação",
+      "slug": "natacao",
+      "lang": "pt",
+      "trid": "665"
+    },
+    {
+      "id": "48",
+      "name": "Duathlon",
+      "slug": "duathlon",
+      "lang": "en",
+      "trid": "670"
+    },
+    {
+      "id": "15051",
+      "name": "Duatlón",
+      "slug": "duatlon-es",
+      "lang": "es",
+      "trid": "670"
+    },
+    {
+      "id": "141",
+      "name": "Duatlo",
+      "slug": "duatlo",
+      "lang": "pt",
+      "trid": "670"
+    },
+    {
+      "id": "420",
+      "name": "Expired",
+      "slug": "expired",
+      "lang": "en",
+      "trid": "1691"
+    },
+    {
+      "id": "15052",
+      "name": "Caducado",
+      "slug": "expired-es",
+      "lang": "es",
+      "trid": "1691"
+    },
+    {
+      "id": "421",
+      "name": "Expirado",
+      "slug": "expired-pt",
+      "lang": "pt",
+      "trid": "1691"
+    }
+  ],
+  "relevant_active_plugins": [
+    "sitepress-multilingual-cms/sitepress.php",
+    "acf-to-rest-api/class-acf-to-rest-api.php",
+    "acfml/wpml-acf.php",
+    "advanced-custom-fields-pro/acf.php",
+    "event-location/event-location.php",
+    "jwt-authentication-for-wp-rest-api/jwt-auth.php",
+    "miss-events/miss-events.php",
+    "sibs-woocommerce/sibs-woocommerce.php",
+    "woocommerce-multilingual/wpml-woocommerce.php",
+    "woocommerce/woocommerce.php",
+    "wpml-api-hook/wpml-api-hook.php",
+    "wpml-string-translation/plugin.php"
+  ],
+  "location_taxonomies": [
+    {
+      "taxonomy": "rf_es_municipality",
+      "terms": "8212"
+    },
+    {
+      "taxonomy": "rf_es_province",
+      "terms": "52"
+    },
+    {
+      "taxonomy": "rf_pt_district",
+      "terms": "22"
+    },
+    {
+      "taxonomy": "rf_pt_municipality",
+      "terms": "308"
+    },
+    {
+      "taxonomy": "rf_pt_region",
+      "terms": "7"
+    },
+    {
+      "taxonomy": "wpcode_location",
+      "terms": "3"
+    }
+  ],
+  "product_counts_by_country": [
+    {
+      "country": "portugal",
+      "count": "6001"
+    }
+  ],
+  "audit_mode": "read-only; no deployment or content changes",
+  "wordpress": {
+    "branch": "main",
+    "commit": "e5a8c826",
+    "tracked_worktree_clean": true,
+    "import_module_installed": false,
+    "module_target": "wp-content/mu-plugins/rf-import-languages.php",
+    "tested_module_sha256": "ec2ddea9885366247032b943a2f1dc4af62b01aae0b9361db81c5dc1a531ecd6",
+    "feature_branch_difference": {
+      "files": 129,
+      "insertions": 1268,
+      "deletions": 26218,
+      "decision": "Do not switch or copy the entire old WordPress feature branch; add only import module on current main"
+    },
+    "shared_dev_prod_file_hashes": {
+      "rf-auto-location.php": "07f7c17fd87e924d47878716fe71eafae31f60bf845b0df8f0e0250fbf7179f0",
+      "rf-domains.php": "c4276c603b4d9873c80d3ba1c884ffb84466030c27618a0d70a0877440c7160e",
+      "wpml-term-api-hook.php": "7b233b8f4c24230e59943d3dc9c4a6ce097657ff53f7f2c855eb45a76fa33354",
+      "class-event-location-spain.php": "dcbad3c10892d3e2eca802f61d41bc2017c856e71cebe4df8e79364dc12a7280",
+      "municipalities.json": "2e9be1e5984f10506435916970e8ed687d0cdfc17a55a44704b787123c387375"
+    }
+  },
+  "publisher": {
+    "branch": "main",
+    "commit": "8911387",
+    "feature_commit_to_deploy": "4a70a4b",
+    "tracked_worktree_clean": true,
+    "wp_url": "https://racefinder.pt",
+    "worksheet": "RACES",
+    "run_on_startup": true,
+    "new_event_languages_configured": false,
+    "enable_spain_configured": false,
+    "spain_wp_host_configured": false,
+    "category_map_current_languages": [
+      "en",
+      "pt"
+    ],
+    "skip_ai": false,
+    "skip_image": true,
+    "process_country_configured": false,
+    "max_events_per_run_configured": false
+  },
+  "auth_preflight": {
+    "woocommerce_read_http": 200,
+    "jwt_http": 200,
+    "authenticated_user_http": 200,
+    "manage_woocommerce": true
+  },
+  "registered_routes": {
+    "set-translation": true,
+    "set-term-translation": true,
+    "import-category-catalog": false,
+    "ensure-import-category-group": false,
+    "verify-import-categories": false,
+    "ensure-import-terms": false,
+    "apply-import-options": false,
+    "ensure-language": false,
+    "link-variation-language": false
+  },
+  "main_table": {
+    "columns": 61,
+    "data_rows": 8986,
+    "language_scheme_counts": {
+      "LEGACY": 3119
+    },
+    "revised_queue": [
+      {
+        "status": "Revised (complete)",
+        "country": "default Portugal",
+        "scheme": "LEGACY",
+        "count": 3
+      }
+    ],
+    "already_prepared": true
+  },
+  "spanish_monitor": {
+    "branch": "ma/es-runtime-20261107",
+    "commit": "b172802",
+    "already_running": true,
+    "worksheet": "RACES",
+    "output_worksheet": "Missing races ES",
+    "schedule": "07:02 Europe/Lisbon",
+    "latest_observed_run": "2026-11-10",
+    "running_life": {
+      "pages": 82,
+      "events": 1620
+    },
+    "rockthesport": {
+      "pages": 6,
+      "total": 535,
+      "running": 325
+    },
+    "scope": "Counts verify both collectors ran; no manual source scan or notification was triggered by this audit"
+  },
+  "confirmed_category_roots": {
+    "Others": {
+      "en": 16,
+      "pt": 241,
+      "es": null
+    },
+    "Running": {
+      "en": 17,
+      "pt": 129,
+      "es": 15047
+    },
+    "Triathlon": {
+      "en": 30,
+      "pt": 132,
+      "es": 15048
+    },
+    "Cycling": {
+      "en": 36,
+      "pt": 130,
+      "es": 15049
+    },
+    "Swimming": {
+      "en": 43,
+      "pt": 131,
+      "es": 15050
+    },
+    "Duathlon": {
+      "en": 48,
+      "pt": 141,
+      "es": 15051
+    },
+    "Expired": {
+      "en": 420,
+      "pt": 421,
+      "es": 15052
+    }
+  },
+  "blockers": [
+    "Publisher not updated to simplified trilingual implementation",
+    "Seven import REST routes absent: rf-import-languages.php not installed",
+    "Others root group has EN=16/PT=241, but no Spanish translation; current validate_roots requires all three IDs for every configured group",
+    "Need DEV parity test on current WordPress main plus only import module; previous feature branch includes unrelated differences",
+    "RUN_ON_STARTUP=true and three Revised LEGACY rows require an isolated first import, not an unrestricted restart",
+    "Public racefinder.es has neither A nor AAAA; www.racefinder.es returns NXDOMAIN; production ES nginx hostname/TLS setup remains to be completed before public launch"
+  ],
+  "public_domain_readiness": {
+    "portugal": {
+      "url": "https://racefinder.pt/",
+      "http": 200
+    },
+    "spain": {
+      "domain_code_installed": true,
+      "public_ready": false,
+      "google_dns": {
+        "racefinder.es_A": {
+          "status": 0,
+          "answers": []
+        },
+        "www.racefinder.es_A": {
+          "status": 3,
+          "answers": []
+        }
+      },
+      "cloudflare_dns": {
+        "racefinder.es_A": {
+          "status": 0,
+          "answers": []
+        },
+        "racefinder.es_AAAA": {
+          "status": 0,
+          "answers": []
+        },
+        "www.racefinder.es_A": {
+          "status": 3,
+          "answers": []
+        },
+        "www.racefinder.es_AAAA": {
+          "status": 3,
+          "answers": []
+        }
+      },
+      "nginx_explicit_es_server_names": [
+        "dev.racefinder.es"
+      ],
+      "production_es_server_name_present": false,
+      "required_work": [
+        "Configure chosen public ES hostname DNS",
+        "Add production nginx host and valid TLS certificate",
+        "Verify canonical redirects, html language, country routing and language links publicly"
+      ]
+    },
+    "dns_sources": [
+      "https://dns.google/resolve?name=racefinder.es&type=A",
+      "https://cloudflare-dns.com/dns-query?name=racefinder.es&type=A"
+    ]
+  }
+}
