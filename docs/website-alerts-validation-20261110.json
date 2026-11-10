@@ -1,0 +1,26 @@
+{
+  "root_cause": "Telegram Message was too long",
+  "last_successful_delivery_utc": "2026-09-05T00:24:18+00:00",
+  "last_successful_message_characters": 4094,
+  "last_failed_scan": "2026-11-09 23:02:54",
+  "last_failed_changes": 46,
+  "source_fetch_failures": 12,
+  "incomplete_rows": 84,
+  "rows_without_website": 24,
+  "checked_rows": 48,
+  "publisher_tests_passed": 253,
+  "monitor_tests_passed": 100,
+  "publication_branch_unchanged": true,
+  "publisher_env_unchanged": true,
+  "monitor_history_unchanged": true,
+  "schedules_unchanged": [
+    "00:15 Europe/Moscow",
+    "02:00 Europe/Moscow"
+  ],
+  "runtime_healthy": true,
+  "telegram_replayed": false,
+  "races_unchanged": true,
+  "change_message_length_utf16": 494,
+  "change_message_preview": "Website changes detected\nChanged event pages: 46\n\n• #482 — Half Marathon Évora\n• #709 — Cascais Christmas Run\n• #815 — Real Priolo Trail Run\n• #969 — São Silvestre de Lourosa\n• #1692 — Color Run David Garcia\n• #1736 — MTB Marathon 5 Peaks\n• #1744 — Setúbal Port Run\n• #1757 — 5th Trail Manuelino\n• #1759 — Monges de Cister Trail 2026\n• #1818 — Sporting Run 2026\n… and 36 more in RACES\n\nReview RACES: https://docs.google.com/spreadsheets/d/12fpkAlmHD7acDyE_jo_pvJ0-J5FOpVcGyapj0-SWOkE/edit#gid=0",
+  "changed_count": 46
+}
