@@ -1,0 +1,65 @@
+{
+  "date": "2026-11-10",
+  "event": "Maratón Alcarria 2026",
+  "id": "RF-PROD-ES-20261110-ALCARRIA",
+  "row": 8988,
+  "spreadsheet_status": "Published",
+  "variants_checked": 9,
+  "all_three_products_are_drafts": true,
+  "unrelated_table_rows_preserved": 8986,
+  "other_production_products_and_variants_preserved": 24889,
+  "new_product_ids": [
+    88637,
+    88636,
+    88639
+  ],
+  "new_variation_ids": [
+    88650,
+    88651,
+    88652,
+    88644,
+    88645,
+    88646,
+    88647,
+    88648,
+    88649
+  ],
+  "exactly_one_event_imported": true,
+  "no_unexpected_created_or_removed_ids": true,
+  "category_content_prices_attributes_faq_deadlines_verified": true,
+  "production_publisher_commit": "0ba8c9f",
+  "scheduler_still_stopped": true,
+  "images_enabled": false,
+  "products": [
+    {
+      "id": 88637,
+      "lang": "pt",
+      "status": "draft",
+      "title": "Maratona Alcarria 2026",
+      "variants": 3,
+      "edit_url": "https://racefinder.pt/wp-admin/post.php?post=88637&action=edit"
+    },
+    {
+      "id": 88636,
+      "lang": "es",
+      "status": "draft",
+      "title": "Maratón Alcarria 2026",
+      "variants": 3,
+      "edit_url": "https://racefinder.pt/wp-admin/post.php?post=88636&action=edit"
+    },
+    {
+      "id": 88639,
+      "lang": "en",
+      "status": "draft",
+      "title": "Marathon Alcarria 2026",
+      "variants": 3,
+      "edit_url": "https://racefinder.pt/wp-admin/post.php?post=88639&action=edit"
+    }
+  ],
+  "raw_database_wpml_geography_verified": true,
+  "execution": "Native docker-compose.prod.yml run: python main.py --once --event-id RF-PROD-ES-20261110-ALCARRIA",
+  "wordpress_publish_transition_performed": false,
+  "table_url": "https://docs.google.com/spreadsheets/d/12fpkAlmHD7acDyE_jo_pvJ0-J5FOpVcGyapj0-SWOkE/edit#gid=0&range=A8988:BI8990",
+  "public_frontend_preview_verified": false,
+  "review_method": "Authenticated WordPress admin links; draft status retained"
+}
