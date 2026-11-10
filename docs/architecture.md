@@ -291,3 +291,10 @@ NXDOMAIN; в nginx найден только dev.racefinder.es. Перед пу�
 сохраняется. Фильтр временный, не хранится в таблице/базе. Pending review не
 переходит к генерации или WordPress; RUN_ON_STARTUP=false и остановленное
 расписание позволяют подготовить pilot без обработки трёх чужих Revised.
+
+PROD Compose: из-за установленного v1.29.2 конфигурация вынесена в
+docker-compose.prod.yml с единственным publisher-сервисом, исходными bind mounts,
+именованным temp_volume и сетью racefinder_network. Образ явно задан прежний
+sheets-to-wp_racefinder:latest, уже проверенный 250 тестами. Новые рабочие ENV
+загружаются в пересозданный, но не запущенный контейнер; native CLI --event-id
+допускает адресную проверку Pending review без импорта чужой очереди.

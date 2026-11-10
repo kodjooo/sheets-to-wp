@@ -1,0 +1,65 @@
+services:
+  racefinder:
+    image: sheets-to-wp_racefinder:latest
+    build: .
+    container_name: racefinder-automation
+    restart: unless-stopped
+    
+    # ========= СЕТЕВЫЕ ИСПРАВЛЕНИЯ ДЛЯ СЕРВЕРА =========
+    # Принудительные DNS серверы для надежного подключения к Google API
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    
+    # Отключение IPv6 для избежания конфликтов сети
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=1
+      - net.ipv6.conf.default.disable_ipv6=1
+    
+    # Принудительное использование IPv4 для внешних API (достаточно настроенных DNS)
+    # ==================================================
+    
+    environment:
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    volumes:
+      # Монтируем только необходимые файлы
+      - ./run/google-credentials.json:/app/google-credentials.json:ro
+      # Подмонтируем папку run для автоматического обновления кода
+      - ./run:/app/run:ro
+      # Логи в папке проекта (без sudo-доступа к /var/log)
+      - ./logs:/app/logs
+      # Временные файлы (для PDF и изображений)
+      - temp_volume:/tmp/app_temp
+    networks:
+      - racefinder_network
+    # Запуск по расписанию (можно заменить на cron)
+    working_dir: /app/run
+    command: python main.py
+    
+    # Мониторинг здоровья контейнера
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  temp_volume:
+    driver: local
+
+networks:
+  racefinder_network:
+    driver: bridge
+    enable_ipv6: false  # Отключаем IPv6 для стабильной работы на сервере
+    driver_opts:
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.24.0.0/16  # Отдельная подсеть для продакшена
+          gateway: 172.24.0.1

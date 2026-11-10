@@ -455,3 +455,10 @@ ID должен быть непустым и встречаться ровно �
 обрабатываются вместе с ним. STATUS всё равно управляет допуском: Pending review
 и Published не импортируются; Revised обрабатывается. `--event-id` без `--once`
 запрещён. До одобрения pilot-строки плановый publisher остаётся остановленным.
+
+На текущем PROD установлен Docker Compose 1.29.2 (`docker-compose`), без плагина
+`docker compose`. Для него используется `docker-compose.prod.yml`: только
+действующий publisher, прежние сеть/тома и проверенный образ, без DEV-профиля.
+Адресный запуск после одобрения строки:
+`docker-compose -f docker-compose.prod.yml run --rm --no-deps racefinder python main.py --once --event-id RF-PROD-ES-20261110-ALCARRIA`.
+До одобрения строка Pending review, ID WordPress пустые, плановый контейнер остановлен.
