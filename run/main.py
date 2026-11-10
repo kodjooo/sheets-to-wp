@@ -336,7 +336,7 @@ def wait_until_next_run():
     
     time.sleep(wait_seconds)
 
-def run_automation():
+def run_automation(event_id=None):
     """Основная функция автоматизации"""
     logging.info("🚀 Запуск автоматизации обработки данных")
 
@@ -362,6 +362,15 @@ def run_automation():
         # Если все попытки исчерпаны — пробрасываем исключение, чтобы обработать выше и запланировать быстрый повтор
         raise last_error
 
+    requested_id = str(event_id or '').strip()
+    if event_id is not None and not requested_id:
+        raise ValueError('Адресный запуск требует непустой ID')
+    if requested_id:
+        matches = [row for _, row in rows if str(row.get('ID') or '').strip() == requested_id]
+        if len(matches) != 1:
+            raise ValueError('Адресный запуск требует ровно одну строку с ID=' + requested_id)
+        logging.info('Адресный запуск только ID=%s', requested_id)
+
     changed_websites = []
     selected_country = process_country()
     event_limit = positive_limit("MAX_EVENTS_PER_RUN")
@@ -369,6 +378,8 @@ def run_automation():
     event_attempts = website_attempts = 0
 
     for i, (row_index, row) in enumerate(rows):
+        if requested_id and str(row.get('ID') or '').strip() != requested_id:
+            continue
         status_raw = row.get("STATUS", "").strip()
         status = status_raw.lower()
         row_id = row.get("ID", "unknown")
@@ -917,8 +928,11 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Публикация и мониторинг общей таблицы RACES")
     parser.add_argument("--once", action="store_true", help="Один проход без запуска планировщика")
+    parser.add_argument('--event-id', help='Только мероприятие с точным ID; используется вместе с --once')
     args = parser.parse_args()
+    if args.event_id and not args.once:
+        parser.error('--event-id требует --once')
     if args.once:
-        run_automation()
+        run_automation(event_id=args.event_id)
     else:
         main()

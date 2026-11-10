@@ -302,3 +302,35 @@ def test_joint_titles_preserve_test_marker_without_separate_translation(workflow
     assert w.row['RACE NAME (ES)'].startswith('TEST ')==is_test
     assert title in m.call_openai_assistant.call_args.args[0]
     m.translate_title_to_en.assert_not_called()
+
+
+def test_targeted_run_does_not_touch_other_revised_events(workflow,monkeypatch):
+    w=workflow;other=dict(w.row,ID='UNRELATED')
+    monkeypatch.setenv('NEW_EVENT_LANGUAGES','pt,es,en')
+    monkeypatch.setattr(m,'log_network_diagnostics',lambda:None)
+    monkeypatch.setattr(m,'load_all_rows',lambda:([(2,dict(w.row)),(3,dict(w.child)),(4,other)],w.headers))
+    m.run_automation(event_id=w.row['ID'])
+    assert w.row['STATUS']=='Published' and len(w.created)==1
+    assert other['STATUS']=='Revised (complete)'
+    assert all(index in (2,3) for index,_ in w.writes)
+    assert m.call_openai_assistant.call_count==1
+
+
+@pytest.mark.parametrize('duplicate',[False,True])
+def test_targeted_run_rejects_missing_or_ambiguous_id_before_writes(workflow,monkeypatch,duplicate):
+    w=workflow;items=[(2,dict(w.row))]
+    if duplicate:items.append((4,dict(w.row)))
+    monkeypatch.setattr(m,'log_network_diagnostics',lambda:None)
+    monkeypatch.setattr(m,'load_all_rows',lambda:(items,w.headers))
+    with pytest.raises(ValueError,match='ровно одну строку'):
+        m.run_automation(event_id=w.row['ID'] if duplicate else 'MISSING')
+    assert not w.writes and not w.created
+    m.call_openai_assistant.assert_not_called()
+
+
+def test_targeted_run_rejects_blank_id_instead_of_running_entire_queue(workflow,monkeypatch):
+    w=workflow
+    monkeypatch.setattr(m,'log_network_diagnostics',lambda:None)
+    monkeypatch.setattr(m,'load_all_rows',lambda:([(2,dict(w.row))],w.headers))
+    with pytest.raises(ValueError,match='непустой ID'):m.run_automation(event_id=' ')
+    assert not w.writes and not w.created
