@@ -1,0 +1,53 @@
+{
+  "date": "2026-11-10",
+  "scope": "Preparation only; production import awaits review",
+  "production_import_executed": false,
+  "tests_passed": 250,
+  "wordpress_release": {
+    "base": "e5a8c826",
+    "commit": "2da9ac5e",
+    "only_added_file": "wp-content/mu-plugins/rf-import-languages.php",
+    "other_site_files_changed": false
+  },
+  "publisher_release": {
+    "commit": "0ba8c9f",
+    "scheduler_running": false,
+    "run_on_startup": false,
+    "native_single_event_cli_ready": true,
+    "compose_file": "docker-compose.prod.yml"
+  },
+  "prepared_row": {
+    "id": "RF-PROD-ES-20261110-ALCARRIA",
+    "name": "Maratón Alcarria 2026",
+    "url": "https://docs.google.com/spreadsheets/d/12fpkAlmHD7acDyE_jo_pvJ0-J5FOpVcGyapj0-SWOkE/edit#gid=0&range=A8988:BI8990",
+    "row_start": 8988,
+    "row_end": 8990,
+    "status": "Pending review",
+    "all_wp_ids_blank": true,
+    "three_language_texts_prepared": true,
+    "variants": 3,
+    "original_rows_preserved": 8986
+  },
+  "dev_acceptance": {
+    "baseline": "e5a8c826a3e69e56e9c882ef4c9c914c3d401759",
+    "only_added_file": "wp-content/mu-plugins/rf-import-languages.php",
+    "draft_products": 3,
+    "variations_checked": 9,
+    "all_drafts": true,
+    "retry_all_ids_preserved": true,
+    "dev_restored": true,
+    "temporary_access_removed": true
+  },
+  "production_inventory": {
+    "before": 24889,
+    "after": 24889,
+    "added": 0,
+    "removed": 0,
+    "all_statuses_unchanged": true
+  },
+  "backups_verified": true,
+  "production_row_readonly_preflight_passed": true,
+  "public_es_dns_https_changed": false,
+  "es_monitor_changed": false,
+  "next_step": "User reviews Pending review row; after approval run native --once --event-id for this exact ID only"
+}

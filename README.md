@@ -462,3 +462,10 @@ ID должен быть непустым и встречаться ровно �
 Адресный запуск после одобрения строки:
 `docker-compose -f docker-compose.prod.yml run --rm --no-deps racefinder python main.py --once --event-id RF-PROD-ES-20261110-ALCARRIA`.
 До одобрения строка Pending review, ID WordPress пустые, плановый контейнер остановлен.
+
+PROD подготовлен без импорта товаров (10.11.2026): на сайте добавлен только наш
+rf-import-languages.php (2da9ac5e); издатель 0ba8c9f настроен, плановый контейнер
+остановлен, RUN_ON_STARTUP=false. RACES 8988–8990 — RF-PROD-ES-20261110-ALCARRIA,
+Pending review, все WP ID пусты. После проверки строки используется только
+адресная команда выше; общую очередь до приёмки не запускать.
+[Отчёт подготовки](docs/prod-preparation-validation-20261110.json).
