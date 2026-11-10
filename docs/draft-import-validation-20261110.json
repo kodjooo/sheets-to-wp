@@ -1,0 +1,86 @@
+{
+  "date": "2026-11-10",
+  "publisher_commit": "edfaf2e",
+  "started_with_empty_ids_and_texts": true,
+  "sheet": {
+    "url": "https://docs.google.com/spreadsheets/d/19OyjSoUn_jSY_mvCplbq5gktJZuWTOMhvno8peOkduc#gid=554440393",
+    "gid": 554440393
+  },
+  "event": "TEST DRAFT 20261110 Maratón Alcarria 2026",
+  "row_id": "RF-DRAFT-20261110",
+  "spreadsheet_status": "Published",
+  "language_state": "COMPLETE",
+  "products": [
+    {
+      "id": 19129,
+      "lang": "pt",
+      "status": "draft",
+      "title": "TEST DRAFT 20261110 Maratona Alcarria 2026",
+      "variants": 3,
+      "edit_url": "https://dev.racefinder.pt/wp-admin/post.php?post=19129&action=edit",
+      "preview_url": "https://dev.racefinder.pt/?post_type=product&p=19129&preview=true"
+    },
+    {
+      "id": 19128,
+      "lang": "es",
+      "status": "draft",
+      "title": "TEST DRAFT 20261110 Maratón Alcarria 2026",
+      "variants": 3,
+      "edit_url": "https://dev.racefinder.pt/wp-admin/post.php?post=19128&action=edit",
+      "preview_url": "https://dev.racefinder.pt/?post_type=product&p=19128&preview=true"
+    },
+    {
+      "id": 19131,
+      "lang": "en",
+      "status": "draft",
+      "title": "TEST DRAFT 20261110 Marathon Alcarria 2026",
+      "variants": 3,
+      "edit_url": "https://dev.racefinder.pt/wp-admin/post.php?post=19131&action=edit",
+      "preview_url": "https://dev.racefinder.pt/?post_type=product&p=19131&preview=true"
+    }
+  ],
+  "variations_checked": 9,
+  "all_three_wordpress_products_are_drafts": true,
+  "original_test_tab_unchanged": true,
+  "content_prices_categories_attributes_faq_deadlines_verified": true,
+  "api_calls": [
+    {
+      "model": "gpt-4.1-mini",
+      "strict": true
+    },
+    {
+      "model": "gpt-4.1-mini",
+      "strict": true
+    }
+  ],
+  "images_enabled": false,
+  "repeat_without_ai_or_sheet_changes": true,
+  "raw_database_drafts_and_wpml_verified": true,
+  "raw_database": [
+    {
+      "id": 19129,
+      "status": "draft",
+      "lang": "pt",
+      "trid": "81692",
+      "variants": 3
+    },
+    {
+      "id": 19128,
+      "status": "draft",
+      "lang": "es",
+      "trid": "81692",
+      "variants": 3
+    },
+    {
+      "id": 19131,
+      "status": "draft",
+      "lang": "en",
+      "trid": "81692",
+      "variants": 3
+    }
+  ],
+  "restored_branch": "kt/70-portal-sync-2",
+  "restored_head": "e5a8c826a3e69e56e9c882ef4c9c914c3d401759",
+  "settings_and_wp_config_unchanged": true,
+  "temporary_access_revoked_http": 401
+}
