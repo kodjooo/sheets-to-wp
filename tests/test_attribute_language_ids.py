@@ -36,3 +36,49 @@ def test_parent_language_verification_failure_is_not_ignored(monkeypatch):
     monkeypatch.setattr(attrs.requests, "post", Mock(return_value=response))
     with pytest.raises(ValueError, match="не подтвердил"):
         attrs.assign_attributes_to_product(123, {"Distance": "10 km"}, lang="pt")
+
+
+def test_term_list_excludes_wpml_language_fallback(monkeypatch):
+    response = Mock()
+    response.json.return_value = [
+        {"id": 11, "name": "1.6 km", "lang": "pt"},
+        {"id": 22, "name": "1.6 km", "lang": "en"},
+        {"id": 33, "name": "1.6 km"},
+    ]
+    monkeypatch.setattr(attrs, "_safe_wc_request", Mock(return_value=response))
+    assert attrs._list_all_attribute_terms(3, lang="en") == [
+        {"id": 22, "name": "1.6 km", "lang": "en"}
+    ]
+
+
+def test_equal_label_resolves_requested_language(monkeypatch):
+    response = Mock()
+    response.json.return_value = [
+        {"id": 11, "name": "1.6 km", "lang": "pt"},
+        {"id": 22, "name": "1.6 km", "lang": "en"},
+    ]
+    request = Mock(return_value=response)
+    monkeypatch.setattr(attrs, "_safe_wc_request", request)
+    assert attrs.get_or_create_attribute_term(3, "1.6 km", lang="en") == 22
+    assert request.call_count == 1
+
+
+def test_new_term_has_explicit_language_and_unique_slug(monkeypatch):
+    monkeypatch.setattr(attrs, "_list_all_attribute_terms", lambda *a, **kw: [])
+    response = Mock()
+    response.json.return_value = {"id": 22, "name": "1.6 km", "lang": "en"}
+    request = Mock(return_value=response)
+    monkeypatch.setattr(attrs, "_safe_wc_request", request)
+    assert attrs.get_or_create_attribute_term(3, "1.6 km", lang="en") == 22
+    payload = request.call_args.kwargs["data"]
+    assert payload["lang"] == "en" and payload["slug"].endswith("-en")
+
+
+def test_term_exists_other_language_is_never_used(monkeypatch):
+    monkeypatch.setattr(attrs, "_list_all_attribute_terms", lambda *a, **kw: [])
+    response = Mock(status_code=400)
+    response.raise_for_status.side_effect = attrs.requests.HTTPError("term_exists")
+    response.json.return_value = {"code": "term_exists", "data": {"resource_id": 11}}
+    monkeypatch.setattr(attrs, "_safe_wc_request", Mock(return_value=response))
+    with pytest.raises(attrs.requests.HTTPError):
+        attrs.get_or_create_attribute_term(3, "1.6 km", lang="en")

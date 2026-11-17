@@ -1,4 +1,5 @@
 import logging
+import hashlib
 import os
 import time
 
@@ -159,6 +160,11 @@ def get_or_create_attribute_term(attr_id, value, lang=None):
             return term['id']
 
     data = {"name": value}
+    if lang:
+        # WPML возвращает и запасные термины другого языка. При создании
+        # одинаковой подписи нужен отдельный slug, иначе term_exists вернёт чужой ID.
+        data["lang"] = lang
+        data["slug"] = "rf-" + hashlib.sha256(value.casefold().encode()).hexdigest()[:16] + "-" + lang
     logging.debug(f"🔧 Пытаемся создать терм '{value}' в атрибуте ID={attr_id}")
     create_endpoint = f"products/attributes/{attr_id}/terms"
     if lang:
@@ -171,6 +177,8 @@ def get_or_create_attribute_term(attr_id, value, lang=None):
         if "id" not in term_data:
             logging.error("❌ Ответ не содержит 'id' при создании терма: %s", term_data)
             raise Exception("Нет ID в ответе от WooCommerce при создании терма")
+        if lang and term_data.get("lang") != lang:
+            raise ValueError("WordPress создал значение атрибута на другом языке")
         return term_data["id"]
 
     except requests.exceptions.HTTPError as e:
@@ -180,6 +188,12 @@ def get_or_create_attribute_term(attr_id, value, lang=None):
                 if error_data.get("code") == "term_exists":
                     existing_id = error_data.get("data", {}).get("resource_id")
                     if existing_id:
+                        if lang:
+                            # Ответ term_exists сам по себе не подтверждает язык.
+                            for term in _list_all_attribute_terms(attr_id, lang=lang):
+                                if term['name'].casefold() == value.casefold():
+                                    return term['id']
+                            raise ValueError("Совпадающее значение атрибута не найдено на языке " + lang)
                         logging.warning(f"⚠️ Терм '{value}' уже существует (ID={existing_id}), используем его.")
                         return existing_id
             except Exception as parse_error:
@@ -201,7 +215,9 @@ def _list_all_attribute_terms(attr_id: int, lang: str | None = None) -> list:
         batch = response.json() or []
         if not isinstance(batch, list) or not batch:
             break
-        terms.extend(batch)
+        # lang=en не отключает fallback WPML: проверяем язык каждой записи,
+        # а не полагаемся на параметр запроса или совпадение видимого текста.
+        terms.extend(term for term in batch if not lang or term.get("lang") == lang)
         if len(batch) < 100:
             break
         page += 1
