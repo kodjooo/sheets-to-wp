@@ -43,7 +43,6 @@ if "_1_google_loader" not in sys.modules:
     gl_stub.load_config = lambda: {}
     gl_stub.load_revised_rows = lambda: []
     gl_stub.load_all_rows = lambda: ([], {})
-    gl_stub.get_worksheet_link = lambda: "https://example.test/sheet"
     gl_stub.update_status_to_published = lambda *args, **kwargs: None
     gl_stub.batch_update_cells = lambda *args, **kwargs: None
     sys.modules["_1_google_loader"] = gl_stub
@@ -118,6 +117,12 @@ class _FakeResponse:
 
 
 class RevisedIncompleteGenerationTests(unittest.TestCase):
+    def setUp(self):
+        # Реальный HTTP/WPML проверяется отдельной DEV-приёмкой.
+        guard = patch("trilingual_import.reconcile_legacy_options")
+        self.reconcile_options = guard.start()
+        self.addCleanup(guard.stop)
+
     @patch.object(main, "create_product_pt_primary", return_value=202)
     @patch.object(main, "sync_variations_by_ids", return_value={})
     @patch.object(main, "assign_attributes_to_product")
@@ -214,6 +219,7 @@ class RevisedIncompleteGenerationTests(unittest.TestCase):
                         with patch.object(main, "SKIP_IMAGE", True):
                             main.run_automation()
 
+        self.reconcile_options.assert_called_once()
         ai_update = next((values for _idx, values in updates if "SUMMARY" in values and "FAQ (PT)" in values), None)
         self.assertIsNotNone(ai_update, "Expected AI fields update for Revised (incomplete)")
         self.assertEqual(ai_update.get("SUMMARY"), "Summary EN")
@@ -293,6 +299,12 @@ class RevisedIncompleteGenerationTests(unittest.TestCase):
 
 
 class SpanishPipelineTests(unittest.TestCase):
+    def setUp(self):
+        # Реальный HTTP/WPML проверяется отдельной DEV-приёмкой.
+        guard = patch("trilingual_import.reconcile_legacy_options")
+        self.reconcile_options = guard.start()
+        self.addCleanup(guard.stop)
+
     def run_spanish(self, enabled="true", country="all"):
         from contextlib import ExitStack
         row = {"ID": "ES-1", "COUNTRY": "Spain", "STATUS": "Revised (incomplete)",

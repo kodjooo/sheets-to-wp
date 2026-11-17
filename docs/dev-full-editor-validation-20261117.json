@@ -1,0 +1,222 @@
+{
+  "date_moscow": "2026-11-17",
+  "scope": "Full scheduled importer path from separate Google test sheet, empty initial IDs/texts, temporary switch of existing DEV, real wp-admin login/forms/AJAX saves",
+  "source": {
+    "spreadsheet_id": "19OyjSoUn_jSY_mvCplbq5gktJZuWTOMhvno8peOkduc",
+    "worksheet": "EDITOR-20261117",
+    "gid": 227302045,
+    "source_row": 8921,
+    "source_event_id": "3034",
+    "source_website": "https://waitastart.com/evento/2a-edicao-cherry-winter-run/",
+    "events": [
+      {
+        "id": "RF-DEV-EDITOR-20261117-LEGACY",
+        "scheme": "LEGACY",
+        "rows": 6
+      },
+      {
+        "id": "RF-DEV-EDITOR-20261117-TRI",
+        "scheme": "PT_ES_EN",
+        "rows": 6
+      }
+    ],
+    "empty_product_ids": true
+  },
+  "production_changed": false,
+  "source_spreadsheet_changed": false,
+  "images_skipped": true,
+  "initial_import_drafts_verified_before_explicit_dev_publication": true,
+  "draft_check_note": "Verified in initial HTTP attempt before publication; subsequent editor passes reused the same published DEV cards",
+  "wp_import_module_commit": "7b457a6e1b19f8f9e16a90eda3828154b1510181",
+  "runtime": {
+    "original_branch": "kt/72-password-reset",
+    "original_head": "1f1235eda52cb0371c989bbca3ab7f011a59fffb",
+    "test_branch": "ma/verify-editability-20261117",
+    "publisher_commit": "a3b3a97c769b029eb426f1cffb2b70209be72afa",
+    "restored": true,
+    "ok": true,
+    "imports_previously_completed": true,
+    "http_editor_exit": 0
+  },
+  "root_causes": [
+    "WooCommerce lang=en term listing included pt fallback rows; first matching label could resolve to wrong-language ID",
+    "Legacy flow did not finalize parent/variation term groups and exact IDs after all WCML synchronization"
+  ],
+  "full_http": {
+    "ok": true,
+    "events": [
+      {
+        "event_id": "RF-DEV-EDITOR-20261117-LEGACY",
+        "scheme": "LEGACY",
+        "products": [
+          {
+            "id": 19430,
+            "lang": "pt",
+            "url": "https://dev.racefinder.pt/event/test-editor-legacy-cherry-winter-run/",
+            "variations": [
+              19459,
+              19458,
+              19457,
+              19456,
+              19455,
+              19432
+            ],
+            "variation_count": 6,
+            "status": "publish",
+            "parent_fee": "0.85",
+            "variation_fee": "2.35",
+            "real_admin_forms_saved": true,
+            "attributes_prices_ids_unchanged": true,
+            "public_http": 200,
+            "verified_after_all_translations_saved": true
+          },
+          {
+            "id": 19437,
+            "lang": "en",
+            "url": "https://dev.racefinder.pt/en/event/test-editor-legacy-cherry-winter-run/",
+            "variations": [
+              19466,
+              19465,
+              19464,
+              19463,
+              19462,
+              19461
+            ],
+            "variation_count": 6,
+            "status": "publish",
+            "parent_fee": "0.85",
+            "variation_fee": "2.35",
+            "real_admin_forms_saved": true,
+            "attributes_prices_ids_unchanged": true,
+            "public_http": 200,
+            "verified_after_all_translations_saved": true
+          }
+        ]
+      },
+      {
+        "event_id": "RF-DEV-EDITOR-20261117-TRI",
+        "scheme": "PT_ES_EN",
+        "products": [
+          {
+            "id": 19370,
+            "lang": "pt",
+            "url": "https://dev.racefinder.pt/event/test-editor-tri-cherry-winter-run/",
+            "variations": [
+              19378,
+              19377,
+              19376,
+              19375,
+              19374,
+              19373
+            ],
+            "variation_count": 6,
+            "status": "publish",
+            "parent_fee": "0.85",
+            "variation_fee": "2.35",
+            "real_admin_forms_saved": true,
+            "attributes_prices_ids_unchanged": true,
+            "public_http": 200,
+            "verified_after_all_translations_saved": true
+          },
+          {
+            "id": 19372,
+            "lang": "es",
+            "url": "https://dev.racefinder.pt/es/event/test-editor-tri-cherry-winter-run/",
+            "variations": [
+              19390,
+              19389,
+              19388,
+              19387,
+              19386,
+              19385
+            ],
+            "variation_count": 6,
+            "status": "publish",
+            "parent_fee": "0.85",
+            "variation_fee": "2.35",
+            "real_admin_forms_saved": true,
+            "attributes_prices_ids_unchanged": true,
+            "public_http": 200,
+            "verified_after_all_translations_saved": true
+          },
+          {
+            "id": 19371,
+            "lang": "en",
+            "url": "https://dev.racefinder.pt/en/event/test-editor-tri-cherry-winter-run/",
+            "variations": [
+              19384,
+              19383,
+              19382,
+              19381,
+              19380,
+              19379
+            ],
+            "variation_count": 6,
+            "status": "publish",
+            "parent_fee": "0.85",
+            "variation_fee": "2.35",
+            "real_admin_forms_saved": true,
+            "attributes_prices_ids_unchanged": true,
+            "public_http": 200,
+            "verified_after_all_translations_saved": true
+          }
+        ]
+      }
+    ],
+    "method": "Real wp-login, product edit HTML, load/save variations AJAX and post.php forms"
+  },
+  "raw_database_audit": {
+    "ok": true,
+    "products": [
+      {
+        "id": 19430,
+        "lang": "pt",
+        "variations": 6,
+        "parent_terms_correct_language": true,
+        "raw_slugs_present_in_parent": true,
+        "fee": "2.35"
+      },
+      {
+        "id": 19437,
+        "lang": "en",
+        "variations": 6,
+        "parent_terms_correct_language": true,
+        "raw_slugs_present_in_parent": true,
+        "fee": "2.35"
+      },
+      {
+        "id": 19370,
+        "lang": "pt",
+        "variations": 6,
+        "parent_terms_correct_language": true,
+        "raw_slugs_present_in_parent": true,
+        "fee": "2.35"
+      },
+      {
+        "id": 19372,
+        "lang": "es",
+        "variations": 6,
+        "parent_terms_correct_language": true,
+        "raw_slugs_present_in_parent": true,
+        "fee": "2.35"
+      },
+      {
+        "id": 19371,
+        "lang": "en",
+        "variations": 6,
+        "parent_terms_correct_language": true,
+        "raw_slugs_present_in_parent": true,
+        "fee": "2.35"
+      }
+    ]
+  },
+  "all_30_variations_enabled": true,
+  "tests": {
+    "passed": 263
+  },
+  "access_cleanup": {
+    "temporary_user_removed": true,
+    "api_key_revoked": true,
+    "test_cards_preserved": true
+  }
+}
