@@ -1,0 +1,95 @@
+{
+  "date_moscow": "2026-11-17",
+  "prod_changed_by_task": false,
+  "three_language_editor": {
+    "scope": "editability-20261117",
+    "ok": true,
+    "created": [
+      19349,
+      19350,
+      19352,
+      19354,
+      19355,
+      19356
+    ],
+    "editor": {
+      "pt": {
+        "unchanged": true,
+        "before": {
+          "pa_distance": "10-km-pt"
+        },
+        "after": {
+          "pa_distance": "10-km-pt"
+        },
+        "fee": "1.25",
+        "parent_fee": "0.50"
+      },
+      "es": {
+        "unchanged": true,
+        "before": {
+          "pa_distance": "10-km-rf-880f9e6c-es"
+        },
+        "after": {
+          "pa_distance": "10-km-rf-880f9e6c-es"
+        },
+        "fee": "1.25",
+        "parent_fee": "0.50"
+      },
+      "en": {
+        "unchanged": true,
+        "before": {
+          "pa_distance": "10-km"
+        },
+        "after": {
+          "pa_distance": "10-km"
+        },
+        "fee": "1.25",
+        "parent_fee": "0.50"
+      }
+    },
+    "products": {
+      "pt": 19349,
+      "es": 19350,
+      "en": 19352
+    },
+    "variations": {
+      "pt": 19354,
+      "es": 19355,
+      "en": 19356
+    },
+    "languages": [
+      "pt",
+      "es",
+      "en"
+    ],
+    "all_drafts": true,
+    "options_verified": true,
+    "categories_verified": true,
+    "repeat_ids_preserved": true,
+    "anonymous_denied": true,
+    "test_records_trashed": 6
+  },
+  "legacy_python_exact_ids_http": true,
+  "legacy_editor": {
+    "status": 200,
+    "data": {
+      "unchanged": true,
+      "before": {
+        "pa_distance": "10-km-pt",
+        "pa_race-start-time": "1530-pt",
+        "pa_running": "kids-pt"
+      },
+      "after": {
+        "pa_distance": "10-km-pt",
+        "pa_race-start-time": "1530-pt",
+        "pa_running": "kids-pt"
+      },
+      "fee": "2.35",
+      "parent_fee": "0.50"
+    }
+  },
+  "pytest": {
+    "passed": 72
+  },
+  "limitation": "Historical write that removed Cherry Winter Run parent relationships is not recorded; mismatch confirmed, old name-based assignment removed."
+}

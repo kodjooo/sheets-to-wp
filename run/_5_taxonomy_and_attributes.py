@@ -210,6 +210,7 @@ def _list_all_attribute_terms(attr_id: int, lang: str | None = None) -> list:
 
 def assign_attributes_to_product(product_id, attributes_dict, lang=None):
     attr_payload = []
+    exact_attributes = []
     variation_attrs = []
 
     merged_attributes = merge_attribute_map_case_insensitive(attributes_dict)
@@ -224,6 +225,7 @@ def assign_attributes_to_product(product_id, attributes_dict, lang=None):
             continue
 
         options = []
+        term_ids = []
         for val in values:
             if not isinstance(val, str) or not val.strip():
                 logging.info(f"⚠️ Значение для атрибута '{attr_name}' пустое или не строка — пропускаем.")
@@ -235,6 +237,7 @@ def assign_attributes_to_product(product_id, attributes_dict, lang=None):
                 continue
 
             options.append(val)
+            term_ids.append(int(term_id))
 
             variation_attrs.append({
                 "id": attr_id,
@@ -251,8 +254,23 @@ def assign_attributes_to_product(product_id, attributes_dict, lang=None):
             "visible": True,
             "options": options
         })
+        exact_attributes.append({"id": attr_id, "term_ids": list(dict.fromkeys(term_ids))})
 
-    if attr_payload:
+    if attr_payload and lang:
+        # Одинаковые названия PT/EN не определяют язык термина. Передаём точные ID,
+        # как в трёхъязычном импорте, и проверяем реальные связи после сохранения.
+        from _3_create_product import get_jwt_token
+        item = {"product_id": int(product_id), "language": lang,
+                "attributes": exact_attributes, "variations": []}
+        headers = {"Authorization": "Bearer " + get_jwt_token()}
+        endpoint = config["wp_url"].rstrip("/") + "/wp-json/custom-api/v1/apply-import-options/"
+        for verify_only in (False, True):
+            response = requests.post(endpoint, headers=headers,
+                                     json={"items": [item], "verify_only": verify_only}, timeout=120)
+            response.raise_for_status()
+            if not response.json().get("verified"):
+                raise ValueError("WordPress не подтвердил языковые ID атрибутов карточки")
+    elif attr_payload:
         product_endpoint = f"products/{product_id}"
         if lang:
             product_endpoint += f"?lang={lang}"
