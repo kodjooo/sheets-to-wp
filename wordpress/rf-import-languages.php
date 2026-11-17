@@ -177,7 +177,11 @@ function rf_import_ensure_terms_exact( $request ) {
         if ( ! $taxonomy || ! taxonomy_exists( $taxonomy ) ) {
             return new WP_Error( 'rf_invalid_attribute', 'Неизвестный атрибут', array( 'status' => 400 ) );
         }
-        foreach ( array( 'en', 'pt', 'es' ) as $lang ) {
+        $labels = $item['labels'] ?? null;
+        if ( ! is_array( $labels ) || ! isset( $labels['en'] ) || count( $labels ) < 2 || array_diff( array_keys( $labels ), array( 'en', 'pt', 'es' ) ) ) {
+            return new WP_Error( 'rf_invalid_label', 'Нужны EN и хотя бы один перевод атрибута', array( 'status' => 400 ) );
+        }
+        foreach ( array_keys( $labels ) as $lang ) {
             if ( empty( $item['labels'][$lang] ) || ! is_string( $item['labels'][$lang] ) || strlen( $item['labels'][$lang] ) > 200 ) {
                 return new WP_Error( 'rf_invalid_label', 'Нет подписи атрибута', array( 'status' => 400 ) );
             }
@@ -199,7 +203,8 @@ function rf_import_ensure_terms_exact( $request ) {
             $trid = $base ? apply_filters( 'wpml_element_trid', null, (int) $base, $type ) : null;
             $terms = $trid ? (array) apply_filters( 'wpml_get_element_translations', null, $trid, $type ) : array();
             $output = array();
-            foreach ( array( 'en', 'pt', 'es' ) as $lang ) {
+            // Старому двухъязычному импорту не создаём лишний третий перевод.
+            foreach ( array_intersect( array( 'en', 'pt', 'es' ), array_keys( $item['labels'] ) ) as $lang ) {
                 $ttid = isset( $terms[$lang] ) ? (int) $terms[$lang]->element_id : 0;
                 if ( ! $ttid ) {
                     $slug = sanitize_title( $item['labels'][$lang] ) . '-rf-' . substr( md5( $taxonomy . $item['labels']['en'] ), 0, 8 ) . '-' . $lang;

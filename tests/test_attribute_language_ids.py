@@ -82,3 +82,34 @@ def test_term_exists_other_language_is_never_used(monkeypatch):
     monkeypatch.setattr(attrs, "_safe_wc_request", Mock(return_value=response))
     with pytest.raises(attrs.requests.HTTPError):
         attrs.get_or_create_attribute_term(3, "1.6 km", lang="en")
+
+
+def test_legacy_final_reconcile_pairs_terms_and_variation_ids(monkeypatch):
+    import trilingual_import as tri
+    monkeypatch.setattr(products, "get_jwt_token", lambda: "test-token")
+    monkeypatch.setattr(tri, "attribute_id", lambda name: 3)
+    response = Mock()
+    response.json.return_value = {"items": [{"pt": {"id": 133}, "en": {"id": 57}}]}
+    post = Mock(return_value=response)
+    monkeypatch.setattr(tri.requests, "post", post)
+    apply = Mock()
+    monkeypatch.setattr(tri, "apply_options", apply)
+    entries = [{"row_index": 2, "attributes": [{"name": "Distance", "option": "10 km"}]}]
+    mappings = {"pt": {2: 201}, "en": {2: 202}}
+    tri.reconcile_legacy_options({"wp_url": "https://dev.example"}, "pt",
+                                 {"pt": 101, "en": 102}, entries, entries, mappings)
+    assert post.call_args.kwargs["json"] == {"items": [
+        {"attribute_id": 3, "labels": {"pt": "10 km", "en": "10 km"}}
+    ]}
+    args = apply.call_args.args
+    assert args[2]["pt"][0]["attributes"] == [{"id": 3, "term_id": 133}]
+    assert args[2]["en"][0]["attributes"] == [{"id": 3, "term_id": 57}]
+    assert args[3] == mappings
+
+
+def test_legacy_without_variations_does_not_create_terms(monkeypatch):
+    import trilingual_import as tri
+    post = Mock(side_effect=AssertionError("No terms expected"))
+    monkeypatch.setattr(tri.requests, "post", post)
+    tri.reconcile_legacy_options({}, "pt", {}, [], [], {})
+    post.assert_not_called()

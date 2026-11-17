@@ -164,6 +164,50 @@ def apply_options(config, ids, entries, mappings=None):
             raise ValueError('WordPress не подтвердил точные языковые ID вариантов')
 
 
+def reconcile_legacy_options(config, native, ids, native_entries, english_entries, mappings):
+    """После WCML-синхронизации закрепляет общие группы терминов и точные ID двух языков."""
+    if not native_entries:
+        return
+    from _3_create_product import get_jwt_token
+    if native not in ('pt', 'es'):
+        raise ValueError('Неизвестный исходный язык старого импорта')
+    config = dict(config, _import_jwt=get_jwt_token())
+    english = {entry['row_index']: entry for entry in english_entries}
+    specs, selected, attribute_ids = {}, {}, {}
+    for entry in native_entries:
+        row_index = entry['row_index']
+        translated = {a['name']: a['option'] for a in english[row_index]['attributes']}
+        selected[row_index] = []
+        for attr in entry['attributes']:
+            name = attr['name']
+            labels = {native: attr['option'], 'en': translated[name]}
+            if name not in attribute_ids:
+                attribute_ids[name] = attribute_id(name)
+            aid = attribute_ids[name]
+            key = (aid, labels['en'])
+            if key in specs and specs[key]['labels'] != labels:
+                raise ValueError('Неоднозначный перевод атрибута ' + name)
+            specs[key] = {'attribute_id': aid, 'labels': labels}
+            selected[row_index].append(key)
+    keys = list(specs)
+    if not keys:
+        return
+    response = requests.post(config['wp_url'].rstrip('/') + '/wp-json/custom-api/v1/ensure-import-terms/',
+                             headers={'Authorization': 'Bearer ' + config['_import_jwt']},
+                             json={'items': list(specs.values())}, timeout=120)
+    response.raise_for_status()
+    resolved = response.json().get('items', [])
+    if len(resolved) != len(keys):
+        raise ValueError('WordPress не подтвердил словарь двух языков')
+    terms = dict(zip(keys, resolved))
+    entries = {lang: [] for lang in ids}
+    for lang in ids:
+        for entry in native_entries:
+            attrs = [{'id': key[0], 'term_id': terms[key][lang]['id']} for key in selected[entry['row_index']]]
+            entries[lang].append({'row_index': entry['row_index'], 'attributes': attrs})
+    apply_options(config, ids, entries, mappings)
+
+
 def read_imported_products(config, ids):
     """Проверяет готовность карточек, не меняя редакционный статус WordPress."""
     auth = (config['consumer_key'], config['consumer_secret'])

@@ -67,7 +67,6 @@ if LOG_FILE:
 from _1_google_loader import (
     load_config,
     load_all_rows,
-    get_worksheet_link,
     batch_update_cells as _batch_update_cells
 )
 
@@ -111,7 +110,6 @@ from utils import (
     get_missing_pt_fields,
     normalize_attribute_name,
 )
-from website_alerts import format_website_changes
 from website_snapshot import (
     compute_website_hash,
     has_website_changed,
@@ -805,6 +803,16 @@ def run_automation(event_id=None):
                 reapply_price_schedules(pt_product_id, variation_entries_pt, lang=active_profile().language)
                 reapply_price_schedules(en_product_id, variation_entries_en, lang="en")
 
+                # Связывание EN может заменить термины родителя и вариаций через WCML.
+                # Как в новом импорте, последним шагом фиксируем точные языковые ID.
+                from trilingual_import import reconcile_legacy_options
+                reconcile_legacy_options(
+                    config, active_profile().language,
+                    {active_profile().language: pt_product_id, 'en': en_product_id},
+                    variation_entries_pt, variation_entries_en,
+                    {active_profile().language: pt_row_to_variation_id, 'en': en_row_to_variation_id},
+                )
+
                 snapshot_hash = ""
                 if is_incomplete:
                     snapshot_hash, _ = compute_website_hash(row.get("WEBSITE", ""))
@@ -869,9 +877,12 @@ def run_automation(event_id=None):
             continue
 
     if TELEGRAM_NOTIFICATIONS_ENABLED and changed_websites:
-        message = format_website_changes(
-            changed_websites, get_worksheet_link(),
-        )
+        lines = ["Website changes detected", ""]
+        for item in changed_websites[:100]:
+            lines.append(f"- ID: {item['id']} | Race: {item['race']} | URL: {item['url']}")
+        if len(changed_websites) > 100:
+            lines.append(f"... and {len(changed_websites) - 100} more")
+        message = "\n".join(lines)
         sent = send_telegram_notification(
             TELEGRAM_API_ID,
             TELEGRAM_API_HASH,
