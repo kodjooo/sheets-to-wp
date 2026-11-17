@@ -1,0 +1,36 @@
+{
+  "date_moscow": "2026-11-17",
+  "ok": true,
+  "deployed": {
+    "site_commit": "b7ebd5e3f24a80eaf4bef9ef29e54468937a9637",
+    "site_branch": "main",
+    "publisher_commit": "0218f7b0c0ac96b9c29559e40bcb77f5f08994f2",
+    "publisher_branch": "ma/prod-pilot-20261110",
+    "env_unchanged": true,
+    "run_on_startup": false,
+    "schedule_moscow": "02:00",
+    "processing_not_invoked": true
+  },
+  "production_checks": {
+    "ok": true,
+    "inventory_unchanged": true,
+    "product_and_variation_records": 24878,
+    "existing_bilingual_terms_reused": true,
+    "no_terms_created": true,
+    "anonymous_denied": true
+  },
+  "all_runtime_environment_unchanged": true,
+  "health": "healthy",
+  "monitor_unchanged_and_healthy": true,
+  "next_run_moscow": "2026-11-18 02:00",
+  "startup_processing_disabled": true,
+  "website_alert_formatter_preserved": true,
+  "tests_passed": 263,
+  "http": {
+    "home": 200,
+    "rest": 200,
+    "anonymous_catalog": 401
+  },
+  "backup_directory": "/home/developer/racefinder-backups/editor-fix-20261117",
+  "new_events_processed_or_published": false
+}
