@@ -21,10 +21,10 @@ def validate_block(block):
     dates = []
     for key in ('EVENT START DATE', 'EVENT END DATE'):
         value, error = parse_datetime(parent.get(key))
-        if error or not value:
+        if error:
             raise ValueError(f'{key}: требуется корректная дата')
-        dates.append(datetime.strptime(value, '%Y-%m-%d %H:%M'))
-    if dates[1] < dates[0]:
+        dates.append(datetime.strptime(value, '%Y-%m-%d %H:%M') if value else None)
+    if all(dates) and dates[1] < dates[0]:
         raise ValueError('EVENT END DATE раньше EVENT START DATE')
     deadline, error = parse_datetime(parent.get('REGISTRATION DEADLINE'))
     if error:
@@ -43,12 +43,15 @@ def validate_block(block):
                         if str(value) in seen_ids[lang]:
                             raise ValueError(f'Row {index}: повторяется ID вариации {lang}')
                         seen_ids[lang].add(str(value))
-        try:
-            price = Decimal(str(row.get('PRICE', '')).strip())
-            if not price.is_finite() or price < 0:
-                raise InvalidOperation
-        except InvalidOperation:
-            raise ValueError(f'Row {index}, PRICE: требуется цена числом, включая 0 для бесплатного участия')
+        # Пустая цена — неизвестная, а не бесплатное участие.
+        price_text = str(row.get('PRICE') if row.get('PRICE') is not None else '').strip()
+        if price_text:
+            try:
+                price = Decimal(price_text)
+                if not price.is_finite() or price < 0:
+                    raise InvalidOperation
+            except InvalidOperation:
+                raise ValueError(f'Row {index}, PRICE: требуется цена числом, включая 0 для бесплатного участия')
         _, error = parse_price_changes(row.get('PRICE CHANGES'))
         if error:
             raise ValueError(f'Row {index}, PRICE CHANGES: {error}')
@@ -58,14 +61,7 @@ def validate_block(block):
                 _, error = parse_datetime(value if key.endswith('DATE') else '2000-01-01 ' + value)
                 if error:
                     raise ValueError(f'Row {index}, {key}: {error}')
-    # Пустой TEAM при наличии команд — отдельный одиночный вариант, а не wildcard.
-    has_teams = any(str(r.get('TEAM') or '').strip() for _, r in block)
-    for _, row in block:
-        if has_teams and not str(row.get('TEAM') or '').strip():
-            row['TEAM'] = 'Individual'
-    for key in ('LICENSE', 'TYPE'):
-        if any(str(r.get(key) or '').strip() for _, r in block) and any(not str(r.get(key) or '').strip() for _, r in block):
-            raise ValueError(f'{key}: заполните значение для каждого варианта, чтобы исключить wildcard')
+    # Не подставляем смысл вместо пустых необязательных атрибутов.
     signatures = set()
     for index, row in block:
         signature = tuple(str(row.get(k) or '').strip().casefold() for k in

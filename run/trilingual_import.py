@@ -251,13 +251,15 @@ def verify_publication(config, ids, row, entries, mappings, attr_ids, require_pu
         for number, item in enumerate(faq):
             expected.update({'event_faq_items_' + str(number) + '_' + key: value for key, value in item.items()})
         for key, field in [('EVENT START DATE', 'event_date_start'), ('EVENT END DATE', 'event_date_end')]:
-            normalized, _ = parse_datetime(row.get(key))
-            expected[field] = datetime.strptime(normalized, '%Y-%m-%d %H:%M').strftime('%Y%m%d')
+            normalized, error = parse_datetime(row.get(key))
+            if error:
+                raise ValueError('Проверка карточки ' + lang + ': неверная дата ' + key)
+            expected[field] = datetime.strptime(normalized, '%Y-%m-%d %H:%M').strftime('%Y%m%d') if normalized else ''
         if any(str(meta.get(key, '')) != str(value) for key, value in expected.items()):
             wrong = [key for key, value in expected.items() if str(meta.get(key, '')) != str(value)]
             raise ValueError('Проверка карточки ' + lang + ': не сохранились ' + ', '.join(wrong))
         deadline, error = parse_datetime(product.get('miss_events', {}).get('registration_deadline'))
-        if error or (deadline or '') != row['RF_REGISTRATION_DEADLINE']:
+        if row['RF_REGISTRATION_DEADLINE'] and (error or (deadline or '') != row['RF_REGISTRATION_DEADLINE']):
             raise ValueError('Проверка карточки ' + lang + ': неверный срок регистрации')
         actual = _load_all_variations(pid, lang)
         if {int(v['id']) for v in actual} != set(mappings[lang].values()):
@@ -266,8 +268,11 @@ def verify_publication(config, ids, row, entries, mappings, attr_ids, require_pu
         for entry in entries[lang]:
             variant = by_id[mappings[lang][entry['row_index']]]
             wanted = {attr_ids[a['name']]: a['option'] for a in entry['attributes']}
-            got = {int(a.get('id', 0)): a.get('option') for a in variant.get('attributes', [])}
-            if variant.get('regular_price') in (None, '') or got != wanted or Decimal(variant['regular_price']) != Decimal(entry['regular_price']):
+            got = {int(a.get('id', 0)): a.get('option') for a in variant.get('attributes', []) if str(a.get('option') or '').strip()}
+            saved_price = str(variant.get('regular_price') if variant.get('regular_price') is not None else '').strip()
+            wanted_price = str(entry.get('regular_price') if entry.get('regular_price') is not None else '').strip()
+            price_matches = (not saved_price) if not wanted_price else bool(saved_price) and Decimal(saved_price) == Decimal(wanted_price)
+            if got != wanted or not price_matches:
                 raise ValueError('Проверка варианта ' + lang + ': не совпали цена или локализованные значения')
             def schedule_key(items):
                 result = []
@@ -277,7 +282,7 @@ def verify_publication(config, ids, row, entries, mappings, attr_ids, require_pu
                         raise ValueError('Не прочиталось расписание цены')
                     result.append((moment, Decimal(str(item['price']))))
                 return sorted(result)
-            if schedule_key(variant.get('miss_events', {}).get('price_schedule') or []) != schedule_key(entry['price_schedule']):
+            if entry['price_schedule'] and schedule_key(variant.get('miss_events', {}).get('price_schedule') or []) != schedule_key(entry['price_schedule']):
                 raise ValueError('Проверка варианта ' + lang + ': неверное расписание цены')
 
 
@@ -433,7 +438,7 @@ def _process(m, config, country, third, index, row, block, headers, write):
             if errors:
                 raise ValueError('Price schedule: ' + str(errors))
             entries[lang].append({'row_index': row_index, 'existing_variation_id': variation.get('WP VARIATION ID ' + lang.upper(), ''),
-                'regular_price': str(variation.get('PRICE') or '0'), 'attributes': attrs, 'price_schedule': schedule, 'strict_schedule': True})
+                'regular_price': str(variation.get('PRICE') if variation.get('PRICE') is not None else '').strip(), 'attributes': attrs, 'price_schedule': schedule})
         signatures = [tuple(sorted((a['name'], a['option']) for a in entry['attributes'])) for entry in entries[lang]]
         if len(signatures) != len(set(signatures)):
             raise ValueError('Перевод сделал варианты неразличимыми: ' + lang)

@@ -14,8 +14,8 @@ def rows():
             (4, {'DISTANCE':'42 km','PRICE':'50','TEAM':'Equipos de 4'})]
 
 
-def test_empty_individual_becomes_explicit_and_all_languages_differ_from_team_options():
-    block=rows();validate_block(block)
+def test_explicit_individual_all_languages_differ_from_team_options():
+    block=rows();block[0][1]['TEAM']='Individual';validate_block(block)
     assert block[0][1]['TEAM']=='Individual'
     labels=label_catalog(block)
     for lang in tri.LANGUAGES:
@@ -23,7 +23,7 @@ def test_empty_individual_becomes_explicit_and_all_languages_differ_from_team_op
     assert labels['Dobles']=={'en':'Pairs','pt':'Duplas','es':'Parejas'}
 
 
-@pytest.mark.parametrize('key,value', [('WP VARIATION ID EN','12/11/2026'),('PRICE',''),('PRICE','NaN'),
+@pytest.mark.parametrize('key,value', [('WP VARIATION ID EN','12/11/2026'),('PRICE','NaN'),
                                      ('PRICE','-1'),('PRICE CHANGES','tomorrow=2'),('RACE START TIME','25:61')])
 def test_bad_input_is_rejected(key,value):
     block=rows();block[0][1][key]=value
@@ -35,9 +35,10 @@ def test_duplicate_options_cannot_be_distinguished_only_by_price():
     with pytest.raises(ValueError,match='одинаковые'):validate_block(block)
 
 
-def test_invalid_license_wildcard_rejected():
+def test_optional_license_blank_is_preserved():
     block=rows();block[1][1]['LICENSE']='Federado'
-    with pytest.raises(ValueError,match='LICENSE'):validate_block(block)
+    validate_block(block)
+    assert not block[0][1].get('LICENSE')
 
 
 def test_arbitrary_labels_are_translated_again_without_sheet_cache(monkeypatch):
@@ -92,14 +93,14 @@ def test_failed_source_refresh_cannot_silently_resume_old_published_text(workflo
     assert len(w.contexts)==3
 
 
-def test_removing_price_schedule_clears_saved_schedule(monkeypatch):
+def test_blank_price_schedule_preserves_saved_schedule(monkeypatch):
     import _6_create_variations as variations
     monkeypatch.setattr(variations,'_build_product_attr_map',lambda pid:{'Distance':1})
     monkeypatch.setattr(variations,'_load_all_variations',lambda *args,**kwargs:[{'id':10,'regular_price':'50','attributes':[{'id':1,'option':'42 km'}]}])
     request=Mock();monkeypatch.setattr(variations,'_wcapi_request_with_retry',request)
     variations.sync_variations_by_ids(1,[{'row_index':2,'existing_variation_id':10,'regular_price':'50',
         'attributes':[{'name':'Distance','option':'42 km','id':1}],'price_schedule':[],'strict_schedule':True}],lang='es')
-    request.assert_called_once_with('PUT','products/1/variations/10?lang=es',{'miss_events':{'price_schedule':[]}})
+    request.assert_not_called()
 
 
 def test_identical_visible_labels_are_assigned_by_distinct_language_ids(monkeypatch):
@@ -141,7 +142,7 @@ def test_real_readback_contract_rejects_incorrect_saved_data(monkeypatch,fault):
              'miss_events':{'price_schedule':[{'datetime':'2026-11-10 00:00:00','price':'60'}] if fault=='schedule' else []}}]
     monkeypatch.setattr(variations,'_load_all_variations',lambda *args:[] if fault=='missing' else actual)
     args=({'wp_url':'https://example.test','consumer_key':'key','consumer_secret':'secret'},{'en':10},row,
-          {'en':[{'row_index':2,'regular_price':'0' if fault=='blank_price' else '50','attributes':[{'name':'Distance','option':'42 km'}],'price_schedule':[]}]},
+          {'en':[{'row_index':2,'regular_price':'0' if fault=='blank_price' else '50','attributes':[{'name':'Distance','option':'42 km'}],'price_schedule':[{'datetime':'2026-11-10 00:00','price':'70'}] if fault=='schedule' else []}]},
           {'en':{2:101}},{'Distance':1})
     if fault:
         with pytest.raises(ValueError):tri.verify_publication(*args)

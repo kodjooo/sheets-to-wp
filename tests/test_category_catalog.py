@@ -90,12 +90,12 @@ def test_roots_from_different_sports_fail_even_without_subcategory(monkeypatch):
     with pytest.raises(ValueError,match='одной группе'):catalog.resolve_categories({'wp_url':'https://example.test'},row,[(2,row)])
 
 
-def test_empty_deadline_removes_previous_value_without_changing_public_status(monkeypatch):
+def test_empty_deadline_preserves_previous_value_without_changing_public_status(monkeypatch):
     import _3_create_product as products
     monkeypatch.setattr(products,'_collect_category_ids',lambda row:[])
     monkeypatch.setattr(products,'_build_acf_fields_partial',lambda row:{})
     response=Mock(ok=True);put=Mock(return_value=response);monkeypatch.setattr(products.requests,'put',put)
     assert products.create_or_update_product({'RACE NAME (PT)':'Race','RF_REGISTRATION_DEADLINE':''},existing_product_id=42)==42
     payload=json.loads(put.call_args.kwargs['data'])
-    assert payload['miss_events']=={'registration_deadline':''}
+    assert 'miss_events' not in payload
     assert 'status' not in payload

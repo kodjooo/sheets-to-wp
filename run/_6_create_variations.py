@@ -263,8 +263,8 @@ def sync_variations_by_ids(product_id, variation_entries, lang: str | None = Non
         # когда вариация не менялась по цене/атрибутам (базовая цена та же, а
         # расписание клиент отредактировал) и dedup выше пропустил бы запись.
         price_schedule = entry.get("price_schedule")
-        # Новый трёхъязычный режим также удаляет расписание, очищенное в таблице.
-        if price_schedule or entry.get('strict_schedule'):
+        # Как в прежнем импорте: пустое поле не удаляет расписание на сайте.
+        if price_schedule:
             endpoint = f"products/{product_id}/variations/{final_id}"
             if lang:
                 endpoint += f"?lang={lang}"
