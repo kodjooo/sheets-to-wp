@@ -512,9 +512,16 @@ def _process(m, config, country, third, index, row, block, headers, write):
                 raise ValueError('Price schedule: ' + str(errors))
             entries[lang].append({'row_index': row_index, 'existing_variation_id': variation.get('WP VARIATION ID ' + lang.upper(), ''),
                 'regular_price': str(variation.get('PRICE') if variation.get('PRICE') is not None else '').strip(), 'attributes': attrs, 'price_schedule': schedule})
-        signatures = [tuple(sorted((a['name'], a['option']) for a in entry['attributes'])) for entry in entries[lang]]
-        if len(signatures) != len(set(signatures)):
-            raise ValueError('Перевод сделал варианты неразличимыми: ' + lang)
+        # Повторяющиеся исходные строки допустимы: связь сохраняется по строке и ID.
+        # Разные исходные параметры перевод всё ещё не должен склеивать в один вариант.
+        localized = {}
+        for entry, (_, original) in zip(entries[lang], block):
+            signature = tuple(sorted((a['name'], a['option']) for a in entry['attributes']))
+            source = tuple(str(original.get(k) or '').strip().casefold() for k in
+                           ('DISTANCE', 'TEAM', 'TYPE', 'LICENSE', 'RACE START DATE', 'RACE START TIME', 'ATTRIBUTE', 'VALUE'))
+            if signature in localized and localized[signature] != source:
+                raise ValueError('Перевод сделал варианты неразличимыми: ' + lang)
+            localized[signature] = source
     # При возобновлении связываем сохранённые варианты до сохранения родителя WCML.
     for row_index, variation in block:
         source_id = variation.get('WP VARIATION ID ' + native.upper())
@@ -551,7 +558,7 @@ def _process(m, config, country, third, index, row, block, headers, write):
     for lang in (native, 'en', third):
         mapping = m.sync_variations_by_ids(ids[lang], entries[lang], lang=lang)
         mappings[lang] = mapping
-        m.reapply_price_schedules(ids[lang], entries[lang], lang=lang)
+        m.reapply_price_schedules(ids[lang], entries[lang], lang=lang, variation_ids=mapping)
         for row_index, vid in mapping.items():
             write({'WP VARIATION ID ' + lang.upper(): vid}, row_index)
     for row_index, source_id in mappings[native].items():

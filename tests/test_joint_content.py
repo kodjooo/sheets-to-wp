@@ -89,3 +89,16 @@ def test_cleaner_cannot_replace_english_summary_with_spanish_or_drop_faq():
     result=validate_cleaned_result(first,cleaned)
     assert result['summary']=='English summary' and result['title']=='Alcarria Marathon'
     assert result['faq']==first['faq'] and result['org_info']=='Cleaned information'
+
+
+def test_empty_summary_in_all_languages_is_valid_draft_content():
+    payload=sample()
+    for suffix in ('','_pt','_es'):payload['summary'+suffix]=''
+    result=validate_joint_result(payload)
+    assert all(result['summary'+suffix]=='' for suffix in ('','_pt','_es'))
+
+
+def test_empty_summary_does_not_allow_a_missing_translation():
+    payload=sample();payload['summary_es']=''
+    with pytest.raises(ValueError,match='паритет'):
+        validate_joint_result(payload)

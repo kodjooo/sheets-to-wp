@@ -30,9 +30,10 @@ def test_bad_input_is_rejected(key,value):
     with pytest.raises(ValueError):validate_block(block)
 
 
-def test_duplicate_options_cannot_be_distinguished_only_by_price():
+def test_duplicate_options_with_different_prices_are_allowed_for_review():
     block=rows();block[2][1].update(TEAM='Dobles',PRICE='70')
-    with pytest.raises(ValueError,match='одинаковые'):validate_block(block)
+    validate_block(block)
+    assert len(block)==3 and block[2][1]['PRICE']=='70'
 
 
 def test_optional_license_blank_is_preserved():

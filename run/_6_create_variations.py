@@ -303,7 +303,7 @@ def _option_signature(attributes):
     )
 
 
-def reapply_price_schedules(product_id, variation_entries, lang: str | None = None):
+def reapply_price_schedules(product_id, variation_entries, lang: str | None = None, variation_ids=None):
     """Идемпотентно проставляет miss_events.price_schedule на ТЕКУЩИЕ вариации
     продукта, матча по набору значений атрибутов (а не по устаревшим ID из прохода).
 
@@ -314,6 +314,27 @@ def reapply_price_schedules(product_id, variation_entries, lang: str | None = No
     быть затёрта, а fallback плагина (get_meta_with_fallback) не резолвит вариацию на
     PT. Полноценное scheduled-pricing на EN-фронте этим способом не гарантируется —
     см. docs/architecture.md (известное ограничение)."""
+    if not any(entry.get('price_schedule') for entry in variation_entries):
+        return
+    if variation_ids is not None:
+        # У одинаковых вариантов расписания различаются по ID строки, а не по атрибутам.
+        current = {int(v['id']) for v in _load_all_variations(product_id, lang=lang)}
+        ids = list(variation_ids.values())
+        if set(variation_ids) != {entry.get('row_index') for entry in variation_entries} or len(ids) != len(set(ids)) or any(int(vid) not in current for vid in ids):
+            raise ValueError('Неверные ID вариантов при закреплении расписаний')
+        for entry in variation_entries:
+            vid = variation_ids.get(entry.get('row_index'))
+            if not vid:
+                raise ValueError('Нет ID строки при закреплении расписания')
+            schedule = entry.get('price_schedule')
+            if not schedule:
+                continue
+            endpoint = f'products/{product_id}/variations/{vid}'
+            if lang:
+                endpoint += f'?lang={lang}'
+            response = _wcapi_request_with_retry('PUT', endpoint, {'miss_events': {'price_schedule': schedule}})
+            response.raise_for_status()
+        return
     wanted = {}
     for entry in variation_entries:
         schedule = entry.get("price_schedule")

@@ -61,14 +61,6 @@ def validate_block(block):
                 _, error = parse_datetime(value if key.endswith('DATE') else '2000-01-01 ' + value)
                 if error:
                     raise ValueError(f'Row {index}, {key}: {error}')
-    # Не подставляем смысл вместо пустых необязательных атрибутов.
-    signatures = set()
-    for index, row in block:
-        signature = tuple(str(row.get(k) or '').strip().casefold() for k in
-                          ('DISTANCE', 'TEAM', 'TYPE', 'LICENSE', 'RACE START DATE', 'RACE START TIME', 'ATTRIBUTE', 'VALUE'))
-        if signature in signatures:
-            raise ValueError(f'Row {index}: одинаковые варианты участия; цена не различает варианты')
-        signatures.add(signature)
     return deadline or ''
 
 

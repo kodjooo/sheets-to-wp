@@ -28,7 +28,7 @@ def validate_joint_result(payload):
                 value = '\n'.join(value)
             if not isinstance(value, str):
                 raise ValueError('В общем ответе отсутствует поле ' + name)
-            if key in ('title', 'summary') and not value.strip():
+            if key == 'title' and not value.strip():
                 raise ValueError('Пустое обязательное поле ' + name)
             result[name] = value
     for key in ('summary', 'org_info', 'benefits', 'faq', 'cancellation'):

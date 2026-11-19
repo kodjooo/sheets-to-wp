@@ -371,3 +371,28 @@ def test_empty_title_fails_before_creation(workflow):
         w.run()
     assert not w.created
     m.call_openai_assistant.assert_not_called()
+
+
+def test_identical_source_variations_keep_both_row_mappings_and_ids(workflow):
+    import main as m
+    w=workflow;w.child.update(DISTANCE=w.row['DISTANCE'],PRICE=w.row['PRICE'])
+    w.run()
+    assert w.row['STATUS']=='Published'
+    for call in m.sync_variations_by_ids.call_args_list:
+        assert [entry['row_index'] for entry in call.args[1]]==[2,3]
+    ids={k:v for k,v in w.row.items() if ' ID ' in k}
+    w.run()
+    assert ids=={k:v for k,v in w.row.items() if ' ID ' in k}
+    assert len(w.created)==1
+
+
+def test_blank_summary_passes_full_workflow_without_dropping_language_guards(workflow,monkeypatch):
+    import main as m
+    from copy import deepcopy
+    w=workflow;result=deepcopy(m.call_openai_assistant.return_value)
+    for suffix in ('','_pt','_es'):result['summary'+suffix]=''
+    monkeypatch.setattr(m,'call_openai_assistant',Mock(return_value=result))
+    monkeypatch.setattr(m,'call_second_openai_assistant',Mock(return_value=result))
+    w.run()
+    assert w.row['STATUS']=='Published'
+    assert all(w.row[tri.column('summary',lang)]=='' for lang in tri.LANGUAGES)
