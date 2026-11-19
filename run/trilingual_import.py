@@ -43,6 +43,16 @@ def column(name, lang):
     return FIELDS[name] + ('' if lang == 'en' else ' (' + lang.upper() + ')')
 
 
+
+def source_title(row):
+    """Preserve the historic input column; country never selects a required title column."""
+    for key in ('RACE NAME (PT)', 'RACE NAME (ES)', 'RACE NAME'):
+        value = str(row.get(key) or '').strip()
+        if value:
+            return value
+    raise ValueError('Не заполнено название мероприятия: укажите его в RACE NAME (PT)')
+
+
 def content(row, lang):
     return {key: row.get(column(key, lang), '') for key in ('title', *FIELDS)}
 
@@ -320,11 +330,10 @@ def process_trilingual(m, index, original, following, headers):
         if row_index == index:
             row.update(updates)
     try:
-        if not str(row.get(column('title', native)) or '').strip():
-            raise ValueError('Не заполнено название мероприятия на исходном языке')
+        source_title(row)
         validate_roots()
         if native == 'es':
-            validate_spanish_row(row, headers, config['wp_url'])
+            validate_spanish_row(row, headers, config['wp_url'], require_title=False)
         validate_block(block)
         write({'LANGUAGE SCHEME': SCHEME})
         row['_RF_CATEGORY_PLAN'] = resolve_categories(config, row, block)
@@ -352,7 +361,8 @@ def _process(m, config, country, third, index, row, block, headers, write):
             file_ids.append(m.openai.files.create(file=source, purpose='assistants').id)
     source_prompt = m.build_first_assistant_prompt(
         regulations_url=regulations_url, regulations_text=regulations, website_text=website)
-    source_prompt = 'EVENT TITLE ('+native.upper()+'): '+row[column('title',native)]+'\n\n'+source_prompt
+    input_title = source_title(row)
+    source_prompt = 'EVENT TITLE (input; generate PT, EN and ES titles): '+input_title+'\n\n'+source_prompt
     first = m.call_openai_assistant(source_prompt, file_ids=file_ids, trilingual=True)
     validate_joint_result(first)
     first = m.normalize_regulations_link_block(first, regulations_url, trilingual=True)
@@ -371,9 +381,9 @@ def _process(m, config, country, third, index, row, block, headers, write):
     updates = {}
     for lang, suffix in SUFFIXES.items():
         title = result['title'+suffix]
-        if row[column('title', native)].startswith('TEST ') and not title.startswith('TEST '):
+        if input_title.startswith('TEST ') and not title.startswith('TEST '):
             title = 'TEST '+title
-        updates[column('title',lang)] = row[column('title',native)] if lang == native else title
+        updates[column('title',lang)] = title
         for key in FIELDS:
             value = result[key+suffix]
             if key == 'org_info':

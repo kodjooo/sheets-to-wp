@@ -297,7 +297,7 @@ def test_joint_generation_uses_only_existing_two_steps_for_both_countries(workfl
 @pytest.mark.parametrize('title,is_test',[('TEST Antonio Marathon Alcarria 2026',True),('TEST TRIATHLON 2026',True),('Testing Marathon 2026',False)])
 def test_joint_titles_preserve_test_marker_without_separate_translation(workflow,title,is_test):
     w=workflow;w.row['RACE NAME (PT)']=title;w.run()
-    assert w.row['RACE NAME (PT)']==title
+    assert w.row['RACE NAME (PT)']==('TEST Corrida' if is_test else 'Corrida')
     assert w.row['RACE NAME'].startswith('TEST ')==is_test
     assert w.row['RACE NAME (ES)'].startswith('TEST ')==is_test
     assert title in m.call_openai_assistant.call_args.args[0]
@@ -334,3 +334,39 @@ def test_targeted_run_rejects_blank_id_instead_of_running_entire_queue(workflow,
     monkeypatch.setattr(m,'load_all_rows',lambda:([(2,dict(w.row))],w.headers))
     with pytest.raises(ValueError,match='непустой ID'):m.run_automation(event_id=' ')
     assert not w.writes and not w.created
+
+
+@pytest.mark.parametrize('profile', [PT, ES])
+def test_historic_title_input_returns_all_three_generated_titles(workflow, profile):
+    w = workflow
+    w.row.update({'RACE NAME (PT)': 'Original supplied race', 'RACE NAME (ES)': '', 'RACE NAME': ''})
+    if profile == ES:
+        w.row.update({'COUNTRY': 'Spain', 'LOCATION (CITY)': 'Badalona, Barcelona'})
+    w.run(profile)
+    assert 'Original supplied race' in m.call_openai_assistant.call_args.args[0]
+    assert w.row['RACE NAME (PT)'] == 'Corrida'
+    assert w.row['RACE NAME (ES)'] == 'Carrera'
+    assert w.row['RACE NAME'] == 'English race'
+    ids = {k: v for k, v in w.row.items() if ' ID ' in k}
+    w.row['STATUS'] = 'Revised (complete)'
+    w.run(profile)
+    assert ids == {k: v for k, v in w.row.items() if ' ID ' in k}
+    assert len(w.created) == 1
+
+
+@pytest.mark.parametrize('row,expected', [
+    ({'RACE NAME (PT)': ' PT input ', 'RACE NAME (ES)': 'ES output'}, 'PT input'),
+    ({'RACE NAME (PT)': '', 'RACE NAME (ES)': 'ES input'}, 'ES input'),
+    ({'RACE NAME': 'EN input'}, 'EN input'),
+])
+def test_source_title_compatible_fallbacks(row, expected):
+    assert tri.source_title(row) == expected
+
+
+def test_empty_title_fails_before_creation(workflow):
+    w = workflow
+    w.row.update({k: '' for k in ('RACE NAME', 'RACE NAME (PT)', 'RACE NAME (ES)')})
+    with pytest.raises(ValueError, match='RACE NAME'):
+        w.run()
+    assert not w.created
+    m.call_openai_assistant.assert_not_called()

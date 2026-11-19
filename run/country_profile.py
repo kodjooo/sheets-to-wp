@@ -128,7 +128,7 @@ def primary_metadata(row):
             {'key': '_rf_location_province_name', 'value': province}]
 
 
-def validate_spanish_row(row, headers, wp_url, require_enabled=True):
+def validate_spanish_row(row, headers, wp_url, require_enabled=True, require_title=True):
     if require_enabled and os.getenv('ENABLE_SPAIN', 'false').lower() != 'true':
         raise ValueError('Обработка Испании выключена: ENABLE_SPAIN=false')
     expected_host = os.getenv('SPAIN_WP_HOST', '').strip().lower()
@@ -140,7 +140,7 @@ def validate_spanish_row(row, headers, wp_url, require_enabled=True):
     missing = [column for column in required if column not in headers]
     if missing:
         raise ValueError('Отсутствуют колонки: ' + ', '.join(missing))
-    if not str(row.get('RACE NAME (ES)') or '').strip():
+    if require_title and not str(row.get('RACE NAME (ES)') or '').strip():
         raise ValueError('Пустое название RACE NAME (ES)')
     from rf_spain_location import resolve_spanish_location
     resolve_spanish_location(row)

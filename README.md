@@ -478,3 +478,7 @@ ID должен быть непустым и встречаться ровно �
 17.11.2026: исправление языковых атрибутов развёрнуто на PROD совместно с обновлением WP-модуля. Новые мероприятия не запускались и не публиковались; ночной запуск остаётся 02:00 Europe/Moscow, RUN_ON_STARTUP=false, новые карточки остаются draft. Действующий формат Telegram-уведомлений сохранён. Отчёт: docs/prod-editor-fix-deployment-20261117.json.
 
 Совместимость пустых полей восстановлена 18.11.2026: неизвестные цена/даты не блокируют импорт, пустая цена не превращается в 0; пустые срок регистрации и расписание цен не очищают данные сайта при повторе. Исправление относится к publisher; WordPress-модуль и окружение менять не требуется. Проверены 281 тест и реальный повторный импорт на DEV.
+
+### Event title input
+
+Keep entering the source event name in `RACE NAME (PT)`, as in the original workflow, regardless of COUNTRY. The three-language importer writes generated PT, ES and EN names to `RACE NAME (PT)`, `RACE NAME (ES)` and `RACE NAME`. For existing prepared rows with an empty PT name, it also accepts ES, then EN as fallbacks. Country does not determine a required input title column.
