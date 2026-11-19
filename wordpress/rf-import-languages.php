@@ -4,6 +4,7 @@
  * Description: Самостоятельные языковые версии импортируемого мероприятия.
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
+require_once __DIR__ . '/rf-import-attribute-integrity.php';
 
 add_action( 'rest_api_init', function () {
     register_rest_route( 'custom-api/v1', '/import-category-catalog/', array(
@@ -253,7 +254,7 @@ function rf_import_apply_options_exact( $request ) {
     if ( ! is_array( $items ) || ! $items || count( $items ) > 3 ) {
         return new WP_Error( 'rf_invalid_options', 'Требуется от 1 до 3 карточек', array( 'status' => 400 ) );
     }
-    $group = null;
+    $group = null; $native_defaults = array();
     foreach ( $items as $item ) {
         $id = (int) ( $item['product_id'] ?? 0 );
         $lang = $item['language'] ?? '';
@@ -274,14 +275,16 @@ function rf_import_apply_options_exact( $request ) {
                 return new WP_Error( 'rf_invalid_option_attribute', 'Неизвестный атрибут', array( 'status' => 400 ) );
             }
             foreach ( $attr['term_ids'] as $term_id ) {
-                $term = get_term( (int) $term_id, $taxonomy );
-                $actual_lang = $term && ! is_wp_error( $term ) ? $wpdb->get_var( $wpdb->prepare( "SELECT language_code FROM {$wpdb->prefix}icl_translations WHERE element_type=%s AND element_id=%d", 'tax_' . $taxonomy, $term->term_taxonomy_id ) ) : '';
+                $raw = rf_import_raw_term( $taxonomy, 'term_id', (int) $term_id );
+                $actual_lang = $raw['lang'] ?? '';
                 if ( $actual_lang !== $lang ) {
                     return new WP_Error( 'rf_invalid_option_language', 'Значение относится к другому языку', array( 'status' => 409 ) );
                 }
                 $allowed[$aid][(int) $term_id] = true;
             }
         }
+        $native_defaults[$id] = rf_import_native_defaults( $id, $lang, $allowed );
+        if ( is_wp_error( $native_defaults[$id] ) ) { return $native_defaults[$id]; }
         foreach ( $item['variations'] ?? array() as $variation ) {
             $vid = (int) ( $variation['id'] ?? 0 );
             if ( 'product_variation' !== get_post_type( $vid ) || (int) wp_get_post_parent_id( $vid ) !== $id || empty( $variation['attributes'] ) || ! is_array( $variation['attributes'] ) ) {
@@ -311,6 +314,7 @@ function rf_import_apply_options_exact( $request ) {
                 }
                 $product = wc_get_product( (int) $item['product_id'] );
                 $product->set_attributes( $attributes );
+                $product->set_default_attributes( $native_defaults[(int) $item['product_id']] );
                 $product->save();
                 // WCML может вернуть уже переведённые ID при чтении старой карточки,
                 // и CRUD не заметит отличия от сырых связей. Фиксируем отношения явно.
@@ -325,8 +329,8 @@ function rf_import_apply_options_exact( $request ) {
                     $attributes = array();
                     foreach ( $variation['attributes'] as $attr ) {
                         $taxonomy = wc_attribute_taxonomy_name_by_id( (int) $attr['id'] );
-                        $term = get_term( (int) $attr['term_id'], $taxonomy );
-                        $attributes[$taxonomy] = $term->slug;
+                        $term = rf_import_raw_term( $taxonomy, 'term_id', (int) $attr['term_id'] );
+                        $attributes[$taxonomy] = $term['slug'];
                     }
                     $product = wc_get_product( (int) $variation['id'] );
                     $product->set_attributes( $attributes );
@@ -348,15 +352,22 @@ function rf_import_apply_options_exact( $request ) {
             foreach ( $item['variations'] ?? array() as $variation ) {
                 foreach ( $variation['attributes'] as $attr ) {
                     $taxonomy = wc_attribute_taxonomy_name_by_id( (int) $attr['id'] );
-                    $term = get_term( (int) $attr['term_id'], $taxonomy );
+                    $term = rf_import_raw_term( $taxonomy, 'term_id', (int) $attr['term_id'] );
                     $stored = $wpdb->get_var( $wpdb->prepare( "SELECT meta_value FROM {$wpdb->postmeta} WHERE post_id=%d AND meta_key=%s", (int) $variation['id'], 'attribute_' . $taxonomy ) );
-                    if ( $stored !== $term->slug ) {
+                    if ( ! $term || $term['lang'] !== $item['language'] || $stored !== $term['slug'] ) {
                         return new WP_Error( 'rf_variation_option_mismatch', 'Вариант сохранил другое языковое значение', array( 'status' => 409 ) );
                     }
                 }
             }
         }
-        return rest_ensure_response( array( 'verified' => true ) );
+        $raw_checked = 0;
+        foreach ( $items as $item ) {
+            if ( empty( $item['variations'] ) ) { continue; }
+            $raw_checked++;
+            $issues = rf_import_raw_option_issues( (int) $item['product_id'], $item['language'] );
+            if ( $issues ) { return new WP_Error( 'rf_raw_option_mismatch', 'Сырые связи или язык атрибутов не совпали', array( 'status' => 409, 'issues' => $issues ) ); }
+        }
+        return rest_ensure_response( array( 'verified' => true, 'raw_verified' => $raw_checked === count( $items ), 'products_checked' => $raw_checked ) );
     } finally {
         do_action( 'wpml_switch_language', $previous );
     }

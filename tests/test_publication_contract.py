@@ -104,7 +104,7 @@ def test_blank_price_schedule_preserves_saved_schedule(monkeypatch):
 
 
 def test_identical_visible_labels_are_assigned_by_distinct_language_ids(monkeypatch):
-    response=Mock();response.json.return_value={'verified':True}
+    response=Mock();response.json.return_value={'verified':True,'raw_verified':True,'products_checked':3}
     request=Mock(return_value=response);monkeypatch.setattr(tri.requests,'post',request)
     entries={lang:[{'row_index':2,'attributes':[{'id':1,'option':'42 km','term_id':20+i}]}] for i,lang in enumerate(tri.LANGUAGES)}
     ids={lang:100+i for i,lang in enumerate(tri.LANGUAGES)}

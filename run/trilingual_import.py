@@ -170,8 +170,9 @@ def apply_options(config, ids, entries, mappings=None):
             except ValueError:
                 detail = {}
             raise ValueError('Проверка языковых ID: ' + str(detail.get('code', response.status_code)) + ' ' + str(detail.get('message', ''))) from error
-        if not response.json().get('verified'):
-            raise ValueError('WordPress не подтвердил точные языковые ID вариантов')
+        proof = response.json()
+        if not proof.get('verified') or (mappings and (not proof.get('raw_verified') or proof.get('products_checked') != len(items))):
+            raise ValueError('WordPress не подтвердил сырые связи и язык значений вариантов')
 
 
 
