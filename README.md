@@ -482,3 +482,7 @@ ID должен быть непустым и встречаться ровно �
 ### Event title input
 
 Keep entering the source event name in `RACE NAME (PT)`, as in the original workflow, regardless of COUNTRY. The three-language importer writes generated PT, ES and EN names to `RACE NAME (PT)`, `RACE NAME (ES)` and `RACE NAME`. For existing prepared rows with an empty PT name, it also accepts ES, then EN as fallbacks. Country does not determine a required input title column.
+
+### Итоговые цены переводов
+
+Для трёхъязычного импорта тип Variable сохраняется явно и при обновлении. После связи вариаций модуль `rf-import-languages.php` пересчитывает только итоговые цены родителей и индекс WooCommerce; отдельный HTTP-запрос проверяет сохранённое состояние. Сверка учитывает уже наступившие этапы PRICE CHANGES в часовом поясе WordPress. Цены вариаций, комиссии и режим draft не меняются этой финализацией. Обновлять нужно издатель и только указанный mu-plugin; тема сайта в этот релиз не входит.

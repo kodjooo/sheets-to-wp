@@ -569,6 +569,8 @@ def create_or_update_product(data, existing_product_id=None, on_created=None):
 
     # Не передаём status при обновлении, чтобы сохранить текущее состояние публикации в WP.
     payload = {"name": data.get("RACE NAME (PT)", "") or data.get("RACE NAME", ""), "lang": active_profile().language}
+    if data.get('LANGUAGE SCHEME') == 'PT_ES_EN':
+        payload['type'] = 'variable'
     category_ids = _collect_category_ids(data)
     if category_ids:
         payload["categories"] = category_ids

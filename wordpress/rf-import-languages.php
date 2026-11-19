@@ -113,7 +113,8 @@ function rf_import_verify_categories( $request ) {
             $english = $c ? $wpdb->get_var( $wpdb->prepare( "SELECT t.name FROM {$wpdb->prefix}icl_translations i JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id=i.element_id JOIN {$wpdb->terms} t USING(term_id) WHERE i.element_type='tax_product_cat' AND i.trid=%d AND i.language_code='en'", $c['trid'] ) ) : '';
             $end = (string) get_post_meta( $id, 'event_date_end', true );
             // Старый обработчик сайта назначает общий EN Expired и ES-карточке.
-            $shared_expired = $c && $c['lang'] === 'en' && preg_match( '/^[0-9]{8}$/', $end ) && $end < wp_date( 'Ymd' );
+            $reference_date = $end !== '' ? $end : (string) get_post_meta( $id, 'event_date_start', true );
+            $shared_expired = $c && $c['lang'] === 'en' && preg_match( '/^[0-9]{8}$/', $reference_date ) && $reference_date < wp_date( 'Ymd' );
             if ( $c && ( $c['lang'] === $lang || $shared_expired ) && $c['parent'] === 0 && $english === 'Expired' ) { $actual = array_values( array_diff( $actual, array( $extra ) ) ); }
         }
         sort( $actual ); sort( $expected );
@@ -411,13 +412,17 @@ function rf_import_ensure_language( $request ) {
                 'post_title' => get_the_title( $origin ), 'post_author' => get_current_user_id(),
             ), true );
             if ( is_wp_error( $id ) ) { return $id; }
-            wp_set_object_terms( $id, 'variable', 'product_type' );
             do_action( 'wpml_set_element_language_details', array(
                 'element_id' => $id, 'element_type' => 'post_product', 'trid' => $trid,
                 'language_code' => $lang, 'source_language_code' => $details['language_code'],
                 'check_duplicates' => true,
             ) );
         }
+        // После назначения языка сбрасываем тип, который WPML мог прочитать как simple при вставке.
+        $type_saved = wp_set_object_terms( $id, 'variable', 'product_type' );
+        if ( is_wp_error( $type_saved ) ) { return $type_saved; }
+        WC_Cache_Helper::invalidate_cache_group( 'product_' . $id );
+        clean_post_cache( $id );
         // Такой же переход к самостоятельному переводу используется в seed-es Кирилла.
         delete_post_meta( $id, '_icl_lang_duplicate_of' );
         update_post_meta( $id, '_rf_import_origin', $origin );
@@ -491,4 +496,68 @@ function rf_import_link_variation_language( $request ) {
         return new WP_Error( 'rf_variation_link_failed', 'WPML не подтвердил связь вариаций', array( 'status' => 500 ) );
     }
     return rest_ensure_response( array( 'linked' => true, 'id' => $target ) );
+}
+
+// Итоговые цены пересчитываются только после завершения языковых связей вариантов.
+add_action( 'rest_api_init', function () {
+    register_rest_route( 'custom-api/v1', '/finalize-import-prices/', array(
+        'methods' => 'POST', 'permission_callback' => function () { return current_user_can( 'manage_woocommerce' ); },
+        'callback' => 'rf_import_finalize_prices',
+    ) );
+} );
+
+function rf_import_finalize_prices( $request ) {
+    global $wpdb;
+    $items = $request->get_param( 'items' );
+    if ( ! is_array( $items ) || ! $items || count( $items ) > 3 ) { return new WP_Error( 'rf_price_items', 'Нужны от одной до трёх карточек', array( 'status' => 400 ) ); }
+    $group = null; $seen = array();
+    foreach ( $items as $item ) {
+        if ( ! is_array( $item ) || ! is_array( $item['variation_ids'] ?? null ) ) { return new WP_Error( 'rf_price_shape', 'Неверный список вариантов', array( 'status' => 400 ) ); }
+        $id = (int) ( $item['product_id'] ?? 0 ); $lang = $item['language'] ?? ''; $ids = array_map( 'intval', $item['variation_ids'] ?? array() );
+        $details = apply_filters( 'wpml_post_language_details', null, $id ); $trid = apply_filters( 'wpml_element_trid', null, $id, 'post_product' );
+        if ( ! in_array( $lang, array( 'pt', 'es', 'en' ), true ) || isset( $seen[$lang] ) || ! $details || $details['language_code'] !== $lang || ! current_user_can( 'edit_post', $id ) || ! $trid || ( $group && (int) $group !== (int) $trid ) || ! $ids || count( $ids ) > 500 || count( $ids ) !== count( array_unique( $ids ) ) ) { return new WP_Error( 'rf_price_product', 'Не совпали язык, группа или варианты карточки', array( 'status' => 409 ) ); }
+        $actual = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT ID FROM {$wpdb->posts} WHERE post_parent=%d AND post_type='product_variation' AND post_status IN ('publish','private') ORDER BY ID", $id ) ) );
+        sort( $ids ); sort( $actual );
+        if ( $ids !== $actual ) { return new WP_Error( 'rf_price_children', 'Список вариантов карточки изменился', array( 'status' => 409 ) ); }
+        foreach ( $ids as $vid ) {
+            $vlang = $wpdb->get_var( $wpdb->prepare( "SELECT language_code FROM {$wpdb->prefix}icl_translations WHERE element_type='post_product_variation' AND element_id=%d", $vid ) );
+            if ( $vlang !== $lang ) { return new WP_Error( 'rf_price_child_language', 'Вариант относится к другому языку', array( 'status' => 409 ) ); }
+        }
+        $seen[$lang] = true; $group = $trid;
+    }
+    $previous = apply_filters( 'wpml_current_language', null ); $result = array();
+    try {
+        foreach ( $items as $item ) {
+            $id = (int) $item['product_id']; $lang = $item['language']; do_action( 'wpml_switch_language', $lang );
+            $product = wc_get_product( $id );
+            if ( ! $product || ! $product->is_type( 'variable' ) ) { return new WP_Error( 'rf_price_type', 'Карточка не является вариативной', array( 'status' => 409 ) ); }
+            if ( ! $request->get_param( 'verify_only' ) ) {
+                // Привязка WPML могла измениться после кеширования запросов дочерних записей.
+                clean_post_cache( $id ); wc_delete_product_transients( $id );
+                $product = new WC_Product_Variable( $id ); $store = $product->get_data_store();
+                $children = $store->read_children( $product, true );
+                $expected = array_map( 'intval', $item['variation_ids'] ); $actual = $children['all']; sort( $expected ); sort( $actual );
+                if ( $actual !== $expected ) { return new WP_Error( 'rf_price_child_query', 'WooCommerce не видит все варианты нужного языка', array( 'status' => 409 ) ); }
+                $product->set_children( $children['all'] ); $product->set_visible_children( $children['visible'] );
+                // Только цены и индекс WooCommerce: без сохранения атрибутов, комиссий и статуса.
+                $store->sync_price( $product ); wc_delete_product_transients( $id );
+            }
+            $product = new WC_Product_Variable( $id );
+            $actual = array_map( 'intval', $product->get_children() ); $expected = array_map( 'intval', $item['variation_ids'] ); sort( $actual ); sort( $expected );
+            if ( $actual !== $expected ) { return new WP_Error( 'rf_price_cached_children', 'После пересчёта потерян список вариантов', array( 'status' => 409 ) ); }
+            $visible = array_map( 'intval', $product->get_visible_children() ); $prices = array();
+            if ( array_diff( $visible, $expected ) ) { return new WP_Error( 'rf_price_visible_children', 'Видимые варианты относятся к другой карточке', array( 'status' => 409 ) ); }
+            foreach ( $visible as $vid ) {
+                $value = $wpdb->get_var( $wpdb->prepare( "SELECT meta_value FROM {$wpdb->postmeta} WHERE post_id=%d AND meta_key='_price' LIMIT 1", $vid ) );
+                if ( $value !== null && $value !== '' ) { $prices[] = wc_format_decimal( $value, wc_get_price_decimals() ); }
+            }
+            $prices = array_values( array_unique( $prices ) ); usort( $prices, static function ( $a, $b ) { return (float) $a <=> (float) $b; } );
+            $stored = $wpdb->get_col( $wpdb->prepare( "SELECT meta_value FROM {$wpdb->postmeta} WHERE post_id=%d AND meta_key='_price'", $id ) );
+            $stored = array_map( static function ( $v ) { return wc_format_decimal( $v, wc_get_price_decimals() ); }, $stored ); usort( $stored, static function ( $a, $b ) { return (float) $a <=> (float) $b; } );
+            $lookup = $wpdb->get_row( $wpdb->prepare( "SELECT min_price,max_price FROM {$wpdb->prefix}wc_product_meta_lookup WHERE product_id=%d", $id ), ARRAY_A );
+            if ( $stored !== $prices || ( $prices && ( ! $lookup || wc_format_decimal( $lookup['min_price'], wc_get_price_decimals() ) !== $prices[0] || wc_format_decimal( $lookup['max_price'], wc_get_price_decimals() ) !== end( $prices ) ) ) ) { return new WP_Error( 'rf_price_index', 'Не сохранились итоговые цены карточки', array( 'status' => 409 ) ); }
+            $result[$lang] = array( 'product_id' => $id, 'visible_variation_ids' => $visible, 'min_price' => $prices ? $prices[0] : null, 'max_price' => $prices ? end( $prices ) : null );
+        }
+        return rest_ensure_response( array( 'verified' => true, 'timezone' => wp_timezone_string(), 'server_time' => wp_date( 'c' ), 'prices' => $result ) );
+    } finally { do_action( 'wpml_switch_language', $previous ); }
 }

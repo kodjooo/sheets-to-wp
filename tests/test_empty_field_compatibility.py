@@ -44,7 +44,7 @@ def test_readback_distinguishes_unknown_from_free_and_preserves_omitted_schedule
     import _6_create_variations as variations
     row={'EVENT START DATE':'14/11/2026','EVENT END DATE':'','WEBSITE':'https://example.test/race','RF_REGISTRATION_DEADLINE':'','SUMMARY':'English','ORG INFO':'Organizer'}
     metadata={'event_country':'portugal','event_date_start':'20261114','event_date_end':'','event_short_description':'English','organizer_description':'Organizer','event_ticket_url':row['WEBSITE']}
-    product={'id':10,'status':'draft','meta_data':[{'key':k,'value':v} for k,v in metadata.items()],'miss_events':{'registration_deadline':'2027-01-01 18:00:00'}}
+    product={'type':'variable','id':10,'status':'draft','variations':[101],'price':saved,'meta_data':[{'key':k,'value':v} for k,v in metadata.items()],'miss_events':{'registration_deadline':'2027-01-01 18:00:00'}}
     response=Mock();response.json.return_value=product;monkeypatch.setattr(tri.requests,'get',Mock(return_value=response))
     actual=[{'id':101,'regular_price':saved,'attributes':[{'id':1,'option':'42 km'},{'id':2,'option':''}],'miss_events':{'price_schedule':[{'datetime':'2026-11-10 00:00:00','price':'60'}]}}]
     monkeypatch.setattr(variations,'_load_all_variations',lambda *args:actual)

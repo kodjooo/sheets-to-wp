@@ -174,6 +174,56 @@ def apply_options(config, ids, entries, mappings=None):
             raise ValueError('WordPress не подтвердил точные языковые ID вариантов')
 
 
+
+def finalize_prices(config, ids, mappings):
+    """Пересчёт родительских цен после фиксации языков и контроль отдельным запросом."""
+    items = [{'product_id': pid, 'language': lang, 'variation_ids': list(mappings[lang].values())}
+             for lang, pid in ids.items()]
+    for verify_only in (False, True):
+        response = requests.post(config['wp_url'].rstrip('/') + '/wp-json/custom-api/v1/finalize-import-prices/',
+            headers={'Authorization': 'Bearer ' + config['_import_jwt']},
+            json={'items': items, 'verify_only': verify_only}, timeout=120)
+        try:
+            response.raise_for_status()
+        except requests.HTTPError as error:
+            detail = response.json()
+            raise ValueError('Финализация цен: ' + str(detail.get('code', response.status_code)) + ' ' + str(detail.get('message', ''))) from error
+        result = response.json()
+        if not result.get('verified') or not result.get('timezone') or set(result.get('prices', {})) != set(ids):
+            raise ValueError('WordPress не подтвердил итоговые цены карточек')
+        config['_RF_PRICE_STATE'] = result
+
+
+def site_price_now(config):
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    state = config.get('_RF_PRICE_STATE') or {}
+    zone = state.get('timezone')
+    if not zone:
+        raise ValueError('Не получен часовой пояс WordPress для проверки цен')
+    try:
+        tz = ZoneInfo(zone)
+    except (ValueError, KeyError):
+        tz = datetime.fromisoformat(state['server_time']).tzinfo
+        if tz is None:
+            raise ValueError('Не определён часовой пояс WordPress')
+    return datetime.now(tz)
+
+
+def effective_regular_price(entry, now):
+    from datetime import datetime
+    value = str(entry.get('regular_price') if entry.get('regular_price') is not None else '').strip()
+    due = []
+    for item in entry.get('price_schedule') or []:
+        moment, error = parse_datetime(item.get('datetime'))
+        if error or not moment:
+            raise ValueError('Не прочиталось расписание цены')
+        dt = datetime.strptime(moment, '%Y-%m-%d %H:%M').replace(tzinfo=now.tzinfo)
+        if dt <= now:
+            due.append((dt, str(item['price'])))
+    return sorted(due, key=lambda item: item[0])[-1][1] if due else value
+
+
 def reconcile_legacy_options(config, native, ids, native_entries, english_entries, mappings):
     """После WCML-синхронизации закрепляет общие группы терминов и точные ID двух языков."""
     if not native_entries:
@@ -244,6 +294,8 @@ def verify_publication(config, ids, row, entries, mappings, attr_ids, require_pu
             params={'lang': lang}, auth=(config['consumer_key'], config['consumer_secret']), timeout=45)
         response.raise_for_status()
         product = response.json()
+        if product.get('type') != 'variable':
+            raise ValueError('Проверка карточки ' + lang + ': потерян тип variable')
         if str(product.get('id')) != str(pid):
             raise ValueError('Проверка карточки ' + lang + ': получен другой ID товара')
         if product.get('status') not in ('draft', 'pending', 'publish', 'private', 'future'):
@@ -274,13 +326,23 @@ def verify_publication(config, ids, row, entries, mappings, attr_ids, require_pu
         actual = _load_all_variations(pid, lang)
         if {int(v['id']) for v in actual} != set(mappings[lang].values()):
             raise ValueError('Проверка карточки ' + lang + ': лишние или отсутствующие варианты')
+        if {int(v) for v in product.get('variations', [])} != set(mappings[lang].values()):
+            raise ValueError('Проверка карточки ' + lang + ': родитель не видит все варианты')
         by_id = {int(v['id']): v for v in actual}
+        visible = config.get('_RF_PRICE_STATE', {}).get('prices', {}).get(lang, {}).get('visible_variation_ids', list(by_id))
+        active_prices = [Decimal(str(by_id[int(vid)].get('price', by_id[int(vid)].get('regular_price'))))
+                         for vid in visible if by_id[int(vid)].get('price', by_id[int(vid)].get('regular_price')) not in (None, '')]
+        parent_price = str(product.get('price') if product.get('price') is not None else '').strip()
+        if (active_prices and (not parent_price or Decimal(parent_price) != min(active_prices))) or (not active_prices and parent_price):
+            raise ValueError('Проверка карточки ' + lang + ': неверная итоговая цена')
+        if active_prices and min(active_prices) > 0 and re.search(r'\bFree\b', product.get('price_html', ''), re.I):
+            raise ValueError('Проверка карточки ' + lang + ': платные варианты отображаются как Free')
         for entry in entries[lang]:
             variant = by_id[mappings[lang][entry['row_index']]]
             wanted = {attr_ids[a['name']]: a['option'] for a in entry['attributes']}
             got = {int(a.get('id', 0)): a.get('option') for a in variant.get('attributes', []) if str(a.get('option') or '').strip()}
             saved_price = str(variant.get('regular_price') if variant.get('regular_price') is not None else '').strip()
-            wanted_price = str(entry.get('regular_price') if entry.get('regular_price') is not None else '').strip()
+            wanted_price = effective_regular_price(entry, site_price_now(config)) if entry.get('price_schedule') else str(entry.get('regular_price') if entry.get('regular_price') is not None else '').strip()
             price_matches = (not saved_price) if not wanted_price else bool(saved_price) and Decimal(saved_price) == Decimal(wanted_price)
             if got != wanted or not price_matches:
                 raise ValueError('Проверка варианта ' + lang + ': не совпали цена или локализованные значения')
@@ -496,6 +558,7 @@ def _process(m, config, country, third, index, row, block, headers, write):
             if lang != native:
                 link_variations(config, source_id, mappings[lang][row_index], lang)
     apply_options(config, ids, entries, mappings)
+    finalize_prices(config, ids, mappings)
     verify_publication(config, ids, row, entries, mappings, attr_ids, require_published=False)
     verify_categories(config, row['_RF_CATEGORY_PLAN'], ids)
     products = read_imported_products(config, ids)

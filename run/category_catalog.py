@@ -21,6 +21,7 @@ VOCABULARY = {
         ('Running 10 km', 'Corrida 10 km', 'Carrera 10 km', []),
         ('Running 5 km', 'Corrida 5 km', 'Carrera 5 km', []),
         ('Road Running', 'Corrida de Estrada', 'Carrera en carretera', []),
+        ('Cross country', 'Corta-mato', 'Campo a través', ['Cross-country', 'Cros']),
         ('Walking', 'Caminhada', 'Senderismo', []),
         ('Kids', 'Crianças', 'Infantil', ['Kids race']),
     ],

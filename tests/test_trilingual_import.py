@@ -87,6 +87,7 @@ def workflow(monkeypatch):
     monkeypatch.setattr(tri,'attribute_id',lambda name: {'Distance':1,'Team':2,'Running':3}.get(name,4))
     monkeypatch.setattr(tri,'ensure_terms',lambda cfg,specs,ids:{(name,value):{lang:{'id':1,'name':labels[lang]} for lang in tri.LANGUAGES} for name,value,labels in specs})
     monkeypatch.setattr(tri,'verify_publication',Mock())
+    monkeypatch.setattr(tri,'finalize_prices',Mock())
     monkeypatch.setattr(tri,'read_imported_products',Mock(return_value={lang:{'permalink':'https://example.test/event/test'} for lang in tri.LANGUAGES}))
     monkeypatch.setattr(tri,'apply_options',Mock())
     monkeypatch.setattr(tri,'resolve_categories',Mock(return_value={'ids':{'pt':[1],'es':[2],'en':[3]},'groups':[]}))

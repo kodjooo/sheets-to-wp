@@ -99,3 +99,23 @@ def test_empty_deadline_preserves_previous_value_without_changing_public_status(
     payload=json.loads(put.call_args.kwargs['data'])
     assert 'miss_events' not in payload
     assert 'status' not in payload
+
+
+def test_cross_country_keeps_original_input_and_supplies_missing_spanish_name():
+    from category_catalog import vocabulary
+    for value in ['Cross country', 'Cross-country', 'Corta-mato', 'Campo a través']:
+        labels, aliases = vocabulary('Running', value)
+        assert labels == {'en': 'Cross country', 'pt': 'Corta-mato', 'es': 'Campo a través'}
+
+
+@pytest.mark.parametrize('scheme,force_variable',[('PT_ES_EN',True),('LEGACY',False)])
+def test_trilingual_update_keeps_variable_type_without_changing_status(monkeypatch,scheme,force_variable):
+    import _3_create_product as products
+    monkeypatch.setattr(products,'_collect_category_ids',lambda row:[])
+    monkeypatch.setattr(products,'_build_acf_fields_partial',lambda row:{})
+    put=Mock(return_value=Mock(ok=True));monkeypatch.setattr(products.requests,'put',put)
+    products.create_or_update_product({'RACE NAME (PT)':'Race','LANGUAGE SCHEME':scheme},existing_product_id=42)
+    payload=json.loads(put.call_args.kwargs['data'])
+    assert ('type' in payload)==force_variable
+    if force_variable:assert payload['type']=='variable'
+    assert 'status' not in payload
