@@ -490,3 +490,5 @@ Keep entering the source event name in `RACE NAME (PT)`, as in the original work
 Проверка атрибутов после импорта читает исходные slug, языки WPML и связи товара напрямую из БД. При развёртывании копируются оба файла `wordpress/rf-import-languages.php` и `wordpress/rf-import-attribute-integrity.php` в mu-plugins. Изменение старых карточек выполняется отдельно с исходниками и проверкой сохранности.
 
 Повторный аудит всех актуальных карточек без изменений данных: `RF_NATIVE_DIR=/private/report php wp-cli.phar --path=/path/to/wordpress eval-file wordpress/tools/rf-plan-native-attributes.php`. Отчёт учитывает язык WPML, значения по умолчанию и связи родителей, включая карточки без вариаций; прошедшие по дате окончания события и корзина исключаются.
+
+Архив и корзина включаются в аудит только явно: `RF_NATIVE_INCLUDE_INACTIVE=1 RF_NATIVE_IDS=123,456` вместе с командой выше. Без списка ID этот режим отклоняется; он не меняет обычный ночной импорт. Восстановление терминов корзины сохраняет её статус и не создаёт активный индекс товара.
