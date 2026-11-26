@@ -128,7 +128,16 @@ def ensure_terms(config, specs, attr_ids):
     response = requests.post(config['wp_url'].rstrip('/') + '/wp-json/custom-api/v1/ensure-import-terms/',
         headers={'Authorization': 'Bearer ' + config['_import_jwt']},
         json={'items': [{'attribute_id': attr_ids[name], 'labels': labels} for name, value, labels in specs]}, timeout=90)
-    response.raise_for_status()
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as error:
+        try:
+            detail = response.json()
+        except ValueError:
+            detail = {}
+        if isinstance(detail, dict) and str(detail.get('code', '')).startswith(('rf_dictionary', 'rf_invalid_label')):
+            raise ValueError('Справочник атрибутов: ' + str(detail['code']) + ' — ' + str(detail.get('message', ''))) from error
+        raise
     items = response.json().get('items')
     if not isinstance(items, list) or len(items) != len(specs):
         raise ValueError('WordPress не подтвердил полный справочник вариантов')

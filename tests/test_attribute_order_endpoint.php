@@ -1,6 +1,6 @@
 <?php
 // Полный обработчик с изолированным хранилищем: без WordPress, сети и PROD.
-define('ABSPATH',__DIR__);define('ARRAY_A','ARRAY_A');
+define('ABSPATH',__DIR__);define('ARRAY_A','ARRAY_A');define('RF_TERM_AUDIT_DIR',sys_get_temp_dir().'/rf-order-endpoint-test-'.getmypid());
 function add_action(...$args){}
 class WP_Error {public function __construct(public $code,public $message,public $data=[]) {}}
 function is_wp_error($x){return $x instanceof WP_Error;}

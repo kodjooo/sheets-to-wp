@@ -26,3 +26,14 @@ def test_actual_ensure_terms_rejects_mislabeled_portuguese_response(monkeypatch)
     with pytest.raises(ValueError, match='подпись'):
         tri.ensure_terms({'wp_url':'https://example.test','_import_jwt':'test'},
                          [('Running','Caminhada',{'en':'Walking','pt':'Caminhada','es':'Senderismo'})], {'Running':3})
+
+
+
+def test_dictionary_drift_error_preserves_actionable_server_message(monkeypatch):
+    import requests
+    response = Mock(); response.raise_for_status.side_effect = requests.HTTPError('409')
+    response.json.return_value = {'code': 'rf_dictionary_changed', 'message': 'Изменились общие переводы атрибутов'}
+    monkeypatch.setattr(tri.requests, 'post', Mock(return_value=response))
+    with pytest.raises(ValueError, match='rf_dictionary_changed.*Изменились'):
+        tri.ensure_terms({'wp_url':'https://example.test','_import_jwt':'test'},
+                         [('Running','Caminhada',{'en':'Walking','pt':'Caminhada','es':'Senderismo'})], {'Running':3})

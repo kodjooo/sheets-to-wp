@@ -278,7 +278,7 @@ function rf_import_apply_options_exact( $request ) {
     if ( ! is_array( $items ) || ! $items || count( $items ) > 3 ) {
         return new WP_Error( 'rf_invalid_options', 'Требуется от 1 до 3 карточек', array( 'status' => 400 ) );
     }
-    $group = null; $native_defaults = array();
+    $group = null; $native_defaults = array(); $checked_baselines = array();
     foreach ( $items as $item ) {
         $id = (int) ( $item['product_id'] ?? 0 );
         $lang = $item['language'] ?? '';
@@ -298,6 +298,7 @@ function rf_import_apply_options_exact( $request ) {
             if ( ! $taxonomy || ! taxonomy_exists( $taxonomy ) || empty( $attr['term_ids'] ) || ! is_array( $attr['term_ids'] ) ) {
                 return new WP_Error( 'rf_invalid_option_attribute', 'Неизвестный атрибут', array( 'status' => 400 ) );
             }
+            if(!isset($checked_baselines[$taxonomy])){ $error=rf_import_check_dictionary_baseline($taxonomy);if($error)return $error;$checked_baselines[$taxonomy]=true; }
             foreach ( $attr['term_ids'] as $term_id ) {
                 $raw = rf_import_raw_term( $taxonomy, 'term_id', (int) $term_id );
                 $actual_lang = $raw['lang'] ?? '';

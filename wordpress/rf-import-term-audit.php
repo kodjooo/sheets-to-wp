@@ -43,7 +43,8 @@ function rf_term_audit_state( $taxonomy, $term_id=0, $trid=0 ) {
 function rf_term_audit_language_before($args) {
     $type=$args['element_type']??'';if(!str_starts_with($type,'tax_pa_'))return;
     global $wpdb;$taxonomy=substr($type,4);$tt=(int)($args['element_id']??0);$term=(int)$wpdb->get_var($wpdb->prepare("SELECT term_id FROM {$wpdb->term_taxonomy} WHERE term_taxonomy_id=%d AND taxonomy=%s",$tt,$taxonomy));
-    $entry=array('args'=>$args,'taxonomy'=>$taxonomy,'term_id'=>$term,'before'=>rf_term_audit_state($taxonomy,$term,(int)($args['trid']??0)));
+    $safe_args=array_intersect_key($args,array_flip(array('element_id','element_type','trid','language_code','source_language_code','check_duplicates','check_null')));
+    $entry=array('args'=>$safe_args,'taxonomy'=>$taxonomy,'term_id'=>$term,'before'=>rf_term_audit_state($taxonomy,$term,(int)($args['trid']??0)));
     $GLOBALS['rf_term_audit_pending'][]=$entry;
     rf_term_audit_write('language_change_requested',$entry);
 }
@@ -55,7 +56,7 @@ function rf_term_audit_language_after($args) {
 }
 add_action('wpml_set_element_language_details','rf_term_audit_language_before',0,1);
 add_action('wpml_set_element_language_details','rf_term_audit_language_after',PHP_INT_MAX,1);
-add_action('wpml_translation_update',function($args){$type=$args['element_type']??'';if(!str_starts_with($type,'tax_pa_'))return;$taxonomy=substr($type,4);rf_term_audit_write('wpml_translation_update',array('operation'=>$args,'state'=>rf_term_audit_state($taxonomy,0,(int)($args['trid']??0))));},PHP_INT_MAX,1);
+add_action('wpml_translation_update',function($args){$type=$args['element_type']??'';if(!str_starts_with($type,'tax_pa_'))return;$taxonomy=substr($type,4);rf_term_audit_write('wpml_translation_update',array('operation'=>array_intersect_key($args,array_flip(array('type','trid','element_id','element_type','translation_id','context'))),'state'=>rf_term_audit_state($taxonomy,0,(int)($args['trid']??0))));},PHP_INT_MAX,1);
 add_action('edit_terms',function($term,$taxonomy){if(str_starts_with($taxonomy,'pa_'))rf_term_audit_write('term_before_edit',array('taxonomy'=>$taxonomy,'term_id'=>$term,'state'=>rf_term_audit_state($taxonomy,(int)$term)));},0,2);
 foreach(array('created_term','edited_term','delete_term') as $hook){add_action($hook,function($term,$tt,$taxonomy)use($hook){if(str_starts_with($taxonomy,'pa_'))rf_term_audit_write($hook,array('taxonomy'=>$taxonomy,'term_id'=>$term,'state'=>rf_term_audit_state($taxonomy,(int)$term)));},PHP_INT_MAX,3);}
 add_action('pre_delete_term',function($term,$taxonomy){if(str_starts_with($taxonomy,'pa_'))rf_term_audit_write('term_before_delete',array('taxonomy'=>$taxonomy,'term_id'=>$term,'state'=>rf_term_audit_state($taxonomy,(int)$term)));},0,2);
@@ -63,8 +64,8 @@ add_action('shutdown',function(){foreach($GLOBALS['rf_term_audit_pending']??arra
 
 function rf_import_check_dictionary_baseline($taxonomy) {
     $file=rf_term_audit_directory().'/baseline.json';if(!is_file($file))return null;
-    $baseline=json_decode(file_get_contents($file),true);if(!is_array($baseline))return new WP_Error('rf_dictionary_baseline','Повреждён контрольный снимок справочника',array('status'=>503));
-    foreach($baseline['terms']??array() as $expected){if($expected['taxonomy']!==$taxonomy)continue;$actual=rf_import_raw_term($taxonomy,'term_id',(int)$expected['term_id']);
+    $baseline=json_decode(file_get_contents($file),true);if(!is_array($baseline)||empty($baseline['terms'])||!is_array($baseline['terms']))return new WP_Error('rf_dictionary_baseline','Повреждён контрольный снимок справочника',array('status'=>503));
+    foreach($baseline['terms'] as $expected){if(!is_array($expected)||array_diff(array('taxonomy','term_id','lang','trid','name'),array_keys($expected)))return new WP_Error('rf_dictionary_baseline','Неполный контрольный снимок справочника',array('status'=>503));if($expected['taxonomy']!==$taxonomy)continue;$actual=rf_import_raw_term($taxonomy,'term_id',(int)$expected['term_id']);
         if(!$actual||$actual['lang']!==$expected['lang']||(int)$actual['trid']!==(int)$expected['trid']||$actual['name']!==$expected['name']){
             rf_term_audit_write('dictionary_baseline_mismatch',array('expected'=>$expected,'actual'=>$actual));return new WP_Error('rf_dictionary_changed','Изменились общие переводы атрибутов; требуется проверка справочника',array('status'=>409));
         }

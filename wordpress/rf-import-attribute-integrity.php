@@ -77,5 +77,5 @@ function rf_import_label_matches_language( $name, $language, $english = null ) {
         array('en'=>array('Trail Run','Trail running'),'pt'=>array('Corrida de montanha','Trail Run','Trail running'),'es'=>array('Carrera de montaña','Trail Run','Trail running'))
     );
     foreach($groups as $group){$all=array_merge(...array_values($group));$needle=$normalize($english??$name);if(!in_array($needle,array_map($normalize,$all),true))continue;return isset($group[$language])&&in_array($normalize($name),array_map($normalize,$group[$language]),true);}
-    return true;
+    return $english !== null ? rf_import_label_matches_language($name,$language) : true;
 }
