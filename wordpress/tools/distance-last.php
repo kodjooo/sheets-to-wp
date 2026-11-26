@@ -20,6 +20,7 @@ function rf_order_snapshot($pid) {
 }
 function rf_order_clear($pid,$snapshot){wp_cache_delete($pid,'post_meta');clean_post_cache($pid);wc_delete_product_transients($pid);foreach($snapshot['posts'] as $p){if((int)$p['ID']!==$pid){wp_cache_delete((int)$p['ID'],'post_meta');clean_post_cache((int)$p['ID']);}}}
 if($mode==='audit') {
+    if(file_exists($dir.'/plan.json'))throw new RuntimeException('Исходный план уже существует; перезапись запрещена');
     $known=json_decode(file_get_contents('/usr/local/sheets-to-wp-racefinder/sheets-to-wp/logs/distance-last-source-ids-20261126.json'),true,512,JSON_THROW_ON_ERROR);$known=array_map('intval',$known);$in=implode(',',$known);
     $seeds=$wpdb->get_col("SELECT p.ID FROM {$wpdb->posts} p JOIN {$wpdb->users} u ON u.ID=p.post_author WHERE p.post_type='product' AND (u.user_login='Alex' OR p.ID IN ($in))");
     $seedin=implode(',',array_map('intval',$seeds));$trids=$wpdb->get_col("SELECT DISTINCT trid FROM {$wpdb->prefix}icl_translations WHERE element_type='post_product' AND element_id IN ($seedin)");$tridin=implode(',',array_map('intval',$trids));
@@ -48,8 +49,15 @@ foreach($plan['items'] as $item){$pid=$item['id'];if($selected&&(int)$selected!=
     if($current!==$item['after']){$results[]=['id'=>$pid,'status'=>'not_applied'];continue;}
     $snapshot=json_decode(gzdecode(file_get_contents($dir.'/before-'.$pid.'.json.gz')),true,512,JSON_THROW_ON_ERROR);$expected=$snapshot;foreach($expected['meta'] as &$m){if((int)$m['meta_id']===$item['meta_id'])$m['meta_value']=$item['after'];}unset($m);$after=rf_order_snapshot($pid);
     if($after!==$expected){rf_order_write($dir.'/verify-difference-'.$pid.'.json',$after);$results[]=['id'=>$pid,'status'=>'concurrent_change'];continue;}
-    $parent=wc_get_product($pid);$keys=array_keys($parent->get_attributes());if(end($keys)!=='pa_distance')throw new RuntimeException('Порядок родителя не подтверждён: '.$pid);
-    $count=0;foreach($after['posts'] as $post){if($post['post_type']!=='product_variation'||in_array($post['post_status'],['trash','auto-draft'],true))continue;$variant=wc_get_product((int)$post['ID']);$keys=array_keys($variant->get_variation_attributes());if(in_array('attribute_pa_distance',$keys,true)&&end($keys)!=='attribute_pa_distance')throw new RuntimeException('Порядок варианта не подтверждён: '.$post['ID']);$count++;}
+    // В повторной сверке читаем исходные строки БД, без переводящих фильтров WCML.
+    if($mode==='verify'){
+        $raw=maybe_unserialize($current);if(rf_order_value($raw)!==$raw)throw new RuntimeException('Неверный сырой порядок: '.$pid);
+        $count=count(array_filter($after['posts'],fn($p)=>$p['post_type']==='product_variation'&&!in_array($p['post_status'],['trash','auto-draft'],true)));
+        $results[]=['id'=>$pid,'lang'=>$item['lang'],'status'=>'verified','variants'=>$count];continue;
+    }
+    // WC_Product_Variation при чтении может записать новый post_title.
+    // Для полной сверки используем наследуемые атрибуты без создания объекта товара.
+    $count=0;foreach($after['posts'] as $post){if($post['post_type']!=='product_variation'||in_array($post['post_status'],['trash','auto-draft'],true))continue;$keys=array_keys(wc_get_product_variation_attributes((int)$post['ID']));if(in_array('attribute_pa_distance',$keys,true)&&end($keys)!=='attribute_pa_distance')throw new RuntimeException('Порядок варианта не подтверждён: '.$post['ID']);$count++;}
     $results[]=['id'=>$pid,'lang'=>$item['lang'],'status'=>'verified','variants'=>$count];
 }
 rf_order_write($dir.'/'.$mode.($selected?'-'.$selected:'').'.json',$results);$counts=array_count_values(array_column($results,'status'));echo json_encode(['mode'=>$mode,'counts'=>$counts,'variants'=>array_sum(array_column($results,'variants'))],JSON_UNESCAPED_UNICODE).PHP_EOL;
