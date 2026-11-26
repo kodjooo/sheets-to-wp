@@ -132,9 +132,12 @@ def ensure_terms(config, specs, attr_ids):
     items = response.json().get('items')
     if not isinstance(items, list) or len(items) != len(specs):
         raise ValueError('WordPress не подтвердил полный справочник вариантов')
-    for item in items:
+    for (_, _, labels), item in zip(specs, items):
         if any(not isinstance(item.get(lang), dict) or not item[lang].get('id') or not item[lang].get('name') for lang in LANGUAGES):
             raise ValueError('WordPress не подтвердил переводы значения')
+        from publication_contract import validate_known_term_label
+        for lang in LANGUAGES:
+            validate_known_term_label(item[lang]['name'], lang, labels['en'])
     return {(name, value): item for (name, value, _), item in zip(specs, items)}
 
 

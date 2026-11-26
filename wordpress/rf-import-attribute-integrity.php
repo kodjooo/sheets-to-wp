@@ -14,9 +14,10 @@ function rf_import_raw_option_issues( $id, $language ) {
     $actual_language = $wpdb->get_var( $wpdb->prepare( "SELECT language_code FROM {$wpdb->prefix}icl_translations WHERE element_type='post_product' AND element_id=%d", $id ) );
     if ( $actual_language !== $language ) { return array( array( 'kind' => 'product_language', 'id' => $id ) ); }
     $issues = array(); $attached = array();
-    $relations = $wpdb->get_results( $wpdb->prepare( "SELECT tt.taxonomy,t.term_id,tt.term_taxonomy_id,i.language_code AS lang FROM {$wpdb->term_relationships} r JOIN {$wpdb->term_taxonomy} tt USING(term_taxonomy_id) JOIN {$wpdb->terms} t USING(term_id) LEFT JOIN {$wpdb->prefix}icl_translations i ON i.element_id=tt.term_taxonomy_id AND i.element_type=CONCAT('tax_',tt.taxonomy) WHERE r.object_id=%d AND LEFT(tt.taxonomy,3)='pa_'", $id ), ARRAY_A );
+    $relations = $wpdb->get_results( $wpdb->prepare( "SELECT tt.taxonomy,t.term_id,t.name,tt.term_taxonomy_id,i.language_code AS lang FROM {$wpdb->term_relationships} r JOIN {$wpdb->term_taxonomy} tt USING(term_taxonomy_id) JOIN {$wpdb->terms} t USING(term_id) LEFT JOIN {$wpdb->prefix}icl_translations i ON i.element_id=tt.term_taxonomy_id AND i.element_type=CONCAT('tax_',tt.taxonomy) WHERE r.object_id=%d AND LEFT(tt.taxonomy,3)='pa_'", $id ), ARRAY_A );
     foreach ( $relations as $r ) {
         $attached[$r['term_taxonomy_id']] = true;
+        if ( isset($r['name']) && !rf_import_label_matches_language($r['name'],$language) ) { $issues[] = array('kind'=>'parent_term_label','term_id'=>(int)$r['term_id']); }
         if ( $r['lang'] !== $language ) { $issues[] = array( 'kind' => 'parent_term_language', 'term_id' => (int) $r['term_id'] ); }
     }
     $values = $wpdb->get_results( $wpdb->prepare( "SELECT m.meta_id,m.meta_key,m.meta_value,v.ID AS variation_id FROM {$wpdb->posts} v JOIN {$wpdb->postmeta} m ON m.post_id=v.ID WHERE v.post_parent=%d AND v.post_type='product_variation' AND v.post_status NOT IN ('trash','auto-draft') AND LEFT(m.meta_key,13)='attribute_pa_' AND m.meta_value<>''", $id ), ARRAY_A );
@@ -28,6 +29,7 @@ function rf_import_raw_option_issues( $id, $language ) {
     }
     foreach ( $values as $v ) {
         $term = rf_import_raw_term( substr( $v['meta_key'], 10 ), 'slug', $v['meta_value'] );
+        if ( $term && isset($term['name']) && !rf_import_label_matches_language($term['name'],$language) ) { $issues[] = array('kind'=>'variation_term_label','variation_id'=>(int)$v['variation_id'],'key'=>$v['meta_key']); }
         if ( ! $term || $term['lang'] !== $language || ! isset( $attached[$term['term_taxonomy_id']] ) ) {
             $issues[] = array( 'kind' => 'variation_or_default_term', 'variation_id' => (int) $v['variation_id'], 'key' => $v['meta_key'], 'value' => $v['meta_value'] );
         }
@@ -64,4 +66,16 @@ function rf_import_distance_last_parent_attributes( $attributes ) {
     foreach ( $attributes as &$attribute ) { $attribute['position'] = $position++; }
     unset( $attribute );
     return $attributes;
+}
+
+// Проверяем смысл известных общих подписей, а не только языковую метку WPML.
+function rf_import_label_matches_language( $name, $language, $english = null ) {
+    $normalize = static function($value) { $value=trim(preg_replace('/\\s+/u',' ',(string)$value));return function_exists('mb_strtolower')?mb_strtolower($value,'UTF-8'):strtolower($value); };
+    $groups = array(
+        array('en'=>array('Walking','Walk'),'pt'=>array('Caminhada'),'es'=>array('Senderismo','Caminata')),
+        array('en'=>array('Road running'),'pt'=>array('Corrida de estrada'),'es'=>array('Carrera en carretera','Carrera de carretera','Carrera en ruta')),
+        array('en'=>array('Trail Run','Trail running'),'pt'=>array('Corrida de montanha','Trail Run','Trail running'),'es'=>array('Carrera de montaña','Trail Run','Trail running'))
+    );
+    foreach($groups as $group){$all=array_merge(...array_values($group));$needle=$normalize($english??$name);if(!in_array($needle,array_map($normalize,$all),true))continue;return isset($group[$language])&&in_array($normalize($name),array_map($normalize,$group[$language]),true);}
+    return true;
 }

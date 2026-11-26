@@ -119,3 +119,15 @@ def label_catalog(block):
     if unknown:
         result.update(zip(unknown, translate_labels(unknown)))
     return result
+
+
+def validate_known_term_label(label, language, english):
+    """Для известных общих значений проверяем подпись независимо от метки WPML."""
+    normalize = lambda value: ' '.join(str(value).split()).casefold()
+    allowed = {
+        'walking': {'en': ('Walking', 'Walk'), 'pt': ('Caminhada',), 'es': ('Senderismo', 'Caminata')},
+        'road running': {'en': ('Road running',), 'pt': ('Corrida de estrada',),
+                         'es': ('Carrera en carretera', 'Carrera de carretera', 'Carrera en ruta')},
+    }.get(normalize(english))
+    if allowed and normalize(label) not in {normalize(value) for value in allowed.get(language, ())}:
+        raise ValueError('Неверная подпись общего значения для языка ' + language + ': ' + str(label))

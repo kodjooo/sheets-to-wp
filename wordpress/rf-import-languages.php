@@ -5,6 +5,7 @@
  */
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 require_once __DIR__ . '/rf-import-attribute-integrity.php';
+require_once __DIR__ . '/rf-import-term-audit.php';
 
 add_action( 'rest_api_init', function () {
     register_rest_route( 'custom-api/v1', '/import-category-catalog/', array(
@@ -187,50 +188,73 @@ function rf_import_ensure_terms_exact( $request ) {
             if ( empty( $item['labels'][$lang] ) || ! is_string( $item['labels'][$lang] ) || strlen( $item['labels'][$lang] ) > 200 ) {
                 return new WP_Error( 'rf_invalid_label', 'Нет подписи атрибута', array( 'status' => 400 ) );
             }
+            if(!rf_import_label_matches_language($item['labels'][$lang],$lang,$labels['en']))return new WP_Error('rf_invalid_label_language','Подпись не соответствует языку',array('status'=>400));
         }
     }
+    $tables=array($wpdb->terms,$wpdb->term_taxonomy,$wpdb->termmeta,$wpdb->prefix.'icl_translations');
+    $engines=(int)$wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name IN (%s,%s,%s,%s) AND engine='InnoDB'",...$tables));
+    if($engines!==4)return new WP_Error('rf_dictionary_transactions','Для безопасного изменения справочника нужны транзакции',array('status'=>503));
     $result = array();
     foreach ( $items as $item ) {
         $taxonomy = wc_attribute_taxonomy_name_by_id( (int) $item['attribute_id'] );
         $type = 'tax_' . $taxonomy;
+        $baseline_error = rf_import_check_dictionary_baseline($taxonomy);
+        if ($baseline_error) { return $baseline_error; }
         $lock = 'rf_terms_' . md5( $taxonomy . $item['labels']['en'] );
         if ( '1' !== (string) $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s,10)', $lock ) ) ) {
             return new WP_Error( 'rf_terms_busy', 'Справочник занят', array( 'status' => 409 ) );
         }
+        $previous = apply_filters('wpml_current_language',null); $transaction = false; $created_ids = array();
         try {
+            if (!rf_term_audit_write('import_terms_requested',array('taxonomy'=>$taxonomy,'labels'=>$item['labels']))) {
+                return new WP_Error('rf_term_audit_unavailable','Не удалось сохранить журнал справочника',array('status'=>503));
+            }
+            $wpdb->query('START TRANSACTION'); $transaction = true;
             $base = $wpdb->get_var( $wpdb->prepare(
                 "SELECT tt.term_taxonomy_id FROM {$wpdb->term_taxonomy} tt JOIN {$wpdb->terms} t ON t.term_id=tt.term_id JOIN {$wpdb->prefix}icl_translations i ON i.element_id=tt.term_taxonomy_id AND i.element_type=%s WHERE tt.taxonomy=%s AND t.name=%s AND i.language_code='en' ORDER BY tt.term_id LIMIT 1",
                 $type, $taxonomy, $item['labels']['en']
             ) );
-            $trid = $base ? apply_filters( 'wpml_element_trid', null, (int) $base, $type ) : null;
-            $terms = $trid ? (array) apply_filters( 'wpml_get_element_translations', null, $trid, $type ) : array();
-            $output = array();
-            // Старому двухъязычному импорту не создаём лишний третий перевод.
+            $trid = $base ? (int)$wpdb->get_var($wpdb->prepare("SELECT trid FROM {$wpdb->prefix}icl_translations WHERE element_id=%d AND element_type=%s AND language_code='en'",(int)$base,$type)) : 0;
+            $terms = array();
+            if ($trid) {
+                // Читаем исходные записи, без кеша и подстановки другого языка WPML.
+                $rows=$wpdb->get_results($wpdb->prepare("SELECT language_code,element_id FROM {$wpdb->prefix}icl_translations WHERE trid=%d AND element_type=%s FOR UPDATE",$trid,$type),ARRAY_A);
+                foreach($rows as $record){if(isset($terms[$record['language_code']]))return new WP_Error('rf_dictionary_ambiguous','Неоднозначная языковая группа',array('status'=>409));$terms[$record['language_code']]=(int)$record['element_id'];}
+            }
+            $original_terms = $terms; $output = array();
             foreach ( array_intersect( array( 'en', 'pt', 'es' ), array_keys( $item['labels'] ) ) as $lang ) {
-                $ttid = isset( $terms[$lang] ) ? (int) $terms[$lang]->element_id : 0;
+                $ttid = $terms[$lang] ?? 0;
                 if ( ! $ttid ) {
                     $slug = sanitize_title( $item['labels'][$lang] ) . '-rf-' . substr( md5( $taxonomy . $item['labels']['en'] ), 0, 8 ) . '-' . $lang;
-                    // Детерминированный slug восстанавливает запись после оборванного запроса.
+                    do_action('wpml_switch_language',$lang);
                     $term = get_term_by( 'slug', $slug, $taxonomy );
                     $created = $term ? array( 'term_id' => $term->term_id, 'term_taxonomy_id' => $term->term_taxonomy_id ) : wp_insert_term( $item['labels'][$lang], $taxonomy, array( 'slug' => $slug ) );
                     if ( is_wp_error( $created ) ) { return $created; }
-                    $ttid = (int) $created['term_taxonomy_id'];
+                    $created_ids[]=(int)$created['term_id'];$ttid = (int) $created['term_taxonomy_id'];
                     do_action( 'wpml_set_element_language_details', array(
                         'element_id' => $ttid, 'element_type' => $type, 'trid' => $trid ?: false,
                         'language_code' => $lang, 'source_language_code' => $lang === 'en' ? null : 'en', 'check_duplicates' => true,
                     ) );
-                    if ( ! $trid ) { $trid = apply_filters( 'wpml_element_trid', null, $ttid, $type ); }
+                    if (!$trid) { $trid=(int)$wpdb->get_var($wpdb->prepare("SELECT trid FROM {$wpdb->prefix}icl_translations WHERE element_id=%d AND element_type=%s",$ttid,$type)); }
                 }
-                $term_id = (int) $wpdb->get_var( $wpdb->prepare( "SELECT term_id FROM {$wpdb->term_taxonomy} WHERE term_taxonomy_id=%d", $ttid ) );
-                $term = get_term( $term_id, $taxonomy );
-                if ( ! $term || is_wp_error( $term ) || (int) apply_filters( 'wpml_element_trid', null, $ttid, $type ) !== (int) $trid ) {
-                    return new WP_Error( 'rf_term_link_failed', 'WPML не подтвердил связь значений', array( 'status' => 500 ) );
+                $term_id = (int)$wpdb->get_var($wpdb->prepare("SELECT term_id FROM {$wpdb->term_taxonomy} WHERE term_taxonomy_id=%d",$ttid));
+                $term = rf_import_raw_term($taxonomy,'term_id',$term_id);
+                if (!$term || $term['lang']!==$lang || (int)$term['trid']!==$trid || !rf_import_label_matches_language($term['name'],$lang,$item['labels']['en'])) {
+                    return new WP_Error('rf_dictionary_label','Язык или подпись общего значения не соответствует переводу',array('status'=>409));
                 }
-                $output[$lang] = array( 'id' => $term_id, 'name' => $term->name, 'slug' => $term->slug );
+                $output[$lang]=array('id'=>$term_id,'name'=>$term['name'],'slug'=>$term['slug']);
             }
-            $result[] = $output;
+            foreach($original_terms as $lang=>$ttid){
+                $actual=$wpdb->get_col($wpdb->prepare("SELECT element_id FROM {$wpdb->prefix}icl_translations WHERE trid=%d AND element_type=%s AND language_code=%s",$trid,$type,$lang));
+                if(array_map('intval',$actual)!==array($ttid))return new WP_Error('rf_dictionary_replaced','Создание перевода заменило существующий термин; изменения отменены',array('status'=>409));
+            }
+            $wpdb->query('COMMIT');$transaction=false;
+            rf_term_audit_write('import_terms_committed',array('taxonomy'=>$taxonomy,'trid'=>$trid,'terms'=>$output));
+            $result[]=$output;
         } finally {
-            $wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+            if($transaction){$wpdb->query('ROLLBACK');foreach($created_ids as $tid)clean_term_cache($tid,$taxonomy);rf_term_audit_write('import_terms_rollback',array('taxonomy'=>$taxonomy,'trid'=>$trid??0));}
+            do_action('wpml_switch_language',$previous);
+            $wpdb->get_var($wpdb->prepare('SELECT RELEASE_LOCK(%s)',$lock));
         }
     }
     return rest_ensure_response( array( 'items' => $result ) );
@@ -277,7 +301,7 @@ function rf_import_apply_options_exact( $request ) {
             foreach ( $attr['term_ids'] as $term_id ) {
                 $raw = rf_import_raw_term( $taxonomy, 'term_id', (int) $term_id );
                 $actual_lang = $raw['lang'] ?? '';
-                if ( $actual_lang !== $lang ) {
+                if ( $actual_lang !== $lang || !rf_import_label_matches_language($raw['name'] ?? '',$lang) ) {
                     return new WP_Error( 'rf_invalid_option_language', 'Значение относится к другому языку', array( 'status' => 409 ) );
                 }
                 $allowed[$aid][(int) $term_id] = true;
