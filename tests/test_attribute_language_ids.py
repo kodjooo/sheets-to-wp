@@ -113,3 +113,22 @@ def test_legacy_without_variations_does_not_create_terms(monkeypatch):
     monkeypatch.setattr(tri.requests, "post", post)
     tri.reconcile_legacy_options({}, "pt", {}, [], [], {})
     post.assert_not_called()
+
+@pytest.mark.parametrize('lang', ['pt', 'en', 'es', None])
+def test_legacy_distance_last_preserves_other_attribute_order(monkeypatch, lang):
+    ids = {'Distance': 1, 'Race Start Date': 2, 'Running': 3}
+    monkeypatch.setattr(attrs, 'get_or_create_attribute', lambda name: ids[name])
+    monkeypatch.setattr(attrs, 'get_or_create_attribute_term', lambda *a, **kw: 33)
+    monkeypatch.setattr(products, 'get_jwt_token', lambda: 'test-token')
+    response = Mock(); response.json.return_value = {'verified': True}
+    post = Mock(return_value=response); put = Mock(return_value=response)
+    monkeypatch.setattr(attrs.requests, 'post', post)
+    monkeypatch.setattr(attrs, '_safe_wc_request', put)
+    result = attrs.assign_attributes_to_product(123, {'Distance': '10 km', 'Race Start Date': '01/01/2027', 'Running': 'Trail'}, lang=lang)
+    assert [item['id'] for item in result] == [2, 3, 1]
+    if lang:
+        assert [item['id'] for item in post.call_args.kwargs['json']['items'][0]['attributes']] == [2, 3, 1]
+    else:
+        payload = put.call_args.kwargs['data']['attributes']
+        assert [item['id'] for item in payload] == [2, 3, 1]
+        assert [item['position'] for item in payload] == [0, 1, 2]

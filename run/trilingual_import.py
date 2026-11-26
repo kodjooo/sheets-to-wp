@@ -502,6 +502,8 @@ def _process(m, config, country, third, index, row, block, headers, write):
             current_pairs = list(pairs)
             if variation.get('ATTRIBUTE') and variation.get('VALUE'):
                 current_pairs.append((variation['ATTRIBUTE'], 'VALUE'))
+            # Дистанция завершает подпись варианта; прочие атрибуты сохраняют порядок.
+            current_pairs.sort(key=lambda pair: pair[1] == 'DISTANCE')
             for name, col in current_pairs:
                 value = variation.get(col)
                 if value:

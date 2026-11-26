@@ -53,3 +53,15 @@ function rf_import_native_defaults( $id, $language, $allowed ) {
     }
     return $defaults;
 }
+
+// Меняется только порядок и позиции; значения, флаги и названия сохраняются.
+function rf_import_distance_last_parent_attributes( $attributes ) {
+    if ( ! is_array( $attributes ) || ! isset( $attributes['pa_distance'] ) ) { return $attributes; }
+    $distance = $attributes['pa_distance'];
+    unset( $attributes['pa_distance'] );
+    $attributes['pa_distance'] = $distance;
+    $position = 0;
+    foreach ( $attributes as &$attribute ) { $attribute['position'] = $position++; }
+    unset( $attribute );
+    return $attributes;
+}

@@ -396,3 +396,19 @@ def test_blank_summary_passes_full_workflow_without_dropping_language_guards(wor
     w.run()
     assert w.row['STATUS']=='Published'
     assert all(w.row[tri.column('summary',lang)]=='' for lang in tri.LANGUAGES)
+
+@pytest.mark.parametrize('profile', [PT, ES])
+def test_distance_is_last_after_custom_attributes_in_all_languages(workflow, profile):
+    w = workflow
+    if profile == ES:
+        w.row.update({'COUNTRY': 'Spain', 'LOCATION (CITY)': 'Badalona, Barcelona'})
+    for row in (w.row, w.child):
+        row.update({'TEAM': 'Pairs', 'ATTRIBUTE': 'Running', 'VALUE': 'Trail Run'})
+    w.run(profile)
+    for call in m.sync_variations_by_ids.call_args_list:
+        for entry in call.args[1]:
+            assert [a['name'] for a in entry['attributes']] == ['Team', 'Running', 'Distance']
+    first = {key: value for key, value in w.row.items() if ' ID ' in key}
+    w.row['STATUS'] = 'Revised (complete)'
+    w.run(profile)
+    assert first == {key: value for key, value in w.row.items() if ' ID ' in key}

@@ -303,11 +303,17 @@ function rf_import_apply_options_exact( $request ) {
             foreach ( $items as $item ) {
                 do_action( 'wpml_switch_language', $item['language'] );
                 $attributes = array();
+                $ordered = array(); $distance = array();
                 foreach ( $item['attributes'] as $attr ) {
+                    if ( wc_attribute_taxonomy_name_by_id( (int) $attr['id'] ) === 'pa_distance' ) { $distance[] = $attr; }
+                    else { $ordered[] = $attr; }
+                }
+                foreach ( array_merge( $ordered, $distance ) as $attr ) {
                     $attribute = new WC_Product_Attribute();
                     $attribute->set_id( (int) $attr['id'] );
                     $attribute->set_name( wc_attribute_taxonomy_name_by_id( (int) $attr['id'] ) );
                     $attribute->set_options( array_map( 'intval', $attr['term_ids'] ) );
+                    $attribute->set_position( count( $attributes ) );
                     $attribute->set_visible( true );
                     $attribute->set_variation( true );
                     $attributes[] = $attribute;
@@ -340,6 +346,11 @@ function rf_import_apply_options_exact( $request ) {
             }
         }
         foreach ( $items as $item ) {
+            $raw = $wpdb->get_var( $wpdb->prepare( "SELECT meta_value FROM {$wpdb->postmeta} WHERE post_id=%d AND meta_key='_product_attributes' LIMIT 1", (int) $item['product_id'] ) );
+            $stored_attributes = maybe_unserialize( $raw );
+            if ( $stored_attributes !== rf_import_distance_last_parent_attributes( $stored_attributes ) ) {
+                return new WP_Error( 'rf_attribute_order', 'Дистанция должна быть последним атрибутом', array( 'status' => 409 ) );
+            }
             foreach ( $item['attributes'] as $attr ) {
                 $taxonomy = wc_attribute_taxonomy_name_by_id( (int) $attr['id'] );
                 $actual = array_map( 'intval', $wpdb->get_col( $wpdb->prepare( "SELECT tt.term_id FROM {$wpdb->term_relationships} r JOIN {$wpdb->term_taxonomy} tt ON tt.term_taxonomy_id=r.term_taxonomy_id WHERE r.object_id=%d AND tt.taxonomy=%s", (int) $item['product_id'], $taxonomy ) ) );

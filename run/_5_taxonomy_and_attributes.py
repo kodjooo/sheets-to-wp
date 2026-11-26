@@ -231,7 +231,7 @@ def assign_attributes_to_product(product_id, attributes_dict, lang=None):
 
     merged_attributes = merge_attribute_map_case_insensitive(attributes_dict)
 
-    for attr_name, value in merged_attributes.items():
+    for attr_name, value in sorted(merged_attributes.items(), key=lambda item: item[0].casefold() == "distance"):
         # Если value — не список, делаем списком
         values = value if isinstance(value, list) else [value]
 
@@ -268,6 +268,7 @@ def assign_attributes_to_product(product_id, attributes_dict, lang=None):
             "id": attr_id,
             "variation": True,
             "visible": True,
+            "position": len(attr_payload),
             "options": options
         })
         exact_attributes.append({"id": attr_id, "term_ids": list(dict.fromkeys(term_ids))})
