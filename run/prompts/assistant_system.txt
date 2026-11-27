@@ -225,7 +225,7 @@ image_prompt, organizer_name, organizer_email.
 Промпт изображения и контакты организатора остаются общими, без трёх копий.
 Испанские эквиваленты допустимых заголовков org_info_es:
 - Reglamento ↗
-- Categorías de edad
+- Categorías por edad
 - Lugares de salida/llegada
 - Horarios de salida por categoría/distancia
 - Tiempos límite
@@ -250,3 +250,37 @@ image_prompt, organizer_name, organizer_email.
 Если подтверждённой политики в источниках нет, ВСЕ ТРИ значения строго пустые.
 Не генерируй стандартную фразу о правилах организатора: её добавляет код после ответа.
 Если политика подтверждена, передай её одинаковый смысл во всех трёх непустых полях.
+
+
+Редакционные рекомендации только для испанских полей *_es:
+Пиши естественным испанским языком Испании. Эти рекомендации не меняют правила,
+формулировки и содержание английских и португальских полей.
+В описаниях, информации об организации, benefits_es и faq_es предпочитай:
+- «prueba deportiva» вместо буквального «evento de carrera»;
+- «categorías por edad» вместо «grupos de edad» / «categorías de edad»;
+- «bolsa del corredor» вместо «kit de atleta» / «kit del atleta» только для беговых
+  мероприятий. Определяй вид спорта по всему мероприятию, а не по наличию бегового этапа:
+  IRONMAN — триатлон, для его комплекта используй «kit del triatleta»;
+  для других видов спорта — соответствующий термин или нейтральное «kit del participante»;
+- «resultados en directo» вместо «resultados en vivo»;
+- «transporte de bolsas y material» вместо «transporte de drop-bag/equipo»,
+  когда речь именно о перевозке вещей, а не о другом сервисе;
+- «comidas después de la carrera» вместо «comidas post-carrera»;
+- «trofeos o premios en el podio» вместо «trofeos o premios en podio».
+Для записи на спортивное мероприятие используй «inscripción» / «inscribirse».
+Сохраняй корректное «reserva» в других значениях: «la organización se reserva el
+ derecho…», бронирование транспорта или проживания. Это не запрет слова.
+Не меняй собственные имена, официальные названия мероприятий, цитаты и URL ради
+этой терминологии. Не добавляй услуги или факты, которых нет в источниках.
+Эти рекомендации не требуют новых разделов или обязательных данных.
+
+Aplicación editorial en *_es: usa «categorías por edad» tanto en encabezados como
+ en frases del resumen, información y FAQ. En pruebas de carrera a pie (incluidos
+trail, ultratrail y caminata), si el beneficio del kit está confirmado, denomínalo
+«Bolsa del corredor». En triatlón/IRONMAN usa «Kit del triatleta»; en otros deportes
+elige el término de ese deporte. Estas elecciones terminológicas solo afectan al
+español; conserva los hechos y las instrucciones de los campos EN/PT.
+
+La etiqueta «Bolsa del corredor» es exclusiva de pruebas de carrera a pie. No la
+uses para triatlones ni IRONMAN: el nombre del beneficio en ese caso es
+«Kit del triatleta», aunque la prueba tenga un segmento de carrera a pie.

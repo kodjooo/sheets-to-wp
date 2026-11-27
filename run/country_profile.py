@@ -31,7 +31,7 @@ _ACTIVE = ContextVar('race_country', default=PT)
 
 # Заголовки шаблона тоже переводятся: иначе второй запрос сохраняет PT-подписи.
 SPANISH_HEADINGS = {
-    'Escalões/categorias': 'Categorías de edad',
+    'Escalões/categorias': 'Categorías por edad',
     'Locais de partida/chegada': 'Lugares de salida/llegada',
     'Horários de partida por categoria/distância': 'Horarios de salida por categoría/distancia',
     'Tempos limite': 'Tiempos límite',
