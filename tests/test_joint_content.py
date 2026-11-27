@@ -112,3 +112,30 @@ def test_spanish_editorial_heading_does_not_change_other_languages():
     assert result['org_info_es'] == '<strong>Categorías por edad:</strong> Adultos'
     for key, value in before.items():
         assert result[key] == ('\n'.join(value) if isinstance(value, list) else value)
+
+
+@pytest.mark.parametrize('category,label', [('Running','Bolsa del corredor'),('Swimming','Kit del participante'),('Cycling','Kit del participante'),('Triathlon','Kit del participante'),('', 'Kit del participante')])
+@pytest.mark.parametrize('old', ['Bolsa del corredor','Kit del atleta','Kit de atleta','Bolsa del participante','Kit del triatleta'])
+def test_kit_label_is_scoped_to_spanish_benefit_label(category, label, old):
+    from joint_content import normalize_spanish_kit_label
+    text = '🎽 ' + old + ': dorsal, camiseta\n🏅 Premio: medalla'
+    payload = {'benefits_es': text, 'benefits': text, 'benefits_pt': text,
+               'summary_es': text, 'faq_es': text, 'org_info_es': text}
+    result = normalize_spanish_kit_label(payload, category)
+    assert result['benefits_es'] == '🎽 ' + label + ': dorsal, camiseta\n🏅 Premio: medalla'
+    assert payload['benefits_es'] == text
+    for key in payload:
+        if key != 'benefits_es':
+            assert result[key] == payload[key]
+    assert normalize_spanish_kit_label(result, category) == result
+
+
+@pytest.mark.parametrize('text', ['', '🏅 Premio: medalla', 'Se entrega una bolsa del corredor en meta.', '🎽 Bolsa del club: dorsal'])
+def test_kit_label_does_not_add_or_rewrite_other_benefits(text):
+    from joint_content import normalize_spanish_kit_label
+    assert normalize_spanish_kit_label({'benefits_es':text}, 'Swimming')['benefits_es'] == text
+
+
+def test_kit_label_preserves_bold_markup():
+    from joint_content import normalize_spanish_kit_label
+    assert normalize_spanish_kit_label({'benefits_es':'🎽 <strong>Bolsa del corredor</strong>: dorsal'}, 'Cycling')['benefits_es'] == '🎽 <strong>Kit del participante</strong>: dorsal'

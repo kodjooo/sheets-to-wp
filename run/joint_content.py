@@ -74,3 +74,17 @@ def validate_cleaned_result(first, cleaned):
         if key in source:
             result[key] = source[key]
     return validate_joint_result(result)
+
+
+def normalize_spanish_kit_label(payload, category):
+    """Меняет только подпись уже существующего комплекта в испанских бенефитах."""
+    result = dict(payload)
+    benefits = result.get('benefits_es')
+    if not isinstance(benefits, str):
+        return result
+    label = 'Bolsa del corredor' if str(category or '').strip().casefold() == 'running' else 'Kit del participante'
+    pattern = (r'(?im)^([^\w<\n]*(?:<(?:strong|b)>\s*)?)'
+               r'(?:kit|bolsa) (?:de|del) (?:atleta|participante|triatleta|corredor|nadador|ciclista)'
+               r'(?=\s*(?:</(?:strong|b)>)?\s*:)')
+    result['benefits_es'] = re.sub(pattern, lambda match: match[1] + label, benefits)
+    return result
