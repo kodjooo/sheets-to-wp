@@ -102,3 +102,13 @@ def test_empty_summary_does_not_allow_a_missing_translation():
     payload=sample();payload['summary_es']=''
     with pytest.raises(ValueError,match='паритет'):
         validate_joint_result(payload)
+
+
+def test_spanish_editorial_heading_does_not_change_other_languages():
+    payload = sample()
+    payload['org_info_es'] = '<strong>Escalões/categorias:</strong> Adultos'
+    before = {k: v for k, v in payload.items() if not k.endswith('_es')}
+    result = validate_joint_result(payload)
+    assert result['org_info_es'] == '<strong>Categorías por edad:</strong> Adultos'
+    for key, value in before.items():
+        assert result[key] == ('\n'.join(value) if isinstance(value, list) else value)
