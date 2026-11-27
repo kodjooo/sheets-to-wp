@@ -11,7 +11,7 @@ from category_catalog import resolve_categories, verify_categories
 from utils import parse_faq_items
 from country_profile import (CountryProfile, active_profile, activate_profile,
                              reset_profile, validate_spanish_row)
-from joint_content import SUFFIXES, validate_joint_result, validate_cleaned_result
+from joint_content import SUFFIXES, validate_joint_result, validate_cleaned_result, normalize_spanish_kit_label
 
 SCHEME = 'PT_ES_EN'
 FIELDS = {'summary': 'SUMMARY', 'org_info': 'ORG INFO', 'benefits': 'BENEFITS', 'faq': 'FAQ'}
@@ -453,6 +453,7 @@ def _process(m, config, country, third, index, row, block, headers, write):
             error = exc
     if result is None:
         raise ValueError('Не получены полные PT/EN/ES версии: '+str(error))
+    result = normalize_spanish_kit_label(result, row.get('CATEGORY', ''))
     updates = {}
     for lang, suffix in SUFFIXES.items():
         title = result['title'+suffix]

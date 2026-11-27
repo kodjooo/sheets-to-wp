@@ -156,7 +156,7 @@ image_prompt, organizer_name, organizer_email.
 
 
 При очистке сохраняй редакционную терминологию испанских полей из первого ответа:
-«categorías por edad», «bolsa del corredor» для беговых мероприятий, «kit del triatleta»
+«categorías por edad», «bolsa del corredor» для беговых мероприятий, «kit del participante»
 для триатлона (включая IRONMAN), «resultados en directo»,
 «transporte de bolsas y material», «comidas después de la carrera», «trofeos o premios en el podio».
 Регистрация на мероприятие — «inscripción»; корректные другие значения «reserva» сохраняй.
